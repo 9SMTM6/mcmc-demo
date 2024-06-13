@@ -1,10 +1,10 @@
 [package]
-name = "eframe_template"
+name = "mcmc_demo"
 version = "0.1.0"
-authors = ["Emil Ernerfeldt <emil.ernerfeldt@gmail.com>"]
+authors = ["Samuel Maier <9smtm6@gmail.com>"]
 edition = "2021"
 include = ["LICENSE-APACHE", "LICENSE-MIT", "**/*.rs", "Cargo.toml"]
-rust-version = "1.76"
+rust-version = "1.79"
 
 [package.metadata.docs.rs]
 all-features = true
@@ -12,16 +12,12 @@ targets = ["x86_64-unknown-linux-gnu", "wasm32-unknown-unknown"]
 
 [dependencies]
 egui = "0.27.0"
-eframe = { version = "0.27.0", default-features = false, features = [
-    "accesskit",     # Make egui comptaible with screen readers. NOTE: adds a lot of dependencies.
-    "default_fonts", # Embed the default egui fonts.
-    "glow",          # Use the glow rendering backend. Alternative: "wgpu".
-    "persistence",   # Enable restoring app state when restarting the app.
-] }
+eframe = { version = "0.27.0", default-features = false, features = ["default_fonts", "wgpu", "persistence", "wayland"] }
 log = "0.4"
 
 # You only need serde if you want app persistence:
 serde = { version = "1", features = ["derive"] }
+wgpu = "0.20.1"
 
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
