@@ -7,8 +7,6 @@ pub struct TemplateApp {
 
     #[serde(skip)] // This how you opt-out of serialization of a field
     value: f32,
-
-    backend_panel: super::backend_panel::BackendPanel,
 }
 
 impl Default for TemplateApp {
@@ -17,16 +15,8 @@ impl Default for TemplateApp {
             // Example stuff:
             label: "Hello World!".to_owned(),
             value: 2.7,
-            backend_panel: super::backend_panel::BackendPanel::default(),
         }
     }
-}
-
-#[derive(Clone, Copy, Debug)]
-#[must_use]
-enum Command {
-    Nothing,
-    ResetEverything,
 }
 
 impl TemplateApp {
@@ -43,56 +33,6 @@ impl TemplateApp {
 
         Default::default()
     }
-
-    fn render_backend_panel(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) -> Command {
-        // The backend-panel can be toggled on/off.
-        // We show a little animation when the user switches it.
-        let is_open =
-            self.backend_panel.open || ctx.memory(|mem| mem.everything_is_visible());
-
-        let mut cmd = Command::Nothing;
-
-        egui::SidePanel::left("backend_panel")
-            .resizable(false)
-            .show_animated(ctx, true, |ui| {
-                ui.vertical_centered(|ui| {
-                    ui.heading("💻 Backend");
-                });
-
-                ui.separator();
-                self.backend_panel_contents(ui, frame, &mut cmd);
-            });
-
-        cmd
-    }
-
-    fn backend_panel_contents(
-        &mut self,
-        ui: &mut egui::Ui,
-        frame: &mut eframe::Frame,
-        cmd: &mut Command,
-    ) {
-        self.backend_panel.ui(ui, frame);
-
-        ui.separator();
-
-        ui.horizontal(|ui| {
-            if ui
-                .button("Reset egui")
-                .on_hover_text("Forget scroll, positions, sizes etc")
-                .clicked()
-            {
-                ui.ctx().memory_mut(|mem| *mem = Default::default());
-                ui.close_menu();
-            }
-
-            if ui.button("Reset everything").clicked() {
-                *cmd = Command::ResetEverything;
-                ui.close_menu();
-            }
-        });
-    }
-
 }
 
 impl eframe::App for TemplateApp {
@@ -102,7 +42,7 @@ impl eframe::App for TemplateApp {
     }
 
     /// Called each time the UI needs repainting, which may be many times per second.
-    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         // Put your widgets into a `SidePanel`, `TopBottomPanel`, `CentralPanel`, `Window` or `Area`.
         // For inspiration and more examples, go to https://emilk.github.io/egui
 
@@ -150,14 +90,6 @@ impl eframe::App for TemplateApp {
                 powered_by_egui_and_eframe(ui);
                 egui::warn_if_debug_build(ui);
             });
-
-            self.backend_panel.update(ui.ctx(), frame);
-
-            // if !is_mobile(ctx) {
-            self.render_backend_panel(ui.ctx(), frame);
-            // }
-
-            self.backend_panel.end_of_frame(ui.ctx());
         });
     }
 }
