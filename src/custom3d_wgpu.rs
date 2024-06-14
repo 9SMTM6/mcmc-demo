@@ -100,6 +100,9 @@ impl Custom3d {
 impl eframe::App for Custom3d {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
+            // ui.add_sized(Vec2::from([400.0, 400.0]), |ui: &mut Ui| {
+            // ui.horizontal_top(|ui| {
+            // ui.allocate_ui_with_layout(Vec2::from([800.0, 800.0]), egui::Layout::top_down(egui::Align::Min), |ui| {
             egui::ScrollArea::both()
                 .auto_shrink(false)
                 .show(ui, |ui| {
@@ -115,8 +118,11 @@ impl eframe::App for Custom3d {
                         self.custom_painting(ui);
                     });
                     ui.label("Drag to rotate!");
-                    // ui.add(::egui_github_link_file!());
+                    ui.add(egui::github_link_file!(
+                        "https://github.com/emilk/egui/blob/master/", "(source code)"
+                    ))
                 });
+            // });
         });
     }
 }

@@ -17,8 +17,7 @@ log = "0.4"
 
 # You only need serde if you want app persistence:
 serde = { version = "1", features = ["derive"] }
-# wgpu = { version = "0.20.1", features = ["webgl", "webgpu"] }
-wgpu = { version = "0.19.1", features = ["webgl", "webgpu"] }
+wgpu = { version = "0.20.1", features = ["webgl", "webgpu"] }
 # egui-wgpu = { version = "0.27.2", features = ["wayland", "winit"] }
 bytemuck = { version = "1.16.0" }
 # eframe = { workspace = true, default-features = false, features = [
