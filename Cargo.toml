@@ -4,20 +4,34 @@ version = "0.1.0"
 authors = ["Samuel Maier <9smtm6@gmail.com>"]
 edition = "2021"
 include = ["LICENSE-APACHE", "LICENSE-MIT", "**/*.rs", "Cargo.toml"]
-rust-version = "1.79"
+rust-version = "1.76"
 
 [package.metadata.docs.rs]
 all-features = true
 targets = ["x86_64-unknown-linux-gnu", "wasm32-unknown-unknown"]
 
 [dependencies]
-egui = "0.27.0"
-eframe = { version = "0.27.0", default-features = false, features = ["default_fonts", "wgpu", "persistence", "wayland"] }
+egui = "0.27.2"
+eframe = { version = "0.27.2", default-features = false, features = ["default_fonts", "wgpu", "persistence", "wayland"] }
 log = "0.4"
 
 # You only need serde if you want app persistence:
 serde = { version = "1", features = ["derive"] }
-wgpu = "0.20.1"
+# wgpu = { version = "0.20.1", features = ["webgl", "webgpu"] }
+wgpu = { version = "0.19.1", features = ["webgl", "webgpu"] }
+# egui-wgpu = { version = "0.27.2", features = ["wayland", "winit"] }
+# bytemuck = { version = "1.16.0", optional = true }
+# eframe = { workspace = true, default-features = false, features = [
+#   "web_screen_reader",
+# ] }
+# egui = { workspace = true, features = ["callstack", "default", "log"] }
+# rfd = { version = "0.13", optional = true }
+# wgpu = { version = "0.19.1", default-features = false, features = [
+#     # Make the renderer `Sync` even on wasm32, because it makes the code simpler:
+#     "fragile-send-sync-non-atomic-wasm",
+# ] }
+# egui = { version = "0.27.2", path = "crates/egui", default-features = false }
+# egui-wgpu = { version = "0.27.2", path = "crates/egui-wgpu", default-features = false }
 
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
