@@ -2,7 +2,7 @@ var cacheName = 'egui-template-pwa';
 var filesToCache = [
   './',
   './index.html',
-  './eframe_template.js',
+  './mcmc_demo.js',
   './mcmc_demo_bg.wasm',
 ];
 

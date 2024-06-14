@@ -1,3 +1,5 @@
+use crate::custom3d_wgpu::Custom3d;
+
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
@@ -7,6 +9,9 @@ pub struct TemplateApp {
 
     #[serde(skip)] // This how you opt-out of serialization of a field
     value: f32,
+    // #[cfg(any(feature = "glow", feature = "wgpu"))]
+    #[serde(skip)]
+    custom3d: Option<crate::custom3d_wgpu::Custom3d>,
 }
 
 impl Default for TemplateApp {
@@ -15,6 +20,7 @@ impl Default for TemplateApp {
             // Example stuff:
             label: "Hello World!".to_owned(),
             value: 2.7,
+            custom3d: Default::default(),
         }
     }
 }
@@ -27,11 +33,14 @@ impl TemplateApp {
 
         // Load previous app state (if any).
         // Note that you must enable the `persistence` feature for this to work.
-        if let Some(storage) = cc.storage {
-            return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
-        }
+        // if let Some(storage) = cc.storage {
+        //     return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
+        // }
 
-        Default::default()
+        Self {
+            custom3d: Custom3d::new(cc),
+            ..Default::default()
+        }
     }
 }
 
@@ -78,6 +87,18 @@ impl eframe::App for TemplateApp {
             if ui.button("Increment").clicked() {
                 self.value += 1.0;
             }
+
+            ui.separator();
+
+            // #[cfg(any(feature = "glow", feature = "wgpu"))]
+            // if let Some(custom3d) = &mut self.custom3d {
+            //     vec.push((
+            //         "🔺 3D painting",
+            //         Anchor::Custom3d,
+            //         custom3d as &mut dyn eframe::App,
+            //     ));
+            // }
+            self.custom3d.as_mut().unwrap().update(ctx, _frame);
 
             ui.separator();
 
