@@ -54,7 +54,9 @@ opt-level = 2
 # If you want to use the bleeding edge version of egui and eframe:
 # egui = { git = "https://github.com/emilk/egui", branch = "master" }
 # eframe = { git = "https://github.com/emilk/egui", branch = "master" }
+egui = { git = "https://github.com/9smtm6/egui", tag = "updated_wgpu" }
+eframe = { git = "https://github.com/9smtm6/egui", tag = "updated_wgpu" }
 
 # If you fork https://github.com/emilk/egui you can test with:
-egui = { path = "../egui/crates/egui" }
-eframe = { path = "../egui/crates/eframe" }
+# egui = { path = "../egui/crates/egui" }
+# eframe = { path = "../egui/crates/eframe" }
