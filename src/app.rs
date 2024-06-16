@@ -1,4 +1,4 @@
-use crate::custom3d_wgpu::Custom3d;
+use crate::{custom3d_wgpu::Custom3d, test_fixed_gaussian};
 
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -12,6 +12,9 @@ pub struct TemplateApp {
     // #[cfg(any(feature = "glow", feature = "wgpu"))]
     #[serde(skip)]
     custom3d: Option<crate::custom3d_wgpu::Custom3d>,
+
+    #[serde(skip)]
+    gaussian: test_fixed_gaussian::FixedGaussian,
 }
 
 impl Default for TemplateApp {
@@ -20,6 +23,7 @@ impl Default for TemplateApp {
             // Example stuff:
             label: "Hello World!".to_owned(),
             value: 2.7,
+            gaussian: test_fixed_gaussian::FixedGaussian {  },
             custom3d: Default::default(),
         }
     }
@@ -38,6 +42,7 @@ impl TemplateApp {
         // }
 
         Self {
+            gaussian: test_fixed_gaussian::FixedGaussian::new(cc.wgpu_render_state.as_ref().unwrap()),
             custom3d: Custom3d::new(cc),
             ..Default::default()
         }
@@ -59,6 +64,10 @@ impl eframe::App for TemplateApp {
             egui::warn_if_debug_build(ui);
         });
 
+        egui::CentralPanel::default().show(ctx, |ui| {
+            self.gaussian.draw(ui);
+        });
+
         // #[cfg(any(feature = "glow", feature = "wgpu"))]
         // if let Some(custom3d) = &mut self.custom3d {
         //     vec.push((
@@ -67,6 +76,6 @@ impl eframe::App for TemplateApp {
         //         custom3d as &mut dyn eframe::App,
         //     ));
         // }
-        self.custom3d.as_mut().unwrap().update(ctx, _frame);
+        // self.custom3d.as_mut().unwrap().update(ctx, _frame);
     }
 }

@@ -2,4 +2,5 @@
 
 mod app;
 mod custom3d_wgpu;
+mod test_fixed_gaussian;
 pub use app::TemplateApp;

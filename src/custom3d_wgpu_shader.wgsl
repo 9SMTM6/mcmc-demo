@@ -1,5 +1,5 @@
 struct VertexOut {
-    @location(0) color: vec4<f32>,
+    @interpolate(linear, sample) @location(0) color: vec4<f32>,
     @builtin(position) position: vec4<f32>,
 };
 
