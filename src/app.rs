@@ -1,4 +1,8 @@
-use crate::{custom3d_wgpu::Custom3d, test_fixed_gaussian};
+use std::sync::Arc;
+
+use egui::mutex::Mutex;
+
+use crate::{custom3d_wgpu::Custom3d, test_fixed_gaussian, RENDER_SIZE};
 
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -23,7 +27,7 @@ impl Default for TemplateApp {
             // Example stuff:
             label: "Hello World!".to_owned(),
             value: 2.7,
-            gaussian: test_fixed_gaussian::FixedGaussian {  },
+            gaussian: test_fixed_gaussian::FixedGaussian { px_size: Arc::new(Mutex::new(RENDER_SIZE.into())) },
             custom3d: Default::default(),
         }
     }
@@ -63,6 +67,9 @@ impl eframe::App for TemplateApp {
         egui::TopBottomPanel::bottom("footer").show(ctx, |ui| {
             egui::warn_if_debug_build(ui);
         });
+
+        // TODO: change to CentralPlanel::frame to remove margins
+        // TODO: to fix size of canvas not follwoing constraints check back with: https://github.com/Norlock/sparticles/tree/main
 
         egui::CentralPanel::default().show(ctx, |ui| {
             self.gaussian.draw(ui);

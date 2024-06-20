@@ -1,12 +1,16 @@
+use std::sync::Arc;
 use std::{mem::size_of_val, num::NonZeroU64};
 
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
+use egui::mutex::Mutex;
+use egui::Vec2;
 use wgpu::{util::DeviceExt, BindGroup, Buffer};
 use wgpu::{
     FragmentState, RenderPipeline, RenderPipelineDescriptor, ShaderModuleDescriptor,
 };
 
 use crate::fullscreen_quad::{get_fullscreen_quad_vertex, FULLSCREEN_QUAD_VERTEX};
+use crate::RENDER_SIZE;
 
 struct GaussPipeline {
     pipeline: RenderPipeline,
@@ -14,13 +18,11 @@ struct GaussPipeline {
     uniform_buffer: Buffer,
 }
 
-#[derive(Clone, Copy)]
-pub struct FixedGaussian {}
-
-// TODO: Add packaged fullscreen quad pipeline that can take any shader etc. Perhaps. 
-// Or at least package the lower bits (VertexState + WGSL source) 
-
-const RENDER_SIZE: [f32; 2] = [640.0, 480.0];
+#[derive(Clone)]
+pub struct FixedGaussian {
+    // theres certainly more elegant solutions than a mutex, but honestly I'm over it at this point. It works. Hopefully.
+    pub px_size: Arc<Mutex<Vec2>>,
+}
 
 impl FixedGaussian {
     pub fn new(render_state: &RenderState) -> Self {
@@ -102,7 +104,9 @@ impl FixedGaussian {
             panic!("pipeline already present?!")
         };
 
-        Self {}
+        Self {
+            px_size: Arc::new(Mutex::new(RENDER_SIZE.into())),
+        }
     }
 }
 
@@ -111,26 +115,40 @@ impl CallbackTrait for FixedGaussian {
         &self,
         _device: &wgpu::Device,
         queue: &wgpu::Queue,
+        // doesn't hold the viewport size
         _screen_descriptor: &eframe::egui_wgpu::ScreenDescriptor,
         _egui_encoder: &mut wgpu::CommandEncoder,
         callback_resources: &mut eframe::egui_wgpu::CallbackResources,
     ) -> Vec<wgpu::CommandBuffer> {
         let GaussPipeline { uniform_buffer, .. } = callback_resources.get().unwrap();
-        queue.write_buffer(&uniform_buffer, 0, bytemuck::cast_slice(&RENDER_SIZE));
+        let px_size = {
+            self.px_size.lock().clone()
+        };
+        queue.write_buffer(&uniform_buffer, 0, bytemuck::cast_slice(&<[f32;2]>::from(px_size)));
         Vec::new()
     }
 
     fn paint<'a>(
         &'a self,
-        _info: egui::PaintCallbackInfo,
+        info: egui::PaintCallbackInfo,
         render_pass: &mut wgpu::RenderPass<'a>,
+        // callback resources aint mutable, no way to get data to prepare :-/
         callback_resources: &'a eframe::egui_wgpu::CallbackResources,
     ) {
+        {
+            // I need to get this to prepare, where I can write the uniform buffer which can be read from wgsl
+            *self.px_size.lock() = info.viewport.size();
+        }
         let GaussPipeline {
             pipeline,
             bind_group,
             ..
         } = callback_resources.get().unwrap();
+
+        // might be interesting
+        // render_pass.set_bind_group(index, bind_group, offsets);
+        // this wont work. Needs native: https://docs.rs/wgpu-types/0.20.0/wgpu_types/struct.Features.html#associatedconstant.PUSH_CONSTANTS
+        // render_pass.set_push_constants(stages, offset, data)
 
         render_pass.set_pipeline(pipeline);
         render_pass.set_bind_group(0, bind_group, &[]);
@@ -141,10 +159,7 @@ impl CallbackTrait for FixedGaussian {
 impl FixedGaussian {
     pub fn draw(&self, ui: &mut egui::Ui) {
         egui::Frame::canvas(ui.style()).show(ui, |ui| {
-            // ([0.0, 0.0].into()
-            let rect = egui::Rect::from_min_size(ui.cursor().min, egui::Vec2::from(RENDER_SIZE));
-            // let (rect, response) =
-            //     ui.allocate_exact_size(egui::Vec2::splat(300.0), egui::Sense::drag());
+            let rect = egui::Rect::from_min_size(ui.cursor().min, ui.available_size());
             ui.painter()
                 .add(eframe::egui_wgpu::Callback::new_paint_callback(
                     rect,
