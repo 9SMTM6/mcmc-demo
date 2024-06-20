@@ -15,7 +15,7 @@ struct GaussPipeline {
 #[derive(Clone, Copy)]
 pub struct FixedGaussian {}
 
-const RENDER_SIZE: [f32; 2] = [64000.0, 48000.0];
+const RENDER_SIZE: [f32; 2] = [640.0, 480.0];
 
 impl FixedGaussian {
     pub fn new(render_state: &RenderState) -> Self {
@@ -53,7 +53,7 @@ impl FixedGaussian {
                 module: &shader,
                 buffers: &[],
                 compilation_options: Default::default(),
-                entry_point: "vs_main",
+                entry_point: "fullscreen_quad_vertex",
             },
             fragment: Some(FragmentState {
                 module: &shader,
@@ -132,7 +132,7 @@ impl CallbackTrait for FixedGaussian {
 
         render_pass.set_pipeline(pipeline);
         render_pass.set_bind_group(0, bind_group, &[]);
-        render_pass.draw(0..1, 0..1);
+        render_pass.draw(0..6, 0..1);
     }
 }
 
