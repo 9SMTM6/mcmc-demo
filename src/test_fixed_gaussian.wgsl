@@ -29,19 +29,6 @@ var<private> gauss_variance: array<f32, len> = array(
     .6,
 );
 
-@vertex
-fn fullscreen_quad_vertex(@builtin(vertex_index) vertexIndex : u32) -> @builtin(position) vec4<f32> {
-    var positions = array<vec2<f32>, 6>(
-        vec2(-1.0,  1.0),
-        vec2( 1.0,  1.0),
-        vec2(-1.0, -1.0),
-        vec2(-1.0, -1.0),
-        vec2( 1.0,  1.0),
-        vec2( 1.0, -1.0),
-    );
-    return vec4(positions[vertexIndex], 0.0, 1.0);
-}
-
 @fragment
 fn fs_main(@builtin(position) pixel_coords: vec4<f32>) -> @location(0) vec4<f32> {
     let normalized_coords = pixel_coords.xy / max(resolution.x, resolution.y) * 2 - 1;
@@ -51,7 +38,8 @@ fn fs_main(@builtin(position) pixel_coords: vec4<f32>) -> @location(0) vec4<f32>
     var normalization = 0.0;
 
     // TODO: consider how to do log-density display, which is what original does.
-    // it does a bunch of math which 1. takes time to implement and 
+    // it does a bunch of math which 
+    // 1. takes time to implement and 
     // 2. I'm not sure whether it would be faster to calculate this on the gpu in every shader
     //  and reduce data transfer or to calculate that on the cpu beforehand (and for that to work we also need to pass in the arrays anyways) 
 
@@ -60,8 +48,7 @@ fn fs_main(@builtin(position) pixel_coords: vec4<f32>) -> @location(0) vec4<f32>
         let variance = gauss_variance[i];
         let position = gauss_centers[i];
 
-        // required to calculate here because these use arrays, and max doesnt accept these.
-        // in addition, top level constants still dont work with wgpu.
+        // for now we calcualte this here, we might test later if this is better or worse than calculating it once on the cpu and delivering it on each render.
         let gauss_normalize = inverseSqrt(2 * PI * variance);
         let sq_dist = pow(distance(normalized_coords, position), 2.0);
 

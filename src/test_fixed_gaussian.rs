@@ -3,8 +3,10 @@ use std::{mem::size_of_val, num::NonZeroU64};
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
 use wgpu::{util::DeviceExt, BindGroup, Buffer};
 use wgpu::{
-    FragmentState, RenderPipeline, RenderPipelineDescriptor, ShaderModuleDescriptor, VertexState,
+    FragmentState, RenderPipeline, RenderPipelineDescriptor, ShaderModuleDescriptor,
 };
+
+use crate::fullscreen_quad::{get_fullscreen_quad_vertex, FULLSCREEN_QUAD_VERTEX};
 
 struct GaussPipeline {
     pipeline: RenderPipeline,
@@ -24,9 +26,11 @@ impl FixedGaussian {
     pub fn new(render_state: &RenderState) -> Self {
         let device = &render_state.device;
 
-        let webgpu_debug_name = Some("test_gaussian");
+        let webgpu_debug_name = Some(file!());
 
-        let shader = device.create_shader_module(ShaderModuleDescriptor {
+        let vertex_shader = device.create_shader_module(FULLSCREEN_QUAD_VERTEX);
+
+        let fragment_shader = device.create_shader_module(ShaderModuleDescriptor {
             label: webgpu_debug_name,
             source: wgpu::ShaderSource::Wgsl(include_str!("test_fixed_gaussian.wgsl").into()),
         });
@@ -52,14 +56,9 @@ impl FixedGaussian {
         });
 
         let pipeline = device.create_render_pipeline(&RenderPipelineDescriptor {
-            vertex: VertexState {
-                module: &shader,
-                buffers: &[],
-                compilation_options: Default::default(),
-                entry_point: "fullscreen_quad_vertex",
-            },
+            vertex: get_fullscreen_quad_vertex(&vertex_shader),
             fragment: Some(FragmentState {
-                module: &shader,
+                module: &fragment_shader,
                 compilation_options: Default::default(),
                 entry_point: "fs_main",
                 targets: &[Some(render_state.target_format.into())],
