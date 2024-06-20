@@ -18,7 +18,7 @@ fn main() -> eframe::Result<()> {
         ..Default::default()
     };
     eframe::run_native(
-        "eframe template",
+        "mcmc-demo",
         native_options,
         Box::new(|cc| Ok(Box::new(mcmc_demo::TemplateApp::new(cc)))),
     )

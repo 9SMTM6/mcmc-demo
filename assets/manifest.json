@@ -1,6 +1,6 @@
 {
-  "name": "egui Template PWA",
-  "short_name": "egui-template-pwa",
+  "name": "Marcov chain Monte Carlo Demo",
+  "short_name": "mcmc-demo",
   "icons": [
     {
       "src": "./icon-256.png",
