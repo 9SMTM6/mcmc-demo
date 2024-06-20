@@ -15,6 +15,9 @@ struct GaussPipeline {
 #[derive(Clone, Copy)]
 pub struct FixedGaussian {}
 
+// TODO: Add packaged fullscreen quad pipeline that can take any shader etc. Perhaps. 
+// Or at least package the lower bits (VertexState + WGSL source) 
+
 const RENDER_SIZE: [f32; 2] = [640.0, 480.0];
 
 impl FixedGaussian {
