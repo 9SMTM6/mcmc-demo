@@ -18,19 +18,7 @@ log = "0.4"
 # You only need serde if you want app persistence:
 serde = { version = "1", features = ["derive"] }
 wgpu = { version = "0.20.1", features = ["webgl", "webgpu"] }
-# egui-wgpu = { version = "0.27.2", features = ["wayland", "winit"] }
 bytemuck = { version = "1.16.0" }
-# eframe = { workspace = true, default-features = false, features = [
-#   "web_screen_reader",
-# ] }
-# egui = { workspace = true, features = ["callstack", "default", "log"] }
-# rfd = { version = "0.13", optional = true }
-# wgpu = { version = "0.19.1", default-features = false, features = [
-#     # Make the renderer `Sync` even on wasm32, because it makes the code simpler:
-#     "fragile-send-sync-non-atomic-wasm",
-# ] }
-# egui = { version = "0.27.2", path = "crates/egui", default-features = false }
-# egui-wgpu = { version = "0.27.2", path = "crates/egui-wgpu", default-features = false }
 
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
