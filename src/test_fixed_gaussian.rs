@@ -1,16 +1,11 @@
-use std::sync::Arc;
 use std::{mem::size_of_val, num::NonZeroU64};
 
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
-use egui::mutex::Mutex;
-use egui::Vec2;
 use wgpu::{util::DeviceExt, BindGroup, Buffer};
-use wgpu::{
-    FragmentState, RenderPipeline, RenderPipelineDescriptor, ShaderModuleDescriptor,
-};
+use wgpu::{FragmentState, RenderPipeline, RenderPipelineDescriptor, ShaderModuleDescriptor};
 
 use crate::fullscreen_quad::{get_fullscreen_quad_vertex, FULLSCREEN_QUAD_VERTEX};
-use crate::RENDER_SIZE;
+use crate::INITIAL_RENDER_SIZE;
 
 struct GaussPipeline {
     pipeline: RenderPipeline,
@@ -19,10 +14,7 @@ struct GaussPipeline {
 }
 
 #[derive(Clone)]
-pub struct FixedGaussian {
-    // theres certainly more elegant solutions than a mutex, but honestly I'm over it at this point. It works. Hopefully.
-    pub px_size: Arc<Mutex<Vec2>>,
-}
+pub struct FixedGaussian {}
 
 impl FixedGaussian {
     pub fn new(render_state: &RenderState) -> Self {
@@ -45,7 +37,7 @@ impl FixedGaussian {
                 ty: wgpu::BindingType::Buffer {
                     ty: wgpu::BufferBindingType::Uniform,
                     has_dynamic_offset: false,
-                    min_binding_size: NonZeroU64::new(size_of_val(&RENDER_SIZE) as u64),
+                    min_binding_size: NonZeroU64::new(size_of_val(&INITIAL_RENDER_SIZE) as u64),
                 },
                 count: None,
             }],
@@ -75,7 +67,7 @@ impl FixedGaussian {
 
         let uniform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: webgpu_debug_name,
-            contents: bytemuck::cast_slice(&RENDER_SIZE),
+            contents: bytemuck::cast_slice(&INITIAL_RENDER_SIZE),
             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
         });
 
@@ -104,13 +96,15 @@ impl FixedGaussian {
             panic!("pipeline already present?!")
         };
 
-        Self {
-            px_size: Arc::new(Mutex::new(RENDER_SIZE.into())),
-        }
+        Self {}
     }
 }
 
-impl CallbackTrait for FixedGaussian {
+struct FixedGaussianRenderCall {
+    px_size: [f32; 2],
+}
+
+impl CallbackTrait for FixedGaussianRenderCall {
     fn prepare(
         &self,
         _device: &wgpu::Device,
@@ -121,34 +115,21 @@ impl CallbackTrait for FixedGaussian {
         callback_resources: &mut eframe::egui_wgpu::CallbackResources,
     ) -> Vec<wgpu::CommandBuffer> {
         let GaussPipeline { uniform_buffer, .. } = callback_resources.get().unwrap();
-        let px_size = {
-            self.px_size.lock().clone()
-        };
-        queue.write_buffer(&uniform_buffer, 0, bytemuck::cast_slice(&<[f32;2]>::from(px_size)));
+        queue.write_buffer(&uniform_buffer, 0, bytemuck::cast_slice(&self.px_size));
         Vec::new()
     }
 
     fn paint<'a>(
         &'a self,
-        info: egui::PaintCallbackInfo,
+        _info: egui::PaintCallbackInfo,
         render_pass: &mut wgpu::RenderPass<'a>,
-        // callback resources aint mutable, no way to get data to prepare :-/
         callback_resources: &'a eframe::egui_wgpu::CallbackResources,
     ) {
-        {
-            // I need to get this to prepare, where I can write the uniform buffer which can be read from wgsl
-            *self.px_size.lock() = info.viewport.size();
-        }
         let GaussPipeline {
             pipeline,
             bind_group,
             ..
         } = callback_resources.get().unwrap();
-
-        // might be interesting
-        // render_pass.set_bind_group(index, bind_group, offsets);
-        // this wont work. Needs native: https://docs.rs/wgpu-types/0.20.0/wgpu_types/struct.Features.html#associatedconstant.PUSH_CONSTANTS
-        // render_pass.set_push_constants(stages, offset, data)
 
         render_pass.set_pipeline(pipeline);
         render_pass.set_bind_group(0, bind_group, &[]);
@@ -159,11 +140,13 @@ impl CallbackTrait for FixedGaussian {
 impl FixedGaussian {
     pub fn draw(&self, ui: &mut egui::Ui) {
         egui::Frame::canvas(ui.style()).show(ui, |ui| {
-            let rect = egui::Rect::from_min_size(ui.cursor().min, ui.available_size());
+            let px_size = ui.available_size();
+            let rect = egui::Rect::from_min_size(ui.cursor().min, px_size);
+            let px_size = <[f32; 2]>::from(px_size);
             ui.painter()
                 .add(eframe::egui_wgpu::Callback::new_paint_callback(
                     rect,
-                    self.clone(),
+                    FixedGaussianRenderCall { px_size },
                 ))
         });
     }

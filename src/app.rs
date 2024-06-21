@@ -1,8 +1,4 @@
-use std::sync::Arc;
-
-use egui::mutex::Mutex;
-
-use crate::{custom3d_wgpu::Custom3d, test_fixed_gaussian, RENDER_SIZE};
+use crate::{custom3d_wgpu::Custom3d, test_fixed_gaussian};
 
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -27,7 +23,7 @@ impl Default for TemplateApp {
             // Example stuff:
             label: "Hello World!".to_owned(),
             value: 2.7,
-            gaussian: test_fixed_gaussian::FixedGaussian { px_size: Arc::new(Mutex::new(RENDER_SIZE.into())) },
+            gaussian: test_fixed_gaussian::FixedGaussian {},
             custom3d: Default::default(),
         }
     }
