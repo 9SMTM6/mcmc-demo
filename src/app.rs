@@ -2,9 +2,12 @@ use egui::{Frame, Rounding, Shadow};
 
 use crate::test_fixed_gaussian;
 
-/// We derive Deserialize/Serialize so we can persist app state on shutdown.
-#[cfg_attr(feature="persistence", derive(serde::Deserialize, serde::Serialize))]
-// #[serde(default)] // if we add new fields, give them default values when deserializing old state
+#[cfg_attr(feature="persistence", 
+    // We derive Deserialize/Serialize so we can persist app state on shutdown.
+    derive(serde::Deserialize, serde::Serialize),
+    // if we add new fields, give them default values when deserializing old state
+    serde(default),
+)]
 pub struct TemplateApp {
     #[cfg_attr(feature="persistence", serde(skip))]
     gaussian: test_fixed_gaussian::FixedGaussian,
