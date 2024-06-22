@@ -42,7 +42,9 @@ impl TemplateApp {
         // }
 
         Self {
-            gaussian: test_fixed_gaussian::FixedGaussian::new(cc.wgpu_render_state.as_ref().unwrap()),
+            gaussian: test_fixed_gaussian::FixedGaussian::new(
+                cc.wgpu_render_state.as_ref().unwrap(),
+            ),
             custom3d: Custom3d::new(cc),
             ..Default::default()
         }
@@ -68,8 +70,8 @@ impl eframe::App for TemplateApp {
             // remove margins
             .frame(Default::default())
             .show(ctx, |ui| {
-            self.gaussian.draw(ui);
-        });
+                self.gaussian.draw(ui);
+            });
 
         // #[cfg(any(feature = "glow", feature = "wgpu"))]
         // if let Some(custom3d) = &mut self.custom3d {
