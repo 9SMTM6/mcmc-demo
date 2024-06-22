@@ -14,6 +14,7 @@ struct GaussPipeline {
     uniform_buffer: Buffer,
 }
 
+#[cfg_attr(feature="persistence", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Clone, Default)]
 pub struct FixedGaussian {}
 
@@ -158,8 +159,8 @@ impl FixedGaussian {
                 ui.painter()
                     .arrow(
                         Pos2 { x: 400.0, y: 400.0 },
-                        Vec2 { x: 20.0, y: 20.0 },
-                        Stroke::new(3.0, Color32::RED),
+                        Vec2 { x: 200.0, y: 200.0 },
+                        Stroke::new(1.0, Color32::RED),
                     );
             });
     }

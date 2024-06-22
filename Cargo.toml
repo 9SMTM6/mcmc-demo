@@ -10,14 +10,20 @@ rust-version = "1.76"
 all-features = true
 targets = ["x86_64-unknown-linux-gnu", "wasm32-unknown-unknown"]
 
+[features]
+default = ["persistence", "shipped_fonts", "webgl_compat"]
+persistence = ["dep:serde", "eframe/persistence"]
+webgl_compat = ["wgpu/webgl"]
+shipped_fonts = ["eframe/default_fonts"]
+
 [dependencies]
 egui = "0.27.2"
-eframe = { version = "0.27.2", default-features = false, features = ["default_fonts", "wgpu", "persistence", "wayland"] }
+eframe = { version = "0.27.2", default-features = false, features = ["wgpu", "wayland"] }
 log = "0.4"
 
 # You only need serde if you want app persistence:
-serde = { version = "1", features = ["derive"] }
-wgpu = { version = "0.20.0", features = ["webgl", "webgpu"] }
+serde = { version = "1", features = ["derive"], optional = true }
+wgpu = { version = "0.20.0", features = ["webgpu"] }
 bytemuck = { version = "1.16.0" }
 
 # native:

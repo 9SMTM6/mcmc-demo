@@ -1,3 +1,36 @@
+# TODO:
+
+## Size-reductions:
+
+Possibilities:
+
+* wasm-opt
+* disable webgl compat layer
+* disable persistence
+* disable default_fonts on egui
+
+All together were able to reduce size from ~7.3MB to ~2.4MB
+
+I enabled all by the webgl_compat disable by default in `trunk build --release`.
+
+### Wasm-opt
+
+`wasm-opt -O2 --fast-math mcmc_demo-95a84b4d1a0af565_bg.wasm -o mcmc_demo-95a84b4d1a0af565_bg.opt.wasm`
+
+Went from ~7.5 MB to ~5.5 MB in my testing
+
+Optimizing with `-Oz` did not make a difference in my testing. Neither for wasm-opt nor cargo.
+
+### Disable WebGL compat
+
+No good reason for that currently, and Serde takes up a bunch of space
+
+went from ~7.5 MB to ~4.0 MB
+
+### disable persistance
+
+requires removal of serde and persisence feature on eframe
+
 # eframe template
 
 [![dependency status](https://deps.rs/repo/github/emilk/eframe_template/status.svg)](https://deps.rs/repo/github/emilk/eframe_template)

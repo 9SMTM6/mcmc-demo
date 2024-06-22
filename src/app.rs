@@ -1,12 +1,12 @@
-use egui::{Color32, Frame, Rounding, Shadow};
+use egui::{Frame, Rounding, Shadow};
 
 use crate::test_fixed_gaussian;
 
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
-#[derive(serde::Deserialize, serde::Serialize)]
-#[serde(default)] // if we add new fields, give them default values when deserializing old state
+#[cfg_attr(feature="persistence", derive(serde::Deserialize, serde::Serialize))]
+// #[serde(default)] // if we add new fields, give them default values when deserializing old state
 pub struct TemplateApp {
-    #[serde(skip)]
+    #[cfg_attr(feature="persistence", serde(skip))]
     gaussian: test_fixed_gaussian::FixedGaussian,
 }
 
@@ -41,6 +41,7 @@ impl TemplateApp {
 
 impl eframe::App for TemplateApp {
     /// Called by the frame work to save state before shutdown.
+    #[cfg(feature="persistence")]
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
         eframe::set_value(storage, eframe::APP_KEY, self);
     }
@@ -57,12 +58,13 @@ impl eframe::App for TemplateApp {
 
         egui::Window::new("Settings")
             .frame(Frame {
-                fill: Color32::from_black_alpha(120),
+                fill: ctx.style().visuals.code_bg_color.gamma_multiply(0.8),
                 shadow: Shadow::default(),
                 rounding: Rounding::same(5.0),
                 ..Default::default()
             })
             .show(ctx, |ui| {
+                // egui::global_dark_light_mode_buttons(ui);
                 ui.label("Hello World!");
             });
 
