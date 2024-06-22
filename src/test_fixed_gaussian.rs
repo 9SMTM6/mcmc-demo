@@ -14,7 +14,7 @@ struct GaussPipeline {
     uniform_buffer: Buffer,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct FixedGaussian {}
 
 impl FixedGaussian {
@@ -116,6 +116,7 @@ impl CallbackTrait for FixedGaussianRenderCall {
         callback_resources: &mut eframe::egui_wgpu::CallbackResources,
     ) -> Vec<wgpu::CommandBuffer> {
         let GaussPipeline { uniform_buffer, .. } = callback_resources.get().unwrap();
+        // &[self.px_size[0], self.px_size[1], 0.0, 0.0]
         queue.write_buffer(&uniform_buffer, 0, bytemuck::cast_slice(&self.px_size));
         Vec::new()
     }

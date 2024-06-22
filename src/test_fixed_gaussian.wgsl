@@ -1,4 +1,8 @@
+// pad to 16 byte for compatibility
+// probably wgpu webgl fallback compatibility,
+// no padding is fine on chrome with webgpu enabled
 @group(0) @binding(0) var<uniform> resolution: vec2<f32>;
+// @size(16) 
 
 const len = 5;
 
