@@ -1,3 +1,5 @@
+use egui::{Color32, Frame, Rounding, Shadow};
+
 use crate::test_fixed_gaussian;
 
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
@@ -48,9 +50,21 @@ impl eframe::App for TemplateApp {
         // Put your widgets into a `SidePanel`, `TopBottomPanel`, `CentralPanel`, `Window` or `Area`.
         // For inspiration and more examples, go to https://emilk.github.io/egui
 
+        #[cfg(debug_assertions)]
         egui::TopBottomPanel::bottom("footer").show(ctx, |ui| {
             egui::warn_if_debug_build(ui);
         });
+
+        egui::Window::new("Settings")
+            .frame(Frame {
+                fill: Color32::from_black_alpha(120),
+                shadow: Shadow::default(),
+                rounding: Rounding::same(5.0),
+                ..Default::default()
+            })
+            .show(ctx, |ui| {
+                ui.label("Hello World!");
+            });
 
         egui::CentralPanel::default()
             // remove margins

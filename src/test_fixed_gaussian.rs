@@ -149,16 +149,15 @@ impl FixedGaussian {
                 let px_size = ui.available_size();
                 let rect = egui::Rect::from_min_size(ui.cursor().min, px_size);
                 let px_size = <[f32; 2]>::from(px_size);
+                // last painted element wins.
                 ui.painter()
                     .add(eframe::egui_wgpu::Callback::new_paint_callback(
                         rect,
                         FixedGaussianRenderCall { px_size },
                     ));
                 ui.painter()
-                    // goddamnnit, this is actually clipping...
-                    .with_clip_rect(rect)
                     .arrow(
-                        Pos2 { x: 0.0, y: 0.0 },
+                        Pos2 { x: 400.0, y: 400.0 },
                         Vec2 { x: 20.0, y: 20.0 },
                         Stroke::new(3.0, Color32::RED),
                     );
