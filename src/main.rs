@@ -31,6 +31,35 @@ fn main() {
 
     let web_options = eframe::WebOptions::default();
 
+    fn get_loading_text() -> Option<web_sys::Element> {
+        web_sys::window()
+            .and_then(|w| w.document())
+            .and_then(|d| d.get_element_by_id("loading_text"))
+    }
+
+    let previous_hook = std::panic::take_hook();
+    std::panic::set_hook(Box::new(move |panic_info| {
+        // Show in the HTML that start has failed
+        get_loading_text().map(|e| {
+            e.set_inner_html(
+                &format!(
+r#"
+    <p> The app has crashed. See the developer console for details. </p>
+    <p style="font-size:10px" align="left">
+        {panic_info}
+    </p>
+    <p style="font-size:14px">
+        See the console for details.
+    </p>
+    <p style="font-size:14px">
+        Reload the page to try again.
+    </p>
+"#))
+        });
+        // Propagate panic info to the previously registered panic hook
+        previous_hook(panic_info);
+    }));
+
     wasm_bindgen_futures::spawn_local(async {
         eframe::WebRunner::new()
             .start(
@@ -40,5 +69,8 @@ fn main() {
             )
             .await
             .expect("failed to start eframe");
-    });
+
+        // loaded successfully, remove the loading indicator
+        get_loading_text().map(|e| e.remove());
+        });
 }
