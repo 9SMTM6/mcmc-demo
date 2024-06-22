@@ -20,17 +20,17 @@ var<private> gauss_centers: array<vec2<f32>, len> = array(
 var<private> gauss_scales: array<f32, len> = array(
     .5,
     .6,
-    .0,
-    .0,
-    .0,
+    .4,
+    .8,
+    1.4,
 );
 
 var<private> gauss_variance: array<f32, len> = array(
-    .5,
+    .14,
     .2,
-    .5,
-    .8,
-    .6,
+    .01,
+    .4,
+    .1,
 );
 
 @fragment
@@ -63,5 +63,9 @@ fn fs_main(@builtin(position) pixel_coords: vec4<f32>) -> @location(0) vec4<f32>
 
     combined_prob_density /= normalization;
 
-    return vec4(vec3(0, combined_prob_density, 0), 1.0);
+    // use log density instead. Adding 1 to the density to start at 0 for density zero, otherwise this is using illegal colorspaces.
+    // Then normalizing to maximum.
+    let log_combined_prob_density = log(1 + combined_prob_density) / log(2);
+
+    return vec4(vec3(0, log_combined_prob_density, 0), 1.0);
 }
