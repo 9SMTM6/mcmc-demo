@@ -41,9 +41,8 @@ fn main() {
     std::panic::set_hook(Box::new(move |panic_info| {
         // Show in the HTML that start has failed
         get_loading_text().map(|e| {
-            e.set_inner_html(
-                &format!(
-r#"
+            e.set_inner_html(&format!(
+                r#"
     <p> The app has crashed. See the developer console for details. </p>
     <p style="font-size:10px" align="left">
         {panic_info}
@@ -54,7 +53,8 @@ r#"
     <p style="font-size:14px">
         Reload the page to try again.
     </p>
-"#))
+"#
+            ))
         });
         // Propagate panic info to the previously registered panic hook
         previous_hook(panic_info);
@@ -72,5 +72,5 @@ r#"
 
         // loaded successfully, remove the loading indicator
         get_loading_text().map(|e| e.remove());
-        });
+    });
 }
