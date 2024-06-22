@@ -1,8 +1,13 @@
-// pad to 16 byte for compatibility
-// probably wgpu webgl fallback compatibility,
-// no padding is fine on chrome with webgpu enabled
-@group(0) @binding(0) var<uniform> resolution: vec2<f32>;
-// @size(16) 
+struct ResolutionInfo {
+    resolution: vec2<f32>,
+    // pad to 16 byte for compatibility
+    // required for wgpu webgl fallback compatibility,
+    // no padding is fine on chrome with webgpu enabled
+    pad: vec2<f32>,
+}
+
+@group(0) @binding(0) 
+var<uniform> resolution_info: ResolutionInfo;
 
 const len = 5;
 
@@ -35,7 +40,8 @@ var<private> gauss_variance: array<f32, len> = array(
 
 @fragment
 fn fs_main(@builtin(position) pixel_coords: vec4<f32>) -> @location(0) vec4<f32> {
-    let normalized_coords = pixel_coords.xy / max(resolution.x, resolution.y) * 2 - 1;
+    let resolution = resolution_info.resolution;
+    let normalized_device_coords = pixel_coords.xy / max(resolution.x, resolution.y) * 2 - 1;
 
     var combined_prob_density = 0.0;
 
@@ -54,7 +60,7 @@ fn fs_main(@builtin(position) pixel_coords: vec4<f32>) -> @location(0) vec4<f32>
 
         // for now we calcualte this here, we might test later if this is better or worse than calculating it once on the cpu and delivering it on each render.
         let gauss_normalize = inverseSqrt(2 * PI * variance);
-        let sq_dist = pow(distance(normalized_coords, position), 2.0);
+        let sq_dist = pow(distance(normalized_device_coords, position), 2.0);
 
         let prob_contrib = gauss_normalize * exp(-sq_dist / (2 * variance));
         combined_prob_density+= scale * prob_contrib;

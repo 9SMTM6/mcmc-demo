@@ -38,7 +38,8 @@ impl FixedGaussian {
                 ty: wgpu::BindingType::Buffer {
                     ty: wgpu::BufferBindingType::Uniform,
                     has_dynamic_offset: false,
-                    min_binding_size: NonZeroU64::new(size_of_val(&INITIAL_RENDER_SIZE) as u64),
+                    // pad for compat
+                    min_binding_size: NonZeroU64::new((size_of_val(&INITIAL_RENDER_SIZE) * 2) as u64),
                 },
                 count: None,
             }],
@@ -68,7 +69,7 @@ impl FixedGaussian {
 
         let uniform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: webgpu_debug_name,
-            contents: bytemuck::cast_slice(&INITIAL_RENDER_SIZE),
+            contents: bytemuck::cast_slice(&[INITIAL_RENDER_SIZE[0], INITIAL_RENDER_SIZE[1], 0.0, 0.0]),
             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
         });
 
@@ -116,8 +117,7 @@ impl CallbackTrait for FixedGaussianRenderCall {
         callback_resources: &mut eframe::egui_wgpu::CallbackResources,
     ) -> Vec<wgpu::CommandBuffer> {
         let GaussPipeline { uniform_buffer, .. } = callback_resources.get().unwrap();
-        // &[self.px_size[0], self.px_size[1], 0.0, 0.0]
-        queue.write_buffer(&uniform_buffer, 0, bytemuck::cast_slice(&self.px_size));
+        queue.write_buffer(&uniform_buffer, 0, bytemuck::cast_slice(&[self.px_size[0], self.px_size[1], 0.0, 0.0]));
         Vec::new()
     }
 
