@@ -64,10 +64,10 @@ impl eframe::App for TemplateApp {
             egui::warn_if_debug_build(ui);
         });
 
-        // TODO: change to CentralPlanel::frame to remove margins
-        // TODO: to fix size of canvas not follwoing constraints check back with: https://github.com/Norlock/sparticles/tree/main
-
-        egui::CentralPanel::default().show(ctx, |ui| {
+        egui::CentralPanel::default()
+            // remove margins
+            .frame(Default::default())
+            .show(ctx, |ui| {
             self.gaussian.draw(ui);
         });
 

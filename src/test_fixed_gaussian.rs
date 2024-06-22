@@ -1,6 +1,7 @@
 use std::{mem::size_of_val, num::NonZeroU64};
 
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
+use egui::{Color32, Margin, Pos2, Stroke, Vec2};
 use wgpu::{util::DeviceExt, BindGroup, Buffer};
 use wgpu::{FragmentState, RenderPipeline, RenderPipelineDescriptor, ShaderModuleDescriptor};
 
@@ -139,7 +140,11 @@ impl CallbackTrait for FixedGaussianRenderCall {
 
 impl FixedGaussian {
     pub fn draw(&self, ui: &mut egui::Ui) {
-        egui::Frame::canvas(ui.style()).show(ui, |ui| {
+        egui::Frame::canvas(ui.style())
+            // remove margins here too
+            .inner_margin(Margin::default())
+            .outer_margin(Margin::default())
+            .show(ui, |ui| {
             let px_size = ui.available_size();
             let rect = egui::Rect::from_min_size(ui.cursor().min, px_size);
             let px_size = <[f32; 2]>::from(px_size);
