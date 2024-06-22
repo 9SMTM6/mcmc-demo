@@ -8,10 +8,23 @@ Possibilities:
 * disable webgl compat layer
 * disable persistence
 * disable default_fonts on egui
+* brotli compression on browser
 
 All together were able to reduce size from ~7.3MB to ~2.4MB
 
-I enabled all by the webgl_compat disable by default in `trunk build --release`.
+I enabled all by the webgl_compat disable and brotli by default in `trunk build --release`.
+
+### Brotli compression
+In addition to all other optimizations, brotli manages to reduce WASM size further from ~2.4MB to ~1MB without webgl_compat, ~5MB to ~1.5MB with.
+
+`brotli dist/mcmc_demo-*_bg.wasm`
+
+Integrating it would be harder, trunk doesnt support it, and I'm unsure if thats a great idea, since I dont think (?) brotli can stream decompression, which in turn means that the ability to stream-run wasm in browsers for faster interactivity is gone.
+
+Just checked, but yeah, brotli supports streaming. Theres also a feature request for trunk that adds sompression, but there was no progress: https://github.com/trunk-rs/trunk/issues/91
+
+Also note that zstd is also an option. Its better still than brotli in most tests. But Safari doesnt support it: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Encoding
+I also just checked, and with default settings, while compression was A LOT faster, it also lead to worse compression ratio with webgl_compat.
 
 ### Wasm-opt
 

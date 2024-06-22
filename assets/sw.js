@@ -4,6 +4,7 @@ var filesToCache = [
   './index.html',
   './mcmc_demo.js',
   './mcmc_demo_bg.wasm',
+  // './mcmc_demo_bg.wasm.br',
 ];
 
 /* Start the service worker and cache all of the app's content */
