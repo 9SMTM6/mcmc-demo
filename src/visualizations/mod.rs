@@ -4,7 +4,7 @@ use egui_expressed::{Arrow, PredictionVariance, SamplingPoint};
 mod egui_expressed;
 mod shaders;
 
-pub use shaders::{test_fixed_gaussian::FixedGaussian, INITIAL_RENDER_SIZE};
+pub use shaders::{test_fixed_gaussian::FixedGaussian, generic_gaussian::GenericGaussian, INITIAL_RENDER_SIZE};
 
 trait CanvasPainter {
     fn paint(&mut self, painter: &egui::Painter, rect: egui::Rect);
@@ -26,10 +26,10 @@ fn paint_in_marginless_canvas(ui: &mut egui::Ui, canvas_painters: &mut [&mut dyn
         });
 }
 
-pub fn draw_all(ui: &mut egui::Ui, fixed_gaussian_raii_obj: &mut FixedGaussian) {
+pub fn draw_all(ui: &mut egui::Ui, gaussian_raii_obj: &mut GenericGaussian) {
     let current_spot: Pos2 = [300.0, 400.0].into();
     let mut canvas_painters = [
-        fixed_gaussian_raii_obj as &mut dyn CanvasPainter,
+        gaussian_raii_obj as &mut dyn CanvasPainter,
         &mut Arrow::new(current_spot, [100.0, 100.0]),
         &mut PredictionVariance::new(current_spot, 200.0),
         &mut SamplingPoint::new(current_spot, 0.65),
