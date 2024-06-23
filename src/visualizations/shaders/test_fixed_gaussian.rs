@@ -1,13 +1,14 @@
+use std::marker::PhantomData;
 use std::{mem::size_of_val, num::NonZeroU64};
 
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
-use egui::epaint::{ColorMode, PathShape, PathStroke};
-use egui::{Color32, Margin, Painter, Pos2, Shape, Stroke, Vec2};
 use wgpu::{util::DeviceExt, BindGroup, Buffer};
 use wgpu::{FragmentState, RenderPipeline, RenderPipelineDescriptor, ShaderModuleDescriptor};
 
-use crate::fullscreen_quad::{get_fullscreen_quad_vertex, FULLSCREEN_QUAD_VERTEX};
+use crate::visualizations::CanvasPainter;
 use crate::INITIAL_RENDER_SIZE;
+
+use super::fullscreen_quad::{get_fullscreen_quad_vertex, FULLSCREEN_QUAD_VERTEX};
 
 struct GaussPipeline {
     pipeline: RenderPipeline,
@@ -17,7 +18,9 @@ struct GaussPipeline {
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Clone, Default)]
-pub struct FixedGaussian {}
+pub struct FixedGaussian {
+    forbid_construct: PhantomData<GaussPipeline>,
+}
 
 impl FixedGaussian {
     pub fn new(render_state: &RenderState) -> Self {
@@ -107,7 +110,9 @@ impl FixedGaussian {
             panic!("pipeline already present?!")
         };
 
-        Self {}
+        Self {
+            forbid_construct: PhantomData,
+        }
     }
 }
 
@@ -152,77 +157,13 @@ impl CallbackTrait for FixedGaussianRenderCall {
     }
 }
 
-impl FixedGaussian {
-    pub fn draw(&self, ui: &mut egui::Ui) {
-        egui::Frame::canvas(ui.style())
-            // remove margins here too
-            .inner_margin(Margin::default())
-            .outer_margin(Margin::default())
-            .show(ui, |ui| {
-                let px_size = ui.available_size();
-                let rect = egui::Rect::from_min_size(ui.cursor().min, px_size);
-                let px_size = <[f32; 2]>::from(px_size);
-                // last painted element wins.
-                let painter = ui.painter();
-                painter.add(eframe::egui_wgpu::Callback::new_paint_callback(
-                    rect,
-                    FixedGaussianRenderCall { px_size },
-                ));
-                let current_spot: Pos2 = [300.0, 400.0].into();
-                arrow(painter, current_spot, [100.0, 100.0]);
-                prediction_variance(painter, current_spot, 200.0);
-                sampling_point(painter, current_spot, 0.65);
-            });
+impl CanvasPainter for FixedGaussian {
+    fn paint(&mut self, painter: &egui::Painter, rect: egui::Rect) {
+        painter.add(eframe::egui_wgpu::Callback::new_paint_callback(
+            rect,
+            FixedGaussianRenderCall {
+                px_size: rect.size().into(),
+            },
+        ));
     }
-}
-
-/// In contrast to the egui arrow, this arrow has an arrow head of constant size.
-/// Note that the head will be added on top of start + direction, otherwise drawing an arrow of zero length is kinda awkward.
-fn arrow(painter: &Painter, start: impl Into<Pos2>, direction: impl Into<Vec2>) {
-    let start = start.into();
-    let direction = direction.into();
-    const HALF_HEAD_THICKNESS: f32 = 4.0;
-    let dir_only = direction.normalized();
-
-    let head = Shape::Path(PathShape {
-        points: vec![
-            start + direction + dir_only.rot90() * (-HALF_HEAD_THICKNESS),
-            start + direction + dir_only * (2.0 * HALF_HEAD_THICKNESS),
-            start + direction + dir_only.rot90() * HALF_HEAD_THICKNESS,
-        ],
-        closed: true,
-        fill: Color32::RED,
-        stroke: PathStroke::NONE,
-    });
-    let base = Shape::LineSegment {
-        points: [start, start + direction],
-        stroke: PathStroke {
-            width: 1.5,
-            color: ColorMode::Solid(Color32::RED),
-        },
-    };
-    painter.extend([base, head]);
-}
-
-/// [`sample_count_fract`] shall be the number of samples at this point (=how long it stayed there/ how often a move away was rejected) divided by
-/// the maximum of that count among all sample points.
-fn sampling_point(painter: &Painter, pos: impl Into<Pos2>, sample_count_fract: f32) {
-    painter.circle(
-        pos.into(),
-        4.0,
-        Color32::WHITE.gamma_multiply(1.0 - sample_count_fract),
-        Stroke::NONE,
-    );
-}
-
-fn prediction_variance(painter: &Painter, pos: impl Into<Pos2>, radius: f32) {
-    painter.circle(
-        pos.into(),
-        radius,
-        Color32::TRANSPARENT,
-        Stroke {
-            color: Color32::WHITE,
-            width: 1.0,
-        },
-    );
 }

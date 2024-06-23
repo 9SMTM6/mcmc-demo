@@ -1,6 +1,6 @@
 use egui::{Frame, Rounding, Shadow};
 
-use crate::test_fixed_gaussian;
+use crate::visualizations::{self, shaders::test_fixed_gaussian::FixedGaussian};
 
 #[cfg_attr(feature="persistence", 
     // We derive Deserialize/Serialize so we can persist app state on shutdown.
@@ -11,7 +11,7 @@ use crate::test_fixed_gaussian;
 #[derive(Default)]
 pub struct TemplateApp {
     #[cfg_attr(feature = "persistence", serde(skip))]
-    gaussian: test_fixed_gaussian::FixedGaussian,
+    gaussian: FixedGaussian,
 }
 
 impl TemplateApp {
@@ -27,9 +27,7 @@ impl TemplateApp {
         // }
 
         Self {
-            gaussian: test_fixed_gaussian::FixedGaussian::new(
-                cc.wgpu_render_state.as_ref().unwrap(),
-            ),
+            gaussian: FixedGaussian::new(cc.wgpu_render_state.as_ref().unwrap()),
         }
     }
 }
@@ -67,7 +65,7 @@ impl eframe::App for TemplateApp {
             // remove margins
             .frame(Default::default())
             .show(ctx, |ui| {
-                self.gaussian.draw(ui);
+                visualizations::draw_all(ui, &mut self.gaussian);
             });
     }
 }

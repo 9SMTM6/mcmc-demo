@@ -19,14 +19,16 @@ Possibilities:
 * disable webgl compat layer
 * (DONE) disable persistence
 * (DONE) disable default_fonts on egui
-* (DONEISH, gzip) brotli compression on browser
+* (DONEISH, gzip) compression on browser
 
-All together were able to reduce size from ~7.3MB to ~2.4MB
+All together were able to reduce size from ~7.3MB to ~1MB
 
 I enabled all by the webgl_compat disable and brotli by default in `trunk build --release`.
 
-### Brotli compression
-In addition to all other optimizations, brotli manages to reduce WASM size further from ~2.4MB to ~1MB without webgl_compat, ~5MB to ~1.5MB with.
+### Compression
+GH-Pages doesnt support brotli, so gzip it is.
+
+In addition to all other optimizations, brotli manages to reduce WASM size further from ~2.4MB to ~1MB without webgl_compat etc, ~5MB to ~1.5MB with.
 
 `brotli dist/mcmc_demo-*_bg.wasm`
 
