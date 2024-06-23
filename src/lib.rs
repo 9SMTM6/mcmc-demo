@@ -3,3 +3,4 @@
 mod app;
 mod visualizations;
 pub use app::TemplateApp;
+pub use visualizations::INITIAL_RENDER_SIZE;

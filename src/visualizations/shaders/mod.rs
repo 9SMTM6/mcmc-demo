@@ -1,3 +1,5 @@
 pub mod fullscreen_quad;
-pub mod test_fixed_gaussian;
 mod resolution_uniform;
+pub mod test_fixed_gaussian;
+
+pub use resolution_uniform::INITIAL_RENDER_SIZE;

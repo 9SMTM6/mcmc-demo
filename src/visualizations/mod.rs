@@ -1,9 +1,10 @@
 use egui::{Margin, Pos2};
 use egui_expressed::{Arrow, PredictionVariance, SamplingPoint};
-use shaders::test_fixed_gaussian::FixedGaussian;
 
-pub mod egui_expressed;
-pub mod shaders;
+mod egui_expressed;
+mod shaders;
+
+pub use shaders::{test_fixed_gaussian::FixedGaussian, INITIAL_RENDER_SIZE};
 
 trait CanvasPainter {
     fn paint(&mut self, painter: &egui::Painter, rect: egui::Rect);

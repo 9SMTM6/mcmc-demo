@@ -1,6 +1,6 @@
 use egui::{Frame, Rounding, Shadow};
 
-use crate::visualizations::{self, shaders::test_fixed_gaussian::FixedGaussian};
+use crate::visualizations::{self, FixedGaussian};
 
 #[cfg_attr(feature="persistence", 
     // We derive Deserialize/Serialize so we can persist app state on shutdown.

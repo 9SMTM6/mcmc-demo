@@ -7,7 +7,9 @@ use wgpu::{FragmentState, RenderPipeline, RenderPipelineDescriptor, ShaderModule
 use crate::visualizations::CanvasPainter;
 
 use super::fullscreen_quad::FULLSCREEN_QUAD;
-use super::resolution_uniform::{create_buffer_init_descr, get_bind_group_entry, RESOLUTION_UNIFORM_FRAGMENT};
+use super::resolution_uniform::{
+    create_buffer_init_descr, get_bind_group_entry, RESOLUTION_UNIFORM_FRAGMENT,
+};
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Clone, Default)]
