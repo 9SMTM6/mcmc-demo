@@ -8,17 +8,10 @@ use crate::test_fixed_gaussian;
     // if we add new fields, give them default values when deserializing old state
     serde(default),
 )]
+#[derive(Default)]
 pub struct TemplateApp {
     #[cfg_attr(feature = "persistence", serde(skip))]
     gaussian: test_fixed_gaussian::FixedGaussian,
-}
-
-impl Default for TemplateApp {
-    fn default() -> Self {
-        Self {
-            gaussian: Default::default(),
-        }
-    }
 }
 
 impl TemplateApp {
@@ -37,7 +30,6 @@ impl TemplateApp {
             gaussian: test_fixed_gaussian::FixedGaussian::new(
                 cc.wgpu_render_state.as_ref().unwrap(),
             ),
-            ..Default::default()
         }
     }
 }

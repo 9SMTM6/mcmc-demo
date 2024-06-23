@@ -127,7 +127,7 @@ impl CallbackTrait for FixedGaussianRenderCall {
     ) -> Vec<wgpu::CommandBuffer> {
         let GaussPipeline { uniform_buffer, .. } = callback_resources.get().unwrap();
         queue.write_buffer(
-            &uniform_buffer,
+            uniform_buffer,
             0,
             bytemuck::cast_slice(&[self.px_size[0], self.px_size[1], 0.0, 0.0]),
         );
@@ -177,7 +177,7 @@ impl FixedGaussian {
 /// Note that the head will be added on top of start + direction, otherwise drawing an arrow of zero length is kinda awkward.
 fn arrow(painter: &Painter, start: Pos2, direction: Vec2) {
     const HALF_HEAD_THICKNESS: f32 = 4.0;
-    let dir_only = direction.clone().normalized();
+    let dir_only = direction.normalized();
 
     let head = Shape::Path(PathShape {
         points: vec![

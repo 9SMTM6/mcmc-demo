@@ -7,7 +7,7 @@ pub const FULLSCREEN_QUAD_VERTEX: ShaderModuleDescriptor<'static> = ShaderModule
     source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(include_str!("fullscreen_quad.wgsl"))),
 };
 
-pub fn get_fullscreen_quad_vertex<'shader>(shader: &'shader ShaderModule) -> VertexState<'shader> {
+pub fn get_fullscreen_quad_vertex(shader: & ShaderModule) -> VertexState<'_> {
     VertexState {
         module: shader,
         buffers: &[],
