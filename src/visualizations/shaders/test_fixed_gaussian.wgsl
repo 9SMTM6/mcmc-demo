@@ -1,9 +1,7 @@
 struct ResolutionInfo {
     resolution: vec2<f32>,
-    // pad to 16 byte for compatibility
-    // required for wgpu webgl fallback compatibility,
-    // no padding is fine on chrome with webgpu enabled
-    pad: vec2<f32>,
+    // See corresponding bindinggroup for reason
+    _pad: vec2<f32>,
 }
 
 @group(0) @binding(0) 

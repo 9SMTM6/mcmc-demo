@@ -1,14 +1,13 @@
 use std::marker::PhantomData;
-use std::{mem::size_of_val, num::NonZeroU64};
 
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
 use wgpu::{util::DeviceExt, BindGroup, Buffer};
 use wgpu::{FragmentState, RenderPipeline, RenderPipelineDescriptor, ShaderModuleDescriptor};
 
 use crate::visualizations::CanvasPainter;
-use crate::INITIAL_RENDER_SIZE;
 
-use super::fullscreen_quad::{get_fullscreen_quad_vertex, FULLSCREEN_QUAD_VERTEX};
+use super::fullscreen_quad::FULLSCREEN_QUAD;
+use super::resolution_uniform::{create_buffer_init_descr, get_bind_group_entry, RESOLUTION_UNIFORM_FRAGMENT};
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Clone, Default)]
@@ -39,29 +38,14 @@ impl FixedGaussian {
 
         let webgpu_debug_name = Some(file!());
 
-        let vertex_shader = device.create_shader_module(FULLSCREEN_QUAD_VERTEX);
+        let vertex_shader = device.create_shader_module(FULLSCREEN_QUAD.shader_module);
 
         let fragment_shader = device.create_shader_module(ShaderModuleDescriptor {
             label: webgpu_debug_name,
             source: wgpu::ShaderSource::Wgsl(include_str!("test_fixed_gaussian.wgsl").into()),
         });
 
-        let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-            label: webgpu_debug_name,
-            entries: &[wgpu::BindGroupLayoutEntry {
-                binding: 0,
-                visibility: wgpu::ShaderStages::FRAGMENT,
-                ty: wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Uniform,
-                    has_dynamic_offset: false,
-                    // pad for compat
-                    min_binding_size: NonZeroU64::new(
-                        (size_of_val(&INITIAL_RENDER_SIZE) * 2) as u64,
-                    ),
-                },
-                count: None,
-            }],
-        });
+        let bind_group_layout = device.create_bind_group_layout(&RESOLUTION_UNIFORM_FRAGMENT);
 
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: webgpu_debug_name,
@@ -70,7 +54,7 @@ impl FixedGaussian {
         });
 
         let pipeline = device.create_render_pipeline(&RenderPipelineDescriptor {
-            vertex: get_fullscreen_quad_vertex(&vertex_shader),
+            vertex: (FULLSCREEN_QUAD.get_vertex_state)(&vertex_shader),
             fragment: Some(FragmentState {
                 module: &fragment_shader,
                 compilation_options: Default::default(),
@@ -85,24 +69,12 @@ impl FixedGaussian {
             primitive: Default::default(),
         });
 
-        let uniform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: webgpu_debug_name,
-            contents: bytemuck::cast_slice(&[
-                INITIAL_RENDER_SIZE[0],
-                INITIAL_RENDER_SIZE[1],
-                0.0,
-                0.0,
-            ]),
-            usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
-        });
+        let uniform_buffer = device.create_buffer_init(&create_buffer_init_descr());
 
         let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: webgpu_debug_name,
             layout: &bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
-                binding: 0,
-                resource: uniform_buffer.as_entire_binding(),
-            }],
+            entries: &[get_bind_group_entry(&uniform_buffer)],
         });
 
         // Because the graphics pipeline must have the same lifetime as the egui render pass,
@@ -164,6 +136,6 @@ impl CallbackTrait for FixedGaussianRenderCall {
 
         render_pass.set_pipeline(pipeline);
         render_pass.set_bind_group(0, bind_group, &[]);
-        render_pass.draw(0..6, 0..1);
+        render_pass.draw(FULLSCREEN_QUAD.shader_vertice_num, 0..1);
     }
 }
