@@ -9,7 +9,7 @@ use crate::test_fixed_gaussian;
     serde(default),
 )]
 pub struct TemplateApp {
-    #[cfg_attr(feature="persistence", serde(skip))]
+    #[cfg_attr(feature = "persistence", serde(skip))]
     gaussian: test_fixed_gaussian::FixedGaussian,
 }
 
@@ -44,7 +44,7 @@ impl TemplateApp {
 
 impl eframe::App for TemplateApp {
     /// Called by the frame work to save state before shutdown.
-    #[cfg(feature="persistence")]
+    #[cfg(feature = "persistence")]
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
         eframe::set_value(storage, eframe::APP_KEY, self);
     }
