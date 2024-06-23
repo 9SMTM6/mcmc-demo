@@ -1,8 +1,8 @@
 use std::{mem::size_of_val, num::NonZeroU64};
 
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
-use egui::epaint::{PathShape, PathStroke};
-use egui::{Color32, Margin, Pos2, Stroke, Vec2};
+use egui::epaint::{ColorMode, PathShape, PathStroke};
+use egui::{Color32, Margin, Painter, Pos2, Shape, Vec2};
 use wgpu::{util::DeviceExt, BindGroup, Buffer};
 use wgpu::{FragmentState, RenderPipeline, RenderPipelineDescriptor, ShaderModuleDescriptor};
 
@@ -168,21 +168,33 @@ impl FixedGaussian {
                     rect,
                     FixedGaussianRenderCall { px_size },
                 ));
-                painter.add(PathShape {
-                    points: vec![
-                        [400.0, 400.0].into(),
-                        [800.0, 600.0].into(),
-                        [400.0, 800.0].into(),
-                    ],
-                    closed: true,
-                    fill: Color32::BLUE,
-                    stroke: PathStroke::NONE,
-                });
-                painter.arrow(
-                    Pos2 { x: 400.0, y: 400.0 },
-                    Vec2 { x: 200.0, y: 200.0 },
-                    Stroke::new(1.0, Color32::RED),
-                );
+                arrow(painter, [300.0, 400.0].into(), [100.0, 100.0].into());
             });
     }
+}
+
+/// In contrast to the egui arrow, this arrow has an arrow head of constant size.
+/// Note that the head will be added on top of start + direction, otherwise drawing an arrow of zero length is kinda awkward.
+fn arrow(painter: &Painter, start: Pos2, direction: Vec2) {
+    const HALF_HEAD_THICKNESS: f32 = 4.0;
+    let dir_only = direction.clone().normalized();
+
+    let head = Shape::Path(PathShape {
+        points: vec![
+            start + direction + dir_only.rot90() * (-HALF_HEAD_THICKNESS),
+            start + direction + dir_only * (2.0 * HALF_HEAD_THICKNESS),
+            start + direction + dir_only.rot90() * HALF_HEAD_THICKNESS,
+        ],
+        closed: true,
+        fill: Color32::RED,
+        stroke: PathStroke::NONE,
+    });
+    let base = Shape::LineSegment {
+        points: [start, start + direction],
+        stroke: PathStroke {
+            width: 1.5,
+            color: ColorMode::Solid(Color32::RED),
+        },
+    };
+    painter.extend([base, head]);
 }
