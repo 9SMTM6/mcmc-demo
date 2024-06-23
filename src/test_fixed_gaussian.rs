@@ -204,13 +204,9 @@ fn arrow(painter: &Painter, start: impl Into<Pos2>, direction: impl Into<Vec2>) 
     painter.extend([base, head]);
 }
 
-/// [`sample_count_fract`] shall be the number of samples at this point (=how long it stayed there/ how often a move away was rejected) divided by 
+/// [`sample_count_fract`] shall be the number of samples at this point (=how long it stayed there/ how often a move away was rejected) divided by
 /// the maximum of that count among all sample points.
-fn sampling_point(
-    painter: &Painter, 
-    pos: impl Into<Pos2>, 
-    sample_count_fract: f32,
-) {
+fn sampling_point(painter: &Painter, pos: impl Into<Pos2>, sample_count_fract: f32) {
     painter.circle(
         pos.into(),
         4.0,
@@ -219,11 +215,7 @@ fn sampling_point(
     );
 }
 
-fn prediction_variance(
-    painter: &Painter, 
-    pos: impl Into<Pos2>,
-    radius: f32,
-) {
+fn prediction_variance(painter: &Painter, pos: impl Into<Pos2>, radius: f32) {
     painter.circle(
         pos.into(),
         radius,
