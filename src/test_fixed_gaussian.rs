@@ -2,7 +2,7 @@ use std::{mem::size_of_val, num::NonZeroU64};
 
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
 use egui::epaint::{ColorMode, PathShape, PathStroke};
-use egui::{Color32, Margin, Painter, Pos2, Shape, Vec2};
+use egui::{Color32, Margin, Painter, Pos2, Shape, Stroke, Vec2};
 use wgpu::{util::DeviceExt, BindGroup, Buffer};
 use wgpu::{FragmentState, RenderPipeline, RenderPipelineDescriptor, ShaderModuleDescriptor};
 
@@ -168,14 +168,19 @@ impl FixedGaussian {
                     rect,
                     FixedGaussianRenderCall { px_size },
                 ));
-                arrow(painter, [300.0, 400.0].into(), [100.0, 100.0].into());
+                let current_spot: Pos2 = [300.0, 400.0].into();
+                arrow(painter, current_spot, [100.0, 100.0]);
+                prediction_variance(painter, current_spot, 200.0);
+                sampling_point(painter, current_spot, 0.65);
             });
     }
 }
 
 /// In contrast to the egui arrow, this arrow has an arrow head of constant size.
 /// Note that the head will be added on top of start + direction, otherwise drawing an arrow of zero length is kinda awkward.
-fn arrow(painter: &Painter, start: Pos2, direction: Vec2) {
+fn arrow(painter: &Painter, start: impl Into<Pos2>, direction: impl Into<Vec2>) {
+    let start = start.into();
+    let direction = direction.into();
     const HALF_HEAD_THICKNESS: f32 = 4.0;
     let dir_only = direction.normalized();
 
@@ -197,4 +202,35 @@ fn arrow(painter: &Painter, start: Pos2, direction: Vec2) {
         },
     };
     painter.extend([base, head]);
+}
+
+/// [`sample_count_fract`] shall be the number of samples at this point (=how long it stayed there/ how often a move away was rejected) divided by 
+/// the maximum of that count among all sample points.
+fn sampling_point(
+    painter: &Painter, 
+    pos: impl Into<Pos2>, 
+    sample_count_fract: f32,
+) {
+    painter.circle(
+        pos.into(),
+        4.0,
+        Color32::WHITE.gamma_multiply(1.0 - sample_count_fract),
+        Stroke::NONE,
+    );
+}
+
+fn prediction_variance(
+    painter: &Painter, 
+    pos: impl Into<Pos2>,
+    radius: f32,
+) {
+    painter.circle(
+        pos.into(),
+        radius,
+        Color32::TRANSPARENT,
+        Stroke {
+            color: Color32::WHITE,
+            width: 1.0,
+        },
+    );
 }
