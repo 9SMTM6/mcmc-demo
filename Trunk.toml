@@ -1,18 +1,2 @@
 [build]
-minify="on_release"
-
-# these might at one point help with compression.
-# currently with serve I had to manually run `brotli dist/mcmc_demo*bg.wasm` after `trunk serve --release`,
-# and that trunk had to be modified to use these precompressed assets, as described here:
-# https://github.com/trunk-rs/trunk/issues/91#issuecomment-2184210744
-[[hooks]]
-stage = "post_build"
-# falling back to sh to get wildcard expansion
-command = "sh"
-command_arguments = ["-c", "brotli ${TRUNK_STAGING_DIR}/mcmc_demo*bg.wasm"]
-
-[[hooks]]
-stage = "post_build"
-# falling back to sh to get wildcard expansion
-command = "sh"
-command_arguments = ["-c", "gzip --keep ${TRUNK_STAGING_DIR}/mcmc_demo*bg.wasm"]
+# minify="on_release"
