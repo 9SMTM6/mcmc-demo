@@ -10,16 +10,27 @@ use crate::INITIAL_RENDER_SIZE;
 
 use super::fullscreen_quad::{get_fullscreen_quad_vertex, FULLSCREEN_QUAD_VERTEX};
 
-struct GaussPipeline {
-    pipeline: RenderPipeline,
-    bind_group: BindGroup,
-    uniform_buffer: Buffer,
-}
-
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Clone, Default)]
 pub struct FixedGaussian {
     forbid_construct: PhantomData<GaussPipeline>,
+}
+
+impl CanvasPainter for FixedGaussian {
+    fn paint(&mut self, painter: &egui::Painter, rect: egui::Rect) {
+        painter.add(eframe::egui_wgpu::Callback::new_paint_callback(
+            rect,
+            FixedGaussianRenderCall {
+                px_size: rect.size().into(),
+            },
+        ));
+    }
+}
+
+struct GaussPipeline {
+    pipeline: RenderPipeline,
+    bind_group: BindGroup,
+    uniform_buffer: Buffer,
 }
 
 impl FixedGaussian {
@@ -154,16 +165,5 @@ impl CallbackTrait for FixedGaussianRenderCall {
         render_pass.set_pipeline(pipeline);
         render_pass.set_bind_group(0, bind_group, &[]);
         render_pass.draw(0..6, 0..1);
-    }
-}
-
-impl CanvasPainter for FixedGaussian {
-    fn paint(&mut self, painter: &egui::Painter, rect: egui::Rect) {
-        painter.add(eframe::egui_wgpu::Callback::new_paint_callback(
-            rect,
-            FixedGaussianRenderCall {
-                px_size: rect.size().into(),
-            },
-        ));
     }
 }
