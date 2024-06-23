@@ -5,6 +5,9 @@
 https://medium.com/@lumi_/render-any-2d-shape-using-a-single-shader-263be93879d9
     https://github.com/GeorgeAzma/silk-engine
 
+alternative, use Painter::line_segment https://github.com/emilk/egui/blob/b1dc059ef3a18ec67c9283fed24c07bc2dfeefcc/crates/egui_demo_lib/src/demo/misc_demo_window.rs#L162
+
+
 not really what I was looking for but gotta remember that for the future:
 https://getcode.substack.com/p/massively-parallel-fun-with-gpus
 
