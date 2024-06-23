@@ -71,7 +71,7 @@ impl CanvasPainter for SamplingPoint {
             sample_count_fract,
         } = *self;
         painter.circle(
-            pos.into(),
+            pos,
             4.0,
             Color32::WHITE.gamma_multiply(1.0 - sample_count_fract),
             Stroke::NONE,
@@ -97,7 +97,7 @@ impl CanvasPainter for PredictionVariance {
     fn paint(&mut self, painter: &egui::Painter, _rect: egui::Rect) {
         let Self { pos, radius } = *self;
         painter.circle(
-            pos.into(),
+            pos,
             radius,
             Color32::TRANSPARENT,
             Stroke {
