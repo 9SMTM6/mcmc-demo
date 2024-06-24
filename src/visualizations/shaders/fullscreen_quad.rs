@@ -13,6 +13,8 @@ pub const FULLSCREEN_QUAD: ShaderParts = ShaderParts {
         label: Some(file!()),
         source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(include_str!("fullscreen_quad.wgsl"))),
     },
+    // Replace once https://github.com/gfx-rs/wgpu/pull/5872 lands
+    //  wgpu::include_wgsl!("fullscreen_quad.wgsl"),
     get_vertex_state: |shader| VertexState {
         module: shader,
         buffers: &[],

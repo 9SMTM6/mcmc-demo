@@ -17,10 +17,7 @@ struct NormalDistribution {
 }
 
 @group(1) @binding(0)
-var<uniform> len: u32;
-
-@group(1) @binding(1)
-var<uniform> gauss_bases: array<NormalDistribution, len>;
+var<storage, read> gauss_bases: array<NormalDistribution>;
 
 @fragment
 fn fs_main(@builtin(position) pixel_coords: vec4<f32>) -> @location(0) vec4<f32> {

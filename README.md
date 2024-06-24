@@ -1,15 +1,20 @@
 # TODO:
 
-## Rendering shapes
+## Rid me of the pain of wgpu boilerplate for wgsl shaders
 
-https://medium.com/@lumi_/render-any-2d-shape-using-a-single-shader-263be93879d9
-    https://github.com/GeorgeAzma/silk-engine
+Use either 
+https://lib.rs/crates/include-wgsl-oil
+or 
+https://lib.rs/crates/wgsl_to_wgpu
+or its fork
+https://lib.rs/crates/wgsl_bindgen
+the reason for the fork seems to be this discussion:
+https://github.com/ScanMountGoat/wgsl_to_wgpu/issues/50
+and here are the features the fork promises over the original
+https://github.com/Swoorup/wgsl-bindgen?tab=readme-ov-file#differences-from-the-wgsl_to_wgpu-fork
+consider that this comes presumably with more dependencies and the gotchas that were listed as reasons for the refusal of the PR that lead to the fork. Perhaps start with the original and see if thats good enough.
 
-alternative, use Painter::line_segment https://github.com/emilk/egui/blob/b1dc059ef3a18ec67c9283fed24c07bc2dfeefcc/crates/egui_demo_lib/src/demo/misc_demo_window.rs#L162
-
-
-not really what I was looking for but gotta remember that for the future:
-https://getcode.substack.com/p/massively-parallel-fun-with-gpus
+Since at least the last 2 of these can be done during build-time, they presumably will NOT increase web bundle size, critical for me. If deploying these, check for that.
 
 ## Size-reductions:
 
