@@ -3,7 +3,7 @@ use wgsl_bindgen::{RustWgslTypeMap, WgslBindgenOptionBuilder, WgslTypeSerializeS
 
 fn main() -> Result<()> {
     let shader_root_dir = "shaders";
-    let shader_entries = ["generic_gaussian", "fullscreen_quad"];
+    let shader_entries = ["multimodal_gaussian", "fullscreen_quad"];
 
     println!("cargo:rerun-if-changed={shader_root_dir}");
 
