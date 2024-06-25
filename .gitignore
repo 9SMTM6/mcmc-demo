@@ -1,3 +1,7 @@
+# kinda hotfix, cant figure out how to include! wam_bindgen output 
+# since it generates inner attributes at top level, which rust doesnt accept in an include! root
+src/shaders.rs
+
 # Mac stuff:
 .DS_Store
 
