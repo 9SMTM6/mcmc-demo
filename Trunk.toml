@@ -1,2 +1,14 @@
 [build]
-# minify="on_release"
+minify="on_release"
+
+[[hooks]]
+stage = "post_build"
+# falling back to sh to get wildcard expansion
+command = "sh"
+command_arguments = ["-c", "[ \"$TRUNK_PROFILE\" = \"release\" ] && brotli ${TRUNK_STAGING_DIR}/mcmc_demo*bg.wasm || true"]
+
+[[hooks]]
+stage = "post_build"
+# falling back to sh to get wildcard expansion
+command = "sh"
+command_arguments = ["-c", "[ \"$TRUNK_PROFILE\" = \"release\" ] && gzip --keep ${TRUNK_STAGING_DIR}/mcmc_demo*bg.wasm || true"]
