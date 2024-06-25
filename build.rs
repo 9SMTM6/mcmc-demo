@@ -11,7 +11,7 @@ fn main() -> Result<()> {
     bindgen
         .workspace_root(shader_root_dir)
         .serialization_strategy(WgslTypeSerializeStrategy::Bytemuck)
-        .derive_serde(cfg!(feature="persistence"))
+        .derive_serde(cfg!(feature = "persistence"))
         .type_map(RustWgslTypeMap);
     for source in shader_entries {
         bindgen.add_entry_point(format!("{shader_root_dir}/{source}.wgsl"));

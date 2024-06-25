@@ -143,17 +143,18 @@ impl MultiModalGaussian {
         // Because the graphics pipeline must have the same lifetime as the egui render pass,
         // instead of storing the pipeline in our struct, we insert it into the
         // `callback_resources` type map, which is stored alongside the render pass.
-        let None = render_state
-            .renderer
-            .write()
-            .callback_resources
-            .insert(MultiModalGaussPipeline {
-                pipeline,
-                resolution_bind_group,
-                elements_bind_group,
-                resolution_buffer,
-                elements_buffer,
-            })
+        let None =
+            render_state
+                .renderer
+                .write()
+                .callback_resources
+                .insert(MultiModalGaussPipeline {
+                    pipeline,
+                    resolution_bind_group,
+                    elements_bind_group,
+                    resolution_buffer,
+                    elements_buffer,
+                })
         else {
             panic!("pipeline already present?!")
         };
@@ -180,7 +181,11 @@ impl CallbackTrait for RenderCall {
         _egui_encoder: &mut wgpu::CommandEncoder,
         callback_resources: &mut eframe::egui_wgpu::CallbackResources,
     ) -> Vec<wgpu::CommandBuffer> {
-        let MultiModalGaussPipeline { resolution_buffer, elements_buffer, .. } = callback_resources.get().unwrap();
+        let MultiModalGaussPipeline {
+            resolution_buffer,
+            elements_buffer,
+            ..
+        } = callback_resources.get().unwrap();
         queue.write_buffer(
             resolution_buffer,
             0,
@@ -189,7 +194,11 @@ impl CallbackTrait for RenderCall {
                 _pad: [0.0; 2],
             }]),
         );
-        queue.write_buffer(elements_buffer, 0, bytemuck::cast_slice(self.elements.as_slice()));
+        queue.write_buffer(
+            elements_buffer,
+            0,
+            bytemuck::cast_slice(self.elements.as_slice()),
+        );
         Vec::new()
     }
 
