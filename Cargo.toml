@@ -35,6 +35,7 @@ wasm-bindgen-futures = "0.4"
 web-sys = "0.3.4"
 
 [build-dependencies]
+miette = { version = "7.2.0", features = ["fancy"] }
 wgsl_bindgen = "0.12.0"
 
 [profile.release]

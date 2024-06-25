@@ -1,8 +1,9 @@
+use miette::{IntoDiagnostic, Result};
 use wgsl_bindgen::{RustWgslTypeMap, WgslBindgenOptionBuilder, WgslTypeSerializeStrategy};
 
-fn main() {
+fn main() -> Result<()> {
     let shader_root_dir = "shaders";
-    let shader_entries = ["generic_gaussian", "fullscreen_quad", "test_fixed_gaussian"];
+    let shader_entries = ["generic_gaussian", "fullscreen_quad"];
 
     println!("cargo:rerun-if-changed={shader_root_dir}");
 
@@ -16,5 +17,5 @@ fn main() {
     }
     let bindgen = bindgen.output("src/shaders.rs").build().unwrap();
 
-    bindgen.generate().unwrap();
+    bindgen.generate().into_diagnostic()
 }
