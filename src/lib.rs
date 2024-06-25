@@ -2,6 +2,7 @@
 
 mod app;
 mod visualizations;
+mod settings;
 // fix compilation warnings from generated code
 #[allow(
     elided_lifetimes_in_paths,
