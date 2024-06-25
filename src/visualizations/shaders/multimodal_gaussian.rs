@@ -18,6 +18,7 @@ use super::resolution_uniform::create_buffer_init_descr;
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Clone, Default)]
 pub struct MultiModalGaussian {
+    gaussians: Vec<NormalDistribution>,
     forbid_construct: PhantomData<MultiModalGaussPipeline>,
 }
 
@@ -27,6 +28,7 @@ impl CanvasPainter for MultiModalGaussian {
             rect,
             RenderCall {
                 px_size: rect.size().into(),
+                elements: self.gaussians.clone(),
             },
         ));
     }
@@ -36,7 +38,8 @@ struct MultiModalGaussPipeline {
     pipeline: RenderPipeline,
     resolution_bind_group: BindGroup,
     elements_bind_group: BindGroup,
-    uniform_buffer: Buffer,
+    resolution_buffer: Buffer,
+    elements_buffer: Buffer,
 }
 
 impl MultiModalGaussian {
@@ -64,11 +67,11 @@ impl MultiModalGaussian {
             primitive: Default::default(),
         });
 
-        let uniform_buffer = device.create_buffer_init(&create_buffer_init_descr());
+        let resolution_buffer = device.create_buffer_init(&create_buffer_init_descr());
 
-        let bindings = multimodal_gaussian::bind_groups::WgpuBindGroupLayout0 {
+        let resolution_bindings = multimodal_gaussian::bind_groups::WgpuBindGroupLayout0 {
             resolution_info: BufferBinding {
-                buffer: &uniform_buffer,
+                buffer: &resolution_buffer,
                 offset: 0,
                 size: NonZero::new(16),
             },
@@ -77,13 +80,13 @@ impl MultiModalGaussian {
         // dunno what that is for...
         // let bind_group = test_fixed_gaussian::bind_groups::WgpuBindGroup0::from_bindings(device, bindings);
 
-        let bind_group_layout =
+        let res_bind_group_layout =
             multimodal_gaussian::bind_groups::WgpuBindGroup0::get_bind_group_layout(device);
 
-        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        let resolution_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: webgpu_debug_name,
-            layout: &bind_group_layout,
-            entries: &bindings.entries(),
+            layout: &res_bind_group_layout,
+            entries: &resolution_bindings.entries(),
         });
 
         const INITIAL_GAUSSIANS: [NormalDistribution; 5] = [
@@ -114,27 +117,27 @@ impl MultiModalGaussian {
             },
         ];
 
-        let storage_buffer = device.create_buffer_init(&BufferInitDescriptor {
+        let elements_buffer = device.create_buffer_init(&BufferInitDescriptor {
             label: Some(file!()),
             usage: BufferUsages::COPY_DST | BufferUsages::STORAGE,
             contents: bytemuck::cast_slice(&INITIAL_GAUSSIANS),
         });
 
-        let bindings2 = multimodal_gaussian::bind_groups::WgpuBindGroupLayout1 {
+        let el_bindings = multimodal_gaussian::bind_groups::WgpuBindGroupLayout1 {
             gauss_bases: BufferBinding {
-                buffer: &storage_buffer,
+                buffer: &elements_buffer,
                 offset: 0,
                 size: NonZero::new(size_of_val(&INITIAL_GAUSSIANS) as u64),
             },
         };
 
-        let bind_group_layout2 =
+        let el_bind_group_layout =
             multimodal_gaussian::bind_groups::WgpuBindGroup1::get_bind_group_layout(device);
 
-        let bind_group2 = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        let elements_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: webgpu_debug_name,
-            layout: &bind_group_layout2,
-            entries: &bindings2.entries(),
+            layout: &el_bind_group_layout,
+            entries: &el_bindings.entries(),
         });
 
         // Because the graphics pipeline must have the same lifetime as the egui render pass,
@@ -146,9 +149,10 @@ impl MultiModalGaussian {
             .callback_resources
             .insert(MultiModalGaussPipeline {
                 pipeline,
-                resolution_bind_group: bind_group,
-                elements_bind_group: bind_group2,
-                uniform_buffer,
+                resolution_bind_group,
+                elements_bind_group,
+                resolution_buffer,
+                elements_buffer,
             })
         else {
             panic!("pipeline already present?!")
@@ -156,12 +160,14 @@ impl MultiModalGaussian {
 
         Self {
             forbid_construct: PhantomData,
+            gaussians: INITIAL_GAUSSIANS.into(),
         }
     }
 }
 
 struct RenderCall {
     px_size: [f32; 2],
+    elements: Vec<NormalDistribution>,
 }
 
 impl CallbackTrait for RenderCall {
@@ -174,15 +180,16 @@ impl CallbackTrait for RenderCall {
         _egui_encoder: &mut wgpu::CommandEncoder,
         callback_resources: &mut eframe::egui_wgpu::CallbackResources,
     ) -> Vec<wgpu::CommandBuffer> {
-        let MultiModalGaussPipeline { uniform_buffer, .. } = callback_resources.get().unwrap();
+        let MultiModalGaussPipeline { resolution_buffer, elements_buffer, .. } = callback_resources.get().unwrap();
         queue.write_buffer(
-            uniform_buffer,
+            resolution_buffer,
             0,
             bytemuck::cast_slice(&[ResolutionInfo {
                 resolution: self.px_size,
                 _pad: [0.0; 2],
             }]),
         );
+        queue.write_buffer(elements_buffer, 0, bytemuck::cast_slice(self.elements.as_slice()));
         Vec::new()
     }
 
