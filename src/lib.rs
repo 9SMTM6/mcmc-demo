@@ -9,6 +9,7 @@ mod visualizations;
     clippy::approx_constant,
     clippy::needless_borrow
 )]
+#[rustfmt::skip]
 mod shaders;
 pub use app::TemplateApp;
 pub use visualizations::INITIAL_RENDER_SIZE;
