@@ -1,6 +1,6 @@
 use egui::{Frame, Rounding, Shadow};
 
-use crate::visualizations::{self, MultiModalGaussianRender};
+use crate::visualizations::{self, MultiModalGaussian};
 
 #[cfg_attr(feature="persistence", 
     // We derive Deserialize/Serialize so we can persist app state on shutdown.
@@ -11,24 +11,31 @@ use crate::visualizations::{self, MultiModalGaussianRender};
 #[derive(Default)]
 pub struct TemplateApp {
     #[cfg_attr(feature = "persistence", serde(skip))]
-    gaussian: MultiModalGaussianRender,
+    gaussian: MultiModalGaussian,
 }
 
 impl TemplateApp {
     /// Called once before the first frame.
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+        let state = Self::get_state(cc);
+        state
+            .gaussian
+            .init_gaussian_pipeline(cc.wgpu_render_state.as_ref().unwrap());
+        state
+    }
+
+    pub fn get_state(cc: &eframe::CreationContext<'_>) -> Self {
         // This is also where you can customize the look and feel of egui using
         // `cc.egui_ctx.set_visuals` and `cc.egui_ctx.set_fonts`.
 
         // Load previous app state (if any).
         // Note that you must enable the `persistence` feature for this to work.
-        // if let Some(storage) = cc.storage {
-        //     return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
-        // }
-
-        Self {
-            gaussian: MultiModalGaussianRender::new(cc.wgpu_render_state.as_ref().unwrap()),
+        #[cfg(feature = "persistence")]
+        if let Some(storage) = cc.storage {
+            return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
         }
+
+        Default::default()
     }
 }
 

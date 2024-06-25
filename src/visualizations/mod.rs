@@ -4,7 +4,7 @@ use egui_expressed::{Arrow, PredictionVariance, SamplingPoint};
 mod egui_expressed;
 mod shaders;
 
-pub use shaders::{multimodal_gaussian::MultiModalGaussianRender, INITIAL_RENDER_SIZE};
+pub use shaders::{multimodal_gaussian::MultiModalGaussian, INITIAL_RENDER_SIZE};
 
 trait CanvasPainter {
     fn paint(&self, painter: &egui::Painter, rect: egui::Rect);
@@ -26,7 +26,7 @@ fn paint_in_marginless_canvas(ui: &mut egui::Ui, canvas_painters: &[&dyn CanvasP
         });
 }
 
-pub fn draw_all(ui: &mut egui::Ui, gaussian_raii_obj: &mut MultiModalGaussianRender) {
+pub fn draw_all(ui: &mut egui::Ui, gaussian_raii_obj: &mut MultiModalGaussian) {
     let current_spot: Pos2 = [300.0, 400.0].into();
     let canvas_painters = [
         gaussian_raii_obj as &dyn CanvasPainter,

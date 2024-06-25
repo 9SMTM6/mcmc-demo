@@ -1,4 +1,3 @@
-use std::marker::PhantomData;
 use std::mem::size_of_val;
 use std::num::NonZero;
 
@@ -15,19 +14,48 @@ use crate::visualizations::CanvasPainter;
 use super::fullscreen_quad::FULLSCREEN_QUAD;
 use super::resolution_uniform::create_buffer_init_descr;
 
-// TODO: I have to split the data from render-pipeline init.
-// Otherwise I'll get errors when initializing from a saved state (or I should).
-// I think at this point I'm actually able to muve the init code to 
-// a simple initialitzation function totally separate from the data
-
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
-#[derive(Clone, Default)]
-pub struct MultiModalGaussianRender {
+#[derive(Clone)]
+pub struct MultiModalGaussian {
     pub gaussians: Vec<NormalDistribution>,
-    forbid_construct: PhantomData<MultiModalGaussPipeline>,
 }
 
-impl CanvasPainter for MultiModalGaussianRender {
+impl Default for MultiModalGaussian {
+    fn default() -> Self {
+        Self {
+            gaussians: [
+                NormalDistribution {
+                    position: [-1.0, -1.0],
+                    scale: 0.5,
+                    variance: 0.14,
+                },
+                NormalDistribution {
+                    position: [0.2, -0.2],
+                    scale: 0.6,
+                    variance: 0.2,
+                },
+                NormalDistribution {
+                    position: [0.9, -0.3],
+                    scale: 0.4,
+                    variance: 0.01,
+                },
+                NormalDistribution {
+                    position: [0.1, -0.6],
+                    scale: 0.8,
+                    variance: 0.4,
+                },
+                NormalDistribution {
+                    position: [-1.0, 0.5],
+                    scale: 1.4,
+                    variance: 0.1,
+                },
+            ]
+            .into(),
+        }
+    }
+}
+
+impl CanvasPainter for MultiModalGaussian {
     fn paint(&self, painter: &egui::Painter, rect: egui::Rect) {
         painter.add(eframe::egui_wgpu::Callback::new_paint_callback(
             rect,
@@ -47,8 +75,8 @@ struct MultiModalGaussPipeline {
     elements_buffer: Buffer,
 }
 
-impl MultiModalGaussianRender {
-    pub fn new(render_state: &RenderState) -> Self {
+impl MultiModalGaussian {
+    pub fn init_gaussian_pipeline(&self, render_state: &RenderState) {
         let device = &render_state.device;
 
         let webgpu_debug_name = Some(file!());
@@ -94,45 +122,17 @@ impl MultiModalGaussianRender {
             entries: &resolution_bindings.entries(),
         });
 
-        const INITIAL_GAUSSIANS: [NormalDistribution; 5] = [
-            NormalDistribution {
-                position: [-1.0, -1.0],
-                scale: 0.5,
-                variance: 0.14,
-            },
-            NormalDistribution {
-                position: [0.2, -0.2],
-                scale: 0.6,
-                variance: 0.2,
-            },
-            NormalDistribution {
-                position: [0.9, -0.3],
-                scale: 0.4,
-                variance: 0.01,
-            },
-            NormalDistribution {
-                position: [0.1, -0.6],
-                scale: 0.8,
-                variance: 0.4,
-            },
-            NormalDistribution {
-                position: [-1.0, 0.5],
-                scale: 1.4,
-                variance: 0.1,
-            },
-        ];
-
         let elements_buffer = device.create_buffer_init(&BufferInitDescriptor {
             label: Some(file!()),
             usage: BufferUsages::COPY_DST | BufferUsages::STORAGE,
-            contents: bytemuck::cast_slice(&INITIAL_GAUSSIANS),
+            contents: bytemuck::cast_slice(self.gaussians.as_slice()),
         });
 
         let el_bindings = multimodal_gaussian::bind_groups::WgpuBindGroupLayout1 {
             gauss_bases: BufferBinding {
                 buffer: &elements_buffer,
                 offset: 0,
-                size: NonZero::new(size_of_val(&INITIAL_GAUSSIANS) as u64),
+                size: NonZero::new(size_of_val(self.gaussians.as_slice()) as u64),
             },
         };
 
@@ -163,11 +163,6 @@ impl MultiModalGaussianRender {
         else {
             panic!("pipeline already present?!")
         };
-
-        Self {
-            forbid_construct: PhantomData,
-            gaussians: INITIAL_GAUSSIANS.into(),
-        }
     }
 }
 
