@@ -16,6 +16,8 @@ consider that this comes presumably with more dependencies and the gotchas that 
 
 Since at least the last 2 of these can be done during build-time, they presumably will NOT increase web bundle size, critical for me. If deploying these, check for that.
 
+also https://lib.rs/crates/wgsl-minifier
+
 ## Size-reductions:
 
 Possibilities:

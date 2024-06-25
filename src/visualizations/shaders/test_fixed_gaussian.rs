@@ -42,6 +42,11 @@ impl FixedGaussian {
 
         let vertex_shader = device.create_shader_module(FULLSCREEN_QUAD.shader_module);
 
+        // comparing: generated code doesnt set any debug labels...
+        // it seems that wgsl-bindgen does add these, commit by synth-trader.
+        // so I'm very tempted to switch.
+        // what speaks against that is that it seems that the feature creep in that project leads to a huge amount of generated code
+        // let fragment_shader = generated::create_shader_module(device);
         let fragment_shader = device.create_shader_module(ShaderModuleDescriptor {
             label: webgpu_debug_name,
             source: wgpu::ShaderSource::Wgsl(include_str!("test_fixed_gaussian.wgsl").into()),

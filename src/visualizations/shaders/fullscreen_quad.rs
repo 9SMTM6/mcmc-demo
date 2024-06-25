@@ -7,6 +7,7 @@ pub struct ShaderParts {
     pub shader_vertice_num: Range<u32>,
     pub get_vertex_state: fn(&ShaderModule) -> VertexState<'_>,
 }
+// crate::shaders::fullscreen_quad::vertex_state(module, entry).create_shader_module_embed_source(device)
 
 pub const FULLSCREEN_QUAD: ShaderParts = ShaderParts {
     shader_module: ShaderModuleDescriptor {
