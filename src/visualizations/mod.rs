@@ -7,10 +7,10 @@ mod shaders;
 pub use shaders::{multimodal_gaussian::MultiModalGaussianRender, INITIAL_RENDER_SIZE};
 
 trait CanvasPainter {
-    fn paint(&mut self, painter: &egui::Painter, rect: egui::Rect);
+    fn paint(&self, painter: &egui::Painter, rect: egui::Rect);
 }
 
-fn paint_in_marginless_canvas(ui: &mut egui::Ui, canvas_painters: &mut [&mut dyn CanvasPainter]) {
+fn paint_in_marginless_canvas(ui: &mut egui::Ui, canvas_painters: &[&dyn CanvasPainter]) {
     egui::Frame::canvas(ui.style())
         // remove margins here too
         .inner_margin(Margin::default())
@@ -28,11 +28,11 @@ fn paint_in_marginless_canvas(ui: &mut egui::Ui, canvas_painters: &mut [&mut dyn
 
 pub fn draw_all(ui: &mut egui::Ui, gaussian_raii_obj: &mut MultiModalGaussianRender) {
     let current_spot: Pos2 = [300.0, 400.0].into();
-    let mut canvas_painters = [
-        gaussian_raii_obj as &mut dyn CanvasPainter,
-        &mut Arrow::new(current_spot, [100.0, 100.0]),
-        &mut PredictionVariance::new(current_spot, 200.0),
-        &mut SamplingPoint::new(current_spot, 0.65),
+    let canvas_painters = [
+        gaussian_raii_obj as &dyn CanvasPainter,
+        &Arrow::new(current_spot, [100.0, 100.0]),
+        &PredictionVariance::new(current_spot, 200.0),
+        &SamplingPoint::new(current_spot, 0.65),
     ];
-    paint_in_marginless_canvas(ui, &mut canvas_painters[..])
+    paint_in_marginless_canvas(ui, &canvas_painters[..])
 }

@@ -22,7 +22,7 @@ impl Arrow {
 }
 
 impl CanvasPainter for Arrow {
-    fn paint(&mut self, painter: &egui::Painter, _rect: egui::Rect) {
+    fn paint(&self, painter: &egui::Painter, _rect: egui::Rect) {
         let Self { direction, start } = *self;
         const HALF_HEAD_THICKNESS: f32 = 4.0;
         let dir_only = direction.normalized();
@@ -65,7 +65,7 @@ impl SamplingPoint {
 }
 
 impl CanvasPainter for SamplingPoint {
-    fn paint(&mut self, painter: &egui::Painter, _rect: egui::Rect) {
+    fn paint(&self, painter: &egui::Painter, _rect: egui::Rect) {
         let Self {
             pos,
             sample_count_fract,
@@ -94,7 +94,7 @@ impl PredictionVariance {
 }
 
 impl CanvasPainter for PredictionVariance {
-    fn paint(&mut self, painter: &egui::Painter, _rect: egui::Rect) {
+    fn paint(&self, painter: &egui::Painter, _rect: egui::Rect) {
         let Self { pos, radius } = *self;
         painter.circle(
             pos,

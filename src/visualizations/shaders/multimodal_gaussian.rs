@@ -28,7 +28,7 @@ pub struct MultiModalGaussianRender {
 }
 
 impl CanvasPainter for MultiModalGaussianRender {
-    fn paint(&mut self, painter: &egui::Painter, rect: egui::Rect) {
+    fn paint(&self, painter: &egui::Painter, rect: egui::Rect) {
         painter.add(eframe::egui_wgpu::Callback::new_paint_callback(
             rect,
             RenderCall {
