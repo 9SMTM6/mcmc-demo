@@ -86,7 +86,7 @@ impl GenericGaussian {
             entries: &bindings.entries(),
         });
 
-        let INITIAL_GAUSSIANS = [
+        const INITIAL_GAUSSIANS: [NormalDistribution; 5] = [
             NormalDistribution {
                 position: [-1.0, -1.0],
                 scale: 0.5,
@@ -116,7 +116,7 @@ impl GenericGaussian {
 
         let storage_buffer = device.create_buffer_init(&BufferInitDescriptor {
             label: Some(file!()),
-            usage: BufferUsages::COPY_DST | BufferUsages::STORAGE,        
+            usage: BufferUsages::COPY_DST | BufferUsages::STORAGE,
             contents: bytemuck::cast_slice(&INITIAL_GAUSSIANS),
         });
 
