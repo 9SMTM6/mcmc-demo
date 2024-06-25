@@ -1,13 +1,6 @@
-struct ResolutionInfo {
-    resolution: vec2<f32>,
-    // See corresponding bindinggroup for reason
-    _pad: vec2<f32>,
-}
-
-@group(0) @binding(0)
-var<uniform> resolution_info: ResolutionInfo;
-
-const PI = radians(180.0);
+#import constants::PI;
+#import resolution_uniform::resolution_info;
+#import fullscreen_quad;
 
 struct NormalDistribution {
     position: vec2<f32>,

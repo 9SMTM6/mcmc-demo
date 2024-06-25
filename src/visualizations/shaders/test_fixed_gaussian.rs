@@ -1,15 +1,16 @@
 use std::marker::PhantomData;
+use std::num::NonZero;
 
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
 use wgpu::{util::DeviceExt, BindGroup, Buffer};
-use wgpu::{FragmentState, RenderPipeline, RenderPipelineDescriptor, ShaderModuleDescriptor};
+use wgpu::{BufferBinding, RenderPipeline, RenderPipelineDescriptor};
 
+use crate::shaders::resolution_uniform::ResolutionInfo;
+use crate::shaders::{fullscreen_quad, test_fixed_gaussian};
 use crate::visualizations::CanvasPainter;
 
 use super::fullscreen_quad::FULLSCREEN_QUAD;
-use super::resolution_uniform::{
-    create_buffer_init_descr, get_bind_group_entry, RESOLUTION_UNIFORM_FRAGMENT,
-};
+use super::resolution_uniform::create_buffer_init_descr;
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Clone, Default)]
@@ -40,48 +41,45 @@ impl FixedGaussian {
 
         let webgpu_debug_name = Some(file!());
 
-        let vertex_shader = device.create_shader_module(FULLSCREEN_QUAD.shader_module);
-
-        // comparing: generated code doesnt set any debug labels...
-        // it seems that wgsl-bindgen does add these, commit by synth-trader.
-        // so I'm very tempted to switch.
-        // what speaks against that is that it seems that the feature creep in that project leads to a huge amount of generated code
-        // let fragment_shader = generated::create_shader_module(device);
-        let fragment_shader = device.create_shader_module(ShaderModuleDescriptor {
-            label: webgpu_debug_name,
-            source: wgpu::ShaderSource::Wgsl(include_str!("test_fixed_gaussian.wgsl").into()),
-        });
-
-        let bind_group_layout = device.create_bind_group_layout(&RESOLUTION_UNIFORM_FRAGMENT);
-
-        let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-            label: webgpu_debug_name,
-            bind_group_layouts: &[&bind_group_layout],
-            push_constant_ranges: &[],
-        });
+        let layout = test_fixed_gaussian::create_pipeline_layout(device);
 
         let pipeline = device.create_render_pipeline(&RenderPipelineDescriptor {
-            vertex: (FULLSCREEN_QUAD.get_vertex_state)(&vertex_shader),
-            fragment: Some(FragmentState {
-                module: &fragment_shader,
-                compilation_options: Default::default(),
-                entry_point: "fs_main",
-                targets: &[Some(render_state.target_format.into())],
-            }),
+            vertex: fullscreen_quad::vertex_state(
+                &fullscreen_quad::create_shader_module_embed_source(device),
+                &fullscreen_quad::fullscreen_quad_entry(),
+            ),
+            fragment: Some(test_fixed_gaussian::fragment_state(
+                &test_fixed_gaussian::create_shader_module_embed_source(device),
+                &test_fixed_gaussian::fs_main_entry([Some(render_state.target_format.into())]),
+            )),
             label: webgpu_debug_name,
-            layout: Some(&pipeline_layout),
+            layout: Some(&layout),
             depth_stencil: None,
+            multiview: None,
             multisample: Default::default(),
-            multiview: Default::default(),
             primitive: Default::default(),
         });
 
         let uniform_buffer = device.create_buffer_init(&create_buffer_init_descr());
 
+        let bindings = test_fixed_gaussian::bind_groups::WgpuBindGroupLayout0 {
+            resolution_info: BufferBinding {
+                buffer: &uniform_buffer,
+                offset: 0,
+                size: NonZero::new(16),
+            },
+        };
+
+        // dunno what that is for...
+        // let bind_group = test_fixed_gaussian::bind_groups::WgpuBindGroup0::from_bindings(device, bindings);
+
+        let bind_group_layout =
+            test_fixed_gaussian::bind_groups::WgpuBindGroup0::get_bind_group_layout(device);
+
         let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: webgpu_debug_name,
             layout: &bind_group_layout,
-            entries: &[get_bind_group_entry(&uniform_buffer)],
+            entries: &bindings.entries(),
         });
 
         // Because the graphics pipeline must have the same lifetime as the egui render pass,
@@ -124,7 +122,10 @@ impl CallbackTrait for FixedGaussianRenderCall {
         queue.write_buffer(
             uniform_buffer,
             0,
-            bytemuck::cast_slice(&[self.px_size[0], self.px_size[1], 0.0, 0.0]),
+            bytemuck::cast_slice(&[ResolutionInfo {
+                resolution: self.px_size,
+                _pad: [0.0; 2],
+            }]),
         );
         Vec::new()
     }

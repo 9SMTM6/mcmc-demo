@@ -1,15 +1,8 @@
-struct ResolutionInfo {
-    resolution: vec2<f32>,
-    // See corresponding bindinggroup for reason
-    _pad: vec2<f32>,
-}
-
-@group(0) @binding(0) 
-var<uniform> resolution_info: ResolutionInfo;
+#import resolution_uniform::resolution_info;
+#import fullscreen_quad;
+#import constants::PI;
 
 const len = 5;
-
-const PI = radians(180.0);
 
 // var because of https://github.com/gfx-rs/wgpu/issues/4337
 var<private> gauss_centers: array<vec2<f32>, len> = array(
