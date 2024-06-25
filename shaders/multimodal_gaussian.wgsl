@@ -27,8 +27,6 @@ fn fs_main(@builtin(position) pixel_coords: vec4<f32>) -> @location(0) vec4<f32>
     // 2. I'm not sure whether it would be faster to calculate this on the gpu in every shader
     //  and reduce data transfer or to calculate that on the cpu beforehand (and for that to work we also need to pass in the arrays anyways) 
 
-    let len = arrayLength(&gauss_bases);
-
     for (var i = 0u; i < arrayLength(&gauss_bases); i+=1u) {
         let el = gauss_bases[i];
 

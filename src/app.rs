@@ -1,6 +1,6 @@
 use egui::{Frame, Rounding, Shadow};
 
-use crate::visualizations::{self, MultiModalGaussian};
+use crate::visualizations::{self, MultiModalGaussianRender};
 
 #[cfg_attr(feature="persistence", 
     // We derive Deserialize/Serialize so we can persist app state on shutdown.
@@ -11,7 +11,7 @@ use crate::visualizations::{self, MultiModalGaussian};
 #[derive(Default)]
 pub struct TemplateApp {
     #[cfg_attr(feature = "persistence", serde(skip))]
-    gaussian: MultiModalGaussian,
+    gaussian: MultiModalGaussianRender,
 }
 
 impl TemplateApp {
@@ -27,7 +27,7 @@ impl TemplateApp {
         // }
 
         Self {
-            gaussian: MultiModalGaussian::new(cc.wgpu_render_state.as_ref().unwrap()),
+            gaussian: MultiModalGaussianRender::new(cc.wgpu_render_state.as_ref().unwrap()),
         }
     }
 }

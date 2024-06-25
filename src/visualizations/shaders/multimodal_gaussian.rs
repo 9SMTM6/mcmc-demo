@@ -15,14 +15,19 @@ use crate::visualizations::CanvasPainter;
 use super::fullscreen_quad::FULLSCREEN_QUAD;
 use super::resolution_uniform::create_buffer_init_descr;
 
+// TODO: I have to split the data from render-pipeline init.
+// Otherwise I'll get errors when initializing from a saved state (or I should).
+// I think at this point I'm actually able to muve the init code to 
+// a simple initialitzation function totally separate from the data
+
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Clone, Default)]
-pub struct MultiModalGaussian {
-    gaussians: Vec<NormalDistribution>,
+pub struct MultiModalGaussianRender {
+    pub gaussians: Vec<NormalDistribution>,
     forbid_construct: PhantomData<MultiModalGaussPipeline>,
 }
 
-impl CanvasPainter for MultiModalGaussian {
+impl CanvasPainter for MultiModalGaussianRender {
     fn paint(&mut self, painter: &egui::Painter, rect: egui::Rect) {
         painter.add(eframe::egui_wgpu::Callback::new_paint_callback(
             rect,
@@ -42,7 +47,7 @@ struct MultiModalGaussPipeline {
     elements_buffer: Buffer,
 }
 
-impl MultiModalGaussian {
+impl MultiModalGaussianRender {
     pub fn new(render_state: &RenderState) -> Self {
         let device = &render_state.device;
 
@@ -210,14 +215,14 @@ impl CallbackTrait for RenderCall {
     ) {
         let MultiModalGaussPipeline {
             pipeline,
-            resolution_bind_group: bind_group,
-            elements_bind_group: bind_group2,
+            resolution_bind_group,
+            elements_bind_group,
             ..
         } = callback_resources.get().unwrap();
 
         render_pass.set_pipeline(pipeline);
-        render_pass.set_bind_group(0, bind_group, &[]);
-        render_pass.set_bind_group(1, bind_group2, &[]);
+        render_pass.set_bind_group(0, resolution_bind_group, &[]);
+        render_pass.set_bind_group(1, elements_bind_group, &[]);
         render_pass.draw(FULLSCREEN_QUAD.shader_vertice_num, 0..1);
     }
 }
