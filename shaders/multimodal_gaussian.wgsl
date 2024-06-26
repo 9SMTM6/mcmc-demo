@@ -12,10 +12,13 @@ struct NormalDistribution {
 @group(1) @binding(0)
 var<storage, read> gauss_bases: array<NormalDistribution>;
 
+fn canvas_coord_to_ndc(canvas_coord: vec2<f32>, canvas_res: vec2<f32>) -> vec2<f32> {
+    return (canvas_coord / max(canvas_res.x, canvas_res.y)) * 2.0 - 1.0;
+}
+
 @fragment
-fn fs_main(@builtin(position) pixel_coords: vec4<f32>) -> @location(0) vec4<f32> {
-    let resolution = resolution_info.resolution;
-    let normalized_device_coords = pixel_coords.xy / max(resolution.x, resolution.y) * 2 - 1;
+fn fs_main(@builtin(position) canvas_coords: vec4<f32>) -> @location(0) vec4<f32> {
+    let normalized_device_coords = canvas_coord_to_ndc(canvas_coords.xy, resolution_info.resolution);
 
     var combined_prob_density = 0.0;
 
