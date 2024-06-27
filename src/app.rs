@@ -1,5 +1,3 @@
-use std::sync::atomic::{AtomicBool, Ordering};
-
 use egui::{self, Pos2, Shadow, Vec2};
 
 use crate::{
@@ -33,6 +31,22 @@ impl TemplateApp {
         // This is also where you can customize the look and feel of egui using
         // `cc.egui_ctx.set_visuals` and `cc.egui_ctx.set_fonts`.
 
+        cc.egui_ctx
+            .style_mut(|style| {
+                let visuals = &mut style.visuals;
+                for fill_color in [
+                    &mut visuals.window_fill,
+                    // &mut visuals.widgets.noninteractive.bg_fill,
+                    // &mut visuals.widgets.noninteractive.weak_bg_fill,
+                    // &mut visuals.widgets.active.weak_bg_fill,
+                    &mut visuals.widgets.open.weak_bg_fill,
+                    &mut visuals.extreme_bg_color,
+                ] {
+                    *fill_color = fill_color.gamma_multiply(0.40);
+                }
+                visuals.window_shadow = Shadow::NONE;
+            });
+
         // Load previous app state (if any).
         // Note that you must enable the `persistence` feature for this to work.
         #[cfg(feature = "persistence")]
@@ -44,8 +58,6 @@ impl TemplateApp {
     }
 }
 
-static FIRST_RENDER: AtomicBool = AtomicBool::new(true);
-
 impl eframe::App for TemplateApp {
     /// Called by the frame work to save state before shutdown.
     #[cfg(feature = "persistence")]
@@ -55,31 +67,6 @@ impl eframe::App for TemplateApp {
 
     /// Called each time the UI needs repainting, which may be many times per second.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        {
-            // set some styling. I wasn't able to find a spot to do it earlier,
-            // while 'just' doing this here leads to reduction every render, leading to full transparency.
-            // rust is rust, so I protect with this super complex atomic...
-            // I wonder whether I actually did it right.
-            let first_render =
-                FIRST_RENDER.compare_exchange(true, false, Ordering::SeqCst, Ordering::Relaxed);
-            if let Ok(true) = first_render {
-                ctx.style_mut(|style| {
-                    let visuals = &mut style.visuals;
-                    for fill_color in [
-                        &mut visuals.window_fill,
-                        // &mut visuals.widgets.noninteractive.bg_fill,
-                        // &mut visuals.widgets.noninteractive.weak_bg_fill,
-                        // &mut visuals.widgets.active.weak_bg_fill,
-                        &mut visuals.widgets.open.weak_bg_fill,
-                        &mut visuals.extreme_bg_color,
-                    ] {
-                        *fill_color = fill_color.gamma_multiply(0.40);
-                    }
-                    visuals.window_shadow = Shadow::NONE;
-                });
-            }
-        }
-
         // Put your widgets into a `SidePanel`, `TopBottomPanel`, `CentralPanel`, `Window` or `Area`.
         // For inspiration and more examples, go to https://emilk.github.io/egui
 
