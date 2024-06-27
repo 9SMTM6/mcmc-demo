@@ -100,7 +100,8 @@ impl eframe::App for TemplateApp {
                     .outer_margin(egui::Margin::default())
                     .show(ui, |ui| {
                         let px_size = ui.available_size();
-                        let (rect, _response) = ui.allocate_exact_size(px_size, egui::Sense::click_and_drag());
+                        let (rect, _response) =
+                            ui.allocate_exact_size(px_size, egui::Sense::click_and_drag());
                         // let rect = egui::Rect::from_min_size(ui.cursor().min, px_size) / ctx.pixels_per_point();
                         // last painted element wins.
                         let painter = ui.painter();
