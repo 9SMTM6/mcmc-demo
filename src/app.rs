@@ -31,21 +31,20 @@ impl TemplateApp {
         // This is also where you can customize the look and feel of egui using
         // `cc.egui_ctx.set_visuals` and `cc.egui_ctx.set_fonts`.
 
-        cc.egui_ctx
-            .style_mut(|style| {
-                let visuals = &mut style.visuals;
-                for fill_color in [
-                    &mut visuals.window_fill,
-                    // &mut visuals.widgets.noninteractive.bg_fill,
-                    // &mut visuals.widgets.noninteractive.weak_bg_fill,
-                    // &mut visuals.widgets.active.weak_bg_fill,
-                    &mut visuals.widgets.open.weak_bg_fill,
-                    &mut visuals.extreme_bg_color,
-                ] {
-                    *fill_color = fill_color.gamma_multiply(0.40);
-                }
-                visuals.window_shadow = Shadow::NONE;
-            });
+        cc.egui_ctx.style_mut(|style| {
+            let visuals = &mut style.visuals;
+            for fill_color in [
+                &mut visuals.window_fill,
+                // &mut visuals.widgets.noninteractive.bg_fill,
+                // &mut visuals.widgets.noninteractive.weak_bg_fill,
+                // &mut visuals.widgets.active.weak_bg_fill,
+                &mut visuals.widgets.open.weak_bg_fill,
+                &mut visuals.extreme_bg_color,
+            ] {
+                *fill_color = fill_color.gamma_multiply(0.40);
+            }
+            visuals.window_shadow = Shadow::NONE;
+        });
 
         // Load previous app state (if any).
         // Note that you must enable the `persistence` feature for this to work.
@@ -70,9 +69,13 @@ impl eframe::App for TemplateApp {
         // Put your widgets into a `SidePanel`, `TopBottomPanel`, `CentralPanel`, `Window` or `Area`.
         // For inspiration and more examples, go to https://emilk.github.io/egui
 
-        #[cfg(debug_assertions)]
         egui::TopBottomPanel::bottom("footer").show(ctx, |ui| {
-            egui::warn_if_debug_build(ui);
+            ui.horizontal(|ui| {
+                if ui.button("Reset State").clicked() {
+                    *self = Default::default();
+                }
+                egui::warn_if_debug_build(ui);
+            })
         });
 
         self.settings.draw(ctx);
@@ -100,9 +103,41 @@ impl eframe::App for TemplateApp {
                             .paint(painter, rect);
                         visualizations::SamplingPoint::new(current_spot, 0.65).paint(painter, rect);
                         if self.settings == Settings::EditDistribution {
+                            // dunno where this is placed, which coordinate system this uses etc.
+                            // But when combined with sensing a drag_and_drop this SHOULD provide me with enough info to find
+                            // the gauss center (if any) that drags correspond to.
+                            let start_loc =
+                                ui.input(|input_state| input_state.pointer.press_origin());
+
+                            let start_loc2 =
+                                ui.input(|input_state| input_state.pointer.interact_pos());
+
+                            // this doesnt seem to hold to what the documentation promises.
+                            // documentation promises this is the delta for each frame, but it behaves as I'd expect if it were the total delta.
+                            // let frame_delta = ui.input(|input_state| input_state.pointer.delta());
+                            // cc.egui_ctx.wants_pointer_input()
+
+                            let painter = ui.painter();
+                            // let delta = if _response.dragged() {
+                            //     // _response.drag_delta()
+                            //     canvas_coord_to_ndc(frame_delta.to_pos2(), rect).to_vec2()
+                            // } else {
+                            //     Vec2::splat(0.0)
+                            // };
+
                             // draw centers of gaussians
                             for ele in self.gaussian.gaussians.iter_mut() {
-                                let painter = ui.painter();
+                                dbg!(ele.position);
+                                if _response.dragged() {
+                                    ele.position = canvas_coord_to_ndc(
+                                        Pos2::from(ele.position)
+                                            + (start_loc2.unwrap().to_vec2()
+                                                - start_loc.unwrap().to_vec2()),
+                                        rect,
+                                    )
+                                    .into();
+                                }
+                                // (Pos2::from(ele.position) + delta).into();
                                 painter.circle_filled(
                                     ndc_to_canvas_coord(ele.position.into(), rect),
                                     5.0,

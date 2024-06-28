@@ -8,6 +8,7 @@ pub enum Settings {
 
 impl Settings {
     pub fn draw(&mut self, ctx: &egui::Context) {
+        #[allow(clippy::collapsible_else_if)]
         egui::Window::new("Settings").show(ctx, |ui| {
             if *self == Self::EditDistribution {
                 if ui.button("Stop Editing Distribution").clicked() {
