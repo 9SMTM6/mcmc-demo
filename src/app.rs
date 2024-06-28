@@ -106,18 +106,14 @@ impl eframe::App for TemplateApp {
                             // dunno where this is placed, which coordinate system this uses etc.
                             // But when combined with sensing a drag_and_drop this SHOULD provide me with enough info to find
                             // the gauss center (if any) that drags correspond to.
-                            let start_loc =
-                                ui.input(|input_state| input_state.pointer.press_origin());
-
-                            let start_loc2 =
-                                ui.input(|input_state| input_state.pointer.interact_pos());
+                            let (start_loc, current_loc) =
+                                ui.input(|input_state| (input_state.pointer.press_origin(), input_state.pointer.interact_pos()));
 
                             // this doesnt seem to hold to what the documentation promises.
                             // documentation promises this is the delta for each frame, but it behaves as I'd expect if it were the total delta.
                             // let frame_delta = ui.input(|input_state| input_state.pointer.delta());
                             // cc.egui_ctx.wants_pointer_input()
 
-                            let painter = ui.painter();
                             // let delta = if _response.dragged() {
                             //     // _response.drag_delta()
                             //     canvas_coord_to_ndc(frame_delta.to_pos2(), rect).to_vec2()
@@ -131,7 +127,7 @@ impl eframe::App for TemplateApp {
                                 if _response.dragged() {
                                     ele.position = canvas_coord_to_ndc(
                                         Pos2::from(ele.position)
-                                            + (start_loc2.unwrap().to_vec2()
+                                            + (current_loc.unwrap().to_vec2()
                                                 - start_loc.unwrap().to_vec2()),
                                         rect,
                                     )
@@ -144,19 +140,6 @@ impl eframe::App for TemplateApp {
                                     egui::Color32::RED,
                                 );
                             }
-
-                            // response.
-
-                            // do dragndrop with the centers of the gaussians aka
-                            // (this is ironically from the wgpu render demo, I originally stripped it out):
-                            // let (rect, response) =
-                            //     ui.allocate_exact_size(egui::Vec2::splat(300.0), egui::Sense::drag());
-
-                            // self.angle += response.drag_motion().x * 0.01;
-                            // ui.painter().add(egui_wgpu::Callback::new_paint_callback(
-                            //     rect,
-                            //     CustomTriangleCallback { angle: self.angle },
-                            // ));
                         }
                     });
             });
