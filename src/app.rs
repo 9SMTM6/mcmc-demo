@@ -179,7 +179,7 @@ mod test {
     use super::{canvas_coord_to_ndc, ndc_to_canvas_coord};
 
     fn close_enough(Pos2 { x: x_1, y: y_1 }: Pos2, Pos2 { x: x_2, y: y_2 }: Pos2) -> bool {
-        ((x_1 - x_2) < f32::EPSILON) && ((y_1 - y_2) < f32::EPSILON)
+        ((x_1 - x_2).abs() < f32::EPSILON) && ((y_1 - y_2).abs() < f32::EPSILON)
     }
 
     #[test]
