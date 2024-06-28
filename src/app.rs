@@ -106,8 +106,12 @@ impl eframe::App for TemplateApp {
                             // dunno where this is placed, which coordinate system this uses etc.
                             // But when combined with sensing a drag_and_drop this SHOULD provide me with enough info to find
                             // the gauss center (if any) that drags correspond to.
-                            let (start_loc, current_loc) =
-                                ui.input(|input_state| (input_state.pointer.press_origin(), input_state.pointer.interact_pos()));
+                            let (start_loc, current_loc) = ui.input(|input_state| {
+                                (
+                                    input_state.pointer.press_origin(),
+                                    input_state.pointer.interact_pos(),
+                                )
+                            });
 
                             // this doesnt seem to hold to what the documentation promises.
                             // documentation promises this is the delta for each frame, but it behaves as I'd expect if it were the total delta.
