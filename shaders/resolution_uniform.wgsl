@@ -1,5 +1,3 @@
-#define_import_path resolution_uniform;
-
 struct ResolutionInfo {
     resolution: vec2<f32>,
     // See corresponding bindinggroup for reason

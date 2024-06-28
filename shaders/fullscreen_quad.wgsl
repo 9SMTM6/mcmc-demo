@@ -1,5 +1,3 @@
-#define_import_path fullscreen_quad;
-
 @vertex
 fn fullscreen_quad(@builtin(vertex_index) vertexIndex : u32) -> @invariant @builtin(position) vec4<f32> {
     var positions = array<vec2<f32>, 6>(
