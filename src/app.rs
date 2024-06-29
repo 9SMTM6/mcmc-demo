@@ -127,22 +127,28 @@ impl eframe::App for TemplateApp {
 
                             // draw centers of gaussians
                             for ele in self.gaussian.gaussians.iter_mut() {
-                                dbg!(ele.position);
-                                if _response.dragged() {
-                                    ele.position = canvas_coord_to_ndc(
-                                        Pos2::from(ele.position)
-                                            + (current_loc.unwrap().to_vec2()
-                                                - start_loc.unwrap().to_vec2()),
+                                dbg!(ele.clone());
+                                let pos = (Pos2::from(ele.position)
+                                    + if _response.dragged() {
+                                        canvas_coord_to_ndc(
+                                            current_loc.unwrap()
+                                                - start_loc.unwrap().to_vec2(),
                                         rect,
-                                    )
+                                        ).to_vec2()
+                                    } else {
+                                        Vec2::splat(0.0)
+                                    })
                                     .into();
-                                }
                                 // (Pos2::from(ele.position) + delta).into();
                                 painter.circle_filled(
-                                    ndc_to_canvas_coord(ele.position.into(), rect),
+                                    ndc_to_canvas_coord(pos, rect),
                                     5.0,
                                     egui::Color32::RED,
                                 );
+                                if _response.drag_stopped() {
+                                    dbg!("reached");
+                                    ele.position = pos.into();
+                                };
                             }
                         }
                     });

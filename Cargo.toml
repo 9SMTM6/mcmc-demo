@@ -57,3 +57,4 @@ eframe = { git = "https://github.com/emilk/egui", branch = "master" }
 # If you fork https://github.com/emilk/egui you can test with:
 # egui = { path = "../egui/crates/egui" }
 # eframe = { path = "../egui/crates/eframe" }
+wgsl_bindgen = { path = "../wgsl-bindgen/wgsl_bindgen/" }

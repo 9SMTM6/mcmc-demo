@@ -1,5 +1,5 @@
 #import constants::PI;
-#import resolution_uniform::resolution_info;
+#import resolution_uniform_bind::resolution_info;
 #import fullscreen_quad;
 
 struct NormalDistribution {
@@ -48,7 +48,8 @@ fn fs_main(@builtin(position) canvas_coords: vec4<f32>) -> @location(0) vec4<f32
 
     combined_prob_density /= normalization;
 
-    // use log density instead. Adding 1 to the density to start at 0 for density zero, otherwise this is using illegal colorspaces.
+    // use log density instead. 
+    // Adding 1 to the density to start at 0 for density zero, otherwise this is using illegal colorspaces.
     // Then normalizing to maximum.
     let log_combined_prob_density = log(1 + combined_prob_density) / log(2.0);
 

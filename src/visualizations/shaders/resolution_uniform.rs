@@ -1,4 +1,4 @@
-use crate::shaders::resolution_uniform::ResolutionInfo;
+use crate::shaders::types::ResolutionInfo;
 
 pub const INITIAL_RENDER_SIZE: [f32; 2] = [640.0, 480.0];
 
