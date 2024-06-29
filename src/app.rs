@@ -127,7 +127,6 @@ impl eframe::App for TemplateApp {
 
                             // draw centers of gaussians
                             for ele in self.gaussian.gaussians.iter_mut() {
-                                dbg!(*ele);
                                 let pos = Pos2::from(ele.position)
                                     + if _response.dragged() {
                                         canvas_coord_to_ndc(
