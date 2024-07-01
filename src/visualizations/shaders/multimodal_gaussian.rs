@@ -4,7 +4,7 @@ use std::num::NonZero;
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
 use wgpu::util::BufferInitDescriptor;
 use wgpu::{util::DeviceExt, BindGroup, Buffer};
-use wgpu::{BufferBinding, BufferUsages, RenderPipeline, RenderPipelineDescriptor};
+use wgpu::{BufferBinding, BufferUsages, ImageCopyTexture, ImageDataLayout, RenderPipeline, RenderPipelineDescriptor, Texture, TextureDescriptor, TextureUsages, TextureView, TextureViewDescriptor};
 
 use crate::shaders::types::{NormalDistribution, ResolutionInfo};
 use crate::shaders::{fullscreen_quad, multimodal_gaussian};
@@ -71,7 +71,8 @@ struct MultiModalGaussPipeline {
     resolution_bind_group: BindGroup,
     elements_bind_group: BindGroup,
     resolution_buffer: Buffer,
-    elements_buffer: Buffer,
+    // elements_buffer: Buffer,
+    elements_texture: Texture,
 }
 
 impl MultiModalGaussian {
@@ -123,16 +124,36 @@ impl MultiModalGaussian {
 
         let elements_buffer = device.create_buffer_init(&BufferInitDescriptor {
             label: Some(file!()),
-            usage: BufferUsages::COPY_DST | BufferUsages::STORAGE,
+            usage: BufferUsages::COPY_DST,
+            // usage: BufferUsages::COPY_DST | BufferUsages::STORAGE,
             contents: bytemuck::cast_slice(self.gaussians.as_slice()),
         });
 
+        let elements_texture = device.create_texture(&TextureDescriptor {
+            label: Some(file!()),
+            dimension: wgpu::TextureDimension::D1,
+            format: wgpu::TextureFormat::R32Float,
+            mip_level_count: 1,
+            sample_count: 1,
+            size: wgpu::Extent3d { width:self.gaussians.len() as u32, height: 1, depth_or_array_layers: 1 },
+            usage: TextureUsages::COPY_DST | TextureUsages::TEXTURE_BINDING,
+            view_formats: &[
+                // wgpu::TextureFormat::Rgba32Float,
+                // wgpu::TextureFormat::R32Float,
+                // wgpu::TextureDescriptor::
+            ],
+        });
+
         let el_bindings = multimodal_gaussian::bind_groups::WgpuBindGroupLayout1 {
-            gauss_bases: BufferBinding {
-                buffer: &elements_buffer,
-                offset: 0,
-                size: NonZero::new(size_of_val(self.gaussians.as_slice()) as u64),
-            },
+            gauss_bases: &elements_texture.create_view(&TextureViewDescriptor {
+                label: Some(file!()),
+                ..Default::default()
+            }),
+            // gauss_bases: BufferBinding {
+            //     buffer: &elements_buffer,
+            //     offset: 0,
+            //     size: NonZero::new(size_of_val(self.gaussians.as_slice()) as u64),
+            // },
         };
 
         let el_bind_group_layout =
@@ -156,8 +177,9 @@ impl MultiModalGaussian {
                     pipeline,
                     resolution_bind_group,
                     elements_bind_group,
+                    elements_texture,
                     resolution_buffer,
-                    elements_buffer,
+                    // elements_buffer,
                 })
         else {
             panic!("pipeline already present?!")
@@ -182,7 +204,7 @@ impl CallbackTrait for RenderCall {
     ) -> Vec<wgpu::CommandBuffer> {
         let MultiModalGaussPipeline {
             resolution_buffer,
-            elements_buffer,
+            elements_texture,
             ..
         } = callback_resources.get().unwrap();
         queue.write_buffer(
@@ -193,11 +215,24 @@ impl CallbackTrait for RenderCall {
                 _pad: [0.0; 2],
             }]),
         );
-        queue.write_buffer(
-            elements_buffer,
-            0,
+        let size =(self.elements.len() * 4 * (32/8)) as u32;
+        let submitted_size = ((size / 256) + 1) * 256;
+        queue.write_texture(
+            ImageCopyTexture {
+                texture: elements_texture,
+                aspect: wgpu::TextureAspect::All,
+                mip_level: 0,
+                origin: wgpu::Origin3d::ZERO,
+            }, 
             bytemuck::cast_slice(self.elements.as_slice()),
+            ImageDataLayout {offset: 0, bytes_per_row: Some(submitted_size), rows_per_image: None},
+            wgpu::Extent3d { width: self.elements.len() as u32, height: 1, depth_or_array_layers: 1 },
         );
+        // queue.write_buffer(
+        //     elements_buffer,
+        //     0,
+        //     bytemuck::cast_slice(self.elements.as_slice()),
+        // );
         Vec::new()
     }
 

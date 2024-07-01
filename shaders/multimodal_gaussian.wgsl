@@ -2,15 +2,13 @@
 #import resolution_uniform_bind::resolution_info;
 #import fullscreen_quad;
 
-struct NormalDistribution {
-    position: vec2<f32>,
-    variance: f32,
-    // this will lead to a weight in relation to the other normal distributions
-    scale: f32,
-}
+// What I want to have:
+// @group(1) @binding(0)
+// var<storage, read> gauss_bases: array<NormalDistribution>;
 
+// What I have to use because of webgl backcompat:
 @group(1) @binding(0)
-var<storage, read> gauss_bases: array<NormalDistribution>;
+var gauss_bases: texture_1d<f32>;
 
 fn canvas_coord_to_ndc(canvas_coord: vec2<f32>, canvas_res: vec2<f32>) -> vec2<f32> {
     return (canvas_coord / max(canvas_res.x, canvas_res.y)) * 2.0 - 1.0;
@@ -24,18 +22,29 @@ fn fs_main(@builtin(position) canvas_coords: vec4<f32>) -> @location(0) vec4<f32
 
     var normalization = 0.0;
 
-    // TODO: consider how to do log-density display, which is what original does.
-    // it does a bunch of math which 
-    // 1. takes time to implement and 
-    // 2. I'm not sure whether it would be faster to calculate this on the gpu in every shader
-    //  and reduce data transfer or to calculate that on the cpu beforehand (and for that to work we also need to pass in the arrays anyways) 
+    // for (var i = 0u; i < arrayLength(&gauss_bases); i+=1u) {
+    for (var i = 0u; i < textureDimensions(gauss_bases); i+=1u) {
+        // let el = gauss_bases[i];
+        let texel = textureLoad(gauss_bases, i, 0);
 
-    for (var i = 0u; i < arrayLength(&gauss_bases); i+=1u) {
-        let el = gauss_bases[i];
+        // let position = el.position;
+        // let variance = el.variance;
+        // let scale = el.scale;
 
-        let scale = el.scale;
-        let variance = el.variance;
-        let position = el.position;
+        // since we send the data with bytemuck converted
+        // NormalDistribution, we interpret the fields in that order.
+        let position = vec2(texel.r, texel.g);
+        let variance = texel.b;
+        let scale = texel.a;
+
+        // let position = vec2(bitcast<f32>(texel.r), bitcast<f32>(texel.g));
+        // let variance = bitcast<f32>(texel.b);
+        // let scale = bitcast<f32>(texel.a);
+
+        // let position = vec2(f32(texel.r), f32(texel.g));
+        // let variance = f32(texel.b);
+        // let scale = f32(texel.a);
+
 
         // for now we calcualte this here, we might test later if this is better or worse than calculating it once on the cpu and delivering it on each render.
         let gauss_normalize = inverseSqrt(2 * PI * variance);
