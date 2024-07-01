@@ -120,7 +120,7 @@ impl eframe::App for TemplateApp {
                             // dunno where this is placed, which coordinate system this uses etc.
                             // But when combined with sensing a drag_and_drop this SHOULD provide me with enough info to find
                             // the gauss center (if any) that drags correspond to.
-                            let map_to_ndc = |loc| canvas_coord_to_ndc(loc, rect);
+                            let map_to_ndc = |loc| canvas_coord_to_ndc(loc, rect.size());
                             let (start_loc, current_loc) = ui.input(|input_state| {
                                 (
                                     input_state.pointer.press_origin().map(map_to_ndc),
@@ -171,7 +171,7 @@ impl eframe::App for TemplateApp {
                             // draw centers of gaussians
                             for ele in self.gaussian.gaussians.iter_mut() {
                                 painter.circle_filled(
-                                    ndc_to_canvas_coord(ele.position.into(), rect),
+                                    ndc_to_canvas_coord(ele.position.into(), rect.size()),
                                     5.0,
                                     egui::Color32::RED,
                                 );
@@ -182,13 +182,13 @@ impl eframe::App for TemplateApp {
     }
 }
 
-fn ndc_to_canvas_coord(ndc: egui::Pos2, canvas_rect: egui::Rect) -> egui::Pos2 {
-    ((ndc.to_vec2() + egui::Vec2::from([1.0, 1.0])) / 2.0 * canvas_rect.size().max_elem()).to_pos2()
+fn ndc_to_canvas_coord(ndc: egui::Pos2, canvas_size: egui::Vec2) -> egui::Pos2 {
+    ((ndc.to_vec2() + egui::Vec2::splat(1.0)) / 2.0 * canvas_size.max_elem()).to_pos2()
 }
 
 #[allow(dead_code)]
-fn canvas_coord_to_ndc(canvas_coord: egui::Pos2, canvas_rect: egui::Rect) -> egui::Pos2 {
-    (canvas_coord / canvas_rect.size().max_elem()) * 2.0 - Vec2::splat(1.0)
+fn canvas_coord_to_ndc(canvas_coord: egui::Pos2, canvas_rect: egui::Vec2) -> egui::Pos2 {
+    (canvas_coord / canvas_rect.max_elem()) * 2.0 - Vec2::splat(1.0)
 }
 
 #[cfg(test)]
@@ -208,15 +208,17 @@ mod test {
             max: [1920.0, 1080.0].into(),
         };
 
+        let size = rect.size();
+
         let start_canvas_coord = egui::Pos2::from([450.0, 670.0]);
         let start_ndc = [-0.634, 0.232].into();
 
         assert_eq!(
-            ndc_to_canvas_coord(canvas_coord_to_ndc(start_canvas_coord, rect), rect),
+            ndc_to_canvas_coord(canvas_coord_to_ndc(start_canvas_coord, size), size),
             start_canvas_coord
         );
         assert!(close_enough(
-            canvas_coord_to_ndc(ndc_to_canvas_coord(start_ndc, rect), rect),
+            canvas_coord_to_ndc(ndc_to_canvas_coord(start_ndc, size), size),
             start_ndc
         ));
     }
