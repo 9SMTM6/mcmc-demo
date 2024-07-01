@@ -78,7 +78,21 @@ impl eframe::App for TemplateApp {
             })
         });
 
-        self.settings.draw(ctx);
+        #[allow(clippy::collapsible_else_if)]
+        egui::Window::new("Settings").show(ctx, |ui| {
+            if self.settings == Settings::EditDistribution {
+                if ui.button("Stop Editing Distribution").clicked() {
+                    self.settings = Settings::Default;
+                }
+                ui.add_enabled(false, egui::Button::new("Add Element"))
+                    .on_hover_text("TODO");
+            } else {
+                if ui.button("Edit Distribution").clicked() {
+                    self.settings = Settings::EditDistribution;
+                };
+            };
+            // egui::global_dark_light_mode_buttons(ui);
+        });
 
         egui::CentralPanel::default()
             // remove margins
@@ -92,7 +106,6 @@ impl eframe::App for TemplateApp {
                         let px_size = ui.available_size();
                         let (rect, _response) =
                             ui.allocate_exact_size(px_size, egui::Sense::click_and_drag());
-                        // let rect = egui::Rect::from_min_size(ui.cursor().min, px_size) / ctx.pixels_per_point();
                         // last painted element wins.
                         let painter = ui.painter();
                         let current_spot: Pos2 = [300.0, 400.0].into();
@@ -113,18 +126,6 @@ impl eframe::App for TemplateApp {
                                 )
                             });
 
-                            // this doesnt seem to hold to what the documentation promises.
-                            // documentation promises this is the delta for each frame, but it behaves as I'd expect if it were the total delta.
-                            // let frame_delta = ui.input(|input_state| input_state.pointer.delta());
-                            // cc.egui_ctx.wants_pointer_input()
-
-                            // let delta = if _response.dragged() {
-                            //     // _response.drag_delta()
-                            //     canvas_coord_to_ndc(frame_delta.to_pos2(), rect).to_vec2()
-                            // } else {
-                            //     Vec2::splat(0.0)
-                            // };
-
                             // draw centers of gaussians
                             for ele in self.gaussian.gaussians.iter_mut() {
                                 let pos = Pos2::from(ele.position)
@@ -137,7 +138,6 @@ impl eframe::App for TemplateApp {
                                     } else {
                                         Vec2::splat(0.0)
                                     };
-                                // (Pos2::from(ele.position) + delta).into();
                                 painter.circle_filled(
                                     ndc_to_canvas_coord(pos, rect),
                                     5.0,
