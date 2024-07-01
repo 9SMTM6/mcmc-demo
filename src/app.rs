@@ -146,7 +146,7 @@ impl eframe::App for TemplateApp {
                                 {
                                     *distr_edit_kind = DistrEditKind::MoveCenter {
                                         idx,
-                                        orig_location: orig_location.clone(),
+                                        orig_location: *orig_location,
                                     }
                                 }
                             }
