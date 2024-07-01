@@ -1,7 +1,8 @@
 use egui::{self, Pos2, Shadow, Vec2};
 
 use crate::{
-    settings::{self, Settings},
+    settings::{self, DistrEditKind, Settings},
+    shaders::types::NormalDistribution,
     visualizations::{self, CanvasPainter, MultiModalGaussian},
 };
 
@@ -80,7 +81,7 @@ impl eframe::App for TemplateApp {
 
         #[allow(clippy::collapsible_else_if)]
         egui::Window::new("Settings").show(ctx, |ui| {
-            if self.settings == Settings::EditDistribution {
+            if matches!(self.settings, Settings::EditDistribution(_)) {
                 if ui.button("Stop Editing Distribution").clicked() {
                     self.settings = Settings::Default;
                 }
@@ -88,7 +89,7 @@ impl eframe::App for TemplateApp {
                     .on_hover_text("TODO");
             } else {
                 if ui.button("Edit Distribution").clicked() {
-                    self.settings = Settings::EditDistribution;
+                    self.settings = Settings::EditDistribution(settings::DistrEditKind::Stateless);
                 };
             };
             // egui::global_dark_light_mode_buttons(ui);
@@ -115,37 +116,65 @@ impl eframe::App for TemplateApp {
                         visualizations::PredictionVariance::new(current_spot, 200.0)
                             .paint(painter, rect);
                         visualizations::SamplingPoint::new(current_spot, 0.65).paint(painter, rect);
-                        if self.settings == Settings::EditDistribution {
+                        if let Settings::EditDistribution(ref mut distr_edit_kind) = self.settings {
                             // dunno where this is placed, which coordinate system this uses etc.
                             // But when combined with sensing a drag_and_drop this SHOULD provide me with enough info to find
                             // the gauss center (if any) that drags correspond to.
+                            let map_to_ndc = |loc| canvas_coord_to_ndc(loc, rect);
                             let (start_loc, current_loc) = ui.input(|input_state| {
                                 (
-                                    input_state.pointer.press_origin(),
-                                    input_state.pointer.interact_pos(),
+                                    input_state.pointer.press_origin().map(map_to_ndc),
+                                    input_state.pointer.interact_pos().map(map_to_ndc),
                                 )
                             });
 
-                            // draw centers of gaussians
-                            for ele in self.gaussian.gaussians.iter_mut() {
-                                let pos = Pos2::from(ele.position)
+                            if _response.drag_started() {
+                                let el =
+                                    self.gaussian.gaussians.iter().enumerate().find(|(_, el)| {
+                                        // todo: move to pixels here, precisely the size of the centers I draw, or something proportional to that.
+                                        (start_loc.unwrap().to_vec2() - Vec2::from(el.position))
+                                            .length()
+                                            < 0.03
+                                    });
+                                if let Some((
+                                    idx,
+                                    NormalDistribution {
+                                        position: orig_location,
+                                        ..
+                                    },
+                                )) = el
+                                {
+                                    *distr_edit_kind = DistrEditKind::MoveCenter {
+                                        idx,
+                                        orig_location: orig_location.clone(),
+                                    }
+                                }
+                            }
+
+                            if _response.drag_stopped() {
+                                *distr_edit_kind = DistrEditKind::Stateless;
+                            };
+
+                            if let DistrEditKind::MoveCenter { idx, orig_location } =
+                                *distr_edit_kind
+                            {
+                                let new_pos = Pos2::from(orig_location)
                                     + if _response.dragged() {
-                                        canvas_coord_to_ndc(
-                                            current_loc.unwrap() - start_loc.unwrap().to_vec2(),
-                                            rect,
-                                        )
-                                        .to_vec2() + Vec2::splat(1.0)
+                                        current_loc.unwrap().to_vec2()
+                                            - start_loc.unwrap().to_vec2()
                                     } else {
                                         Vec2::splat(0.0)
                                     };
+                                self.gaussian.gaussians[idx].position = new_pos.into();
+                            }
+
+                            // draw centers of gaussians
+                            for ele in self.gaussian.gaussians.iter_mut() {
                                 painter.circle_filled(
-                                    ndc_to_canvas_coord(pos, rect),
+                                    ndc_to_canvas_coord(ele.position.into(), rect),
                                     5.0,
                                     egui::Color32::RED,
                                 );
-                                if _response.drag_stopped() {
-                                    ele.position = pos.into();
-                                };
                             }
                         }
                     });
