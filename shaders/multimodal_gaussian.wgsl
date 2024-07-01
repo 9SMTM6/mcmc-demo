@@ -1,13 +1,7 @@
 #import constants::PI;
 #import resolution_uniform_bind::resolution_info;
 #import fullscreen_quad;
-
-struct NormalDistribution {
-    position: vec2<f32>,
-    variance: f32,
-    // this will lead to a weight in relation to the other normal distributions
-    scale: f32,
-}
+#import types::NormalDistribution;
 
 @group(1) @binding(0)
 var<storage, read> gauss_bases: array<NormalDistribution>;
