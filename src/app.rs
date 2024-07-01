@@ -133,7 +133,7 @@ impl eframe::App for TemplateApp {
                                             current_loc.unwrap() - start_loc.unwrap().to_vec2(),
                                             rect,
                                         )
-                                        .to_vec2()
+                                        .to_vec2() + Vec2::splat(1.0)
                                     } else {
                                         Vec2::splat(0.0)
                                     };
@@ -144,7 +144,6 @@ impl eframe::App for TemplateApp {
                                     egui::Color32::RED,
                                 );
                                 if _response.drag_stopped() {
-                                    dbg!("reached");
                                     ele.position = pos.into();
                                 };
                             }
