@@ -7,10 +7,9 @@ use wgpu::{util::DeviceExt, BindGroup, Buffer};
 use wgpu::{BufferBinding, BufferUsages, RenderPipeline, RenderPipelineDescriptor};
 
 use crate::shaders::types::{NormalDistribution, ResolutionInfo};
-use crate::shaders::{fullscreen_quad, multimodal_gaussian};
+use crate::shaders::{self, fullscreen_quad, multimodal_gaussian};
 use crate::visualizations::CanvasPainter;
 
-use super::fullscreen_quad::FULLSCREEN_QUAD;
 use super::resolution_uniform::create_buffer_init_descr;
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
@@ -217,6 +216,6 @@ impl CallbackTrait for RenderCall {
         render_pass.set_pipeline(pipeline);
         render_pass.set_bind_group(0, resolution_bind_group, &[]);
         render_pass.set_bind_group(1, elements_bind_group, &[]);
-        render_pass.draw(FULLSCREEN_QUAD.shader_vertice_num, 0..1);
+        render_pass.draw(0..fullscreen_quad::NUM_VERTICES, 0..1);
     }
 }

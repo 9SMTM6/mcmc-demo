@@ -1,4 +1,3 @@
-pub mod fullscreen_quad;
 pub mod multimodal_gaussian;
 mod resolution_uniform;
 
