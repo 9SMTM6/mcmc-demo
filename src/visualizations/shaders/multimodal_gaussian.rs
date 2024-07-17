@@ -7,7 +7,7 @@ use wgpu::{util::DeviceExt, BindGroup, Buffer};
 use wgpu::{BufferBinding, BufferUsages, RenderPipeline, RenderPipelineDescriptor};
 
 use crate::shaders::types::{NormalDistribution, ResolutionInfo};
-use crate::shaders::{self, fullscreen_quad, multimodal_gaussian};
+use crate::shaders::{fullscreen_quad, multimodal_gaussian};
 use crate::visualizations::CanvasPainter;
 
 use super::resolution_uniform::create_buffer_init_descr;
