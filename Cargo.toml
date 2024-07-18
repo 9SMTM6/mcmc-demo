@@ -17,8 +17,8 @@ x11 = ["eframe/x11"]
 shipped_fonts = ["eframe/default_fonts"]
 
 [dependencies]
-egui = "0.27.2"
-eframe = { version = "0.27.2", default-features = false, features = ["wgpu", "wayland"] }
+egui = "0.28.1"
+eframe = { version = "0.28.1", default-features = false, features = ["wgpu", "wayland"] }
 log = "0.4"
 
 # You only need serde if you want app persistence:
@@ -30,6 +30,7 @@ getrandom = { version = "0.2.15", features = ["js"] }
 rand_pcg = "0.3.1"
 rand_distr = "0.4.3"
 rand = { version = "0.8.5", features = ["log"] }
+web-sys = { version = "0.3.69", features = ["Navigator", "Gpu"] }
 
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]

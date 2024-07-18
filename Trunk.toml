@@ -1,5 +1,8 @@
 [build]
 minify="on_release"
+# this happens often on firefox, but a forced reload always gets rid of this.
+# since firefox isnt supported currently anyways, I'll leave it disabled.
+# no_sri = true
 
 [[hooks]]
 stage = "post_build"

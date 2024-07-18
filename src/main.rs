@@ -25,26 +25,47 @@ fn main() -> eframe::Result<()> {
     )
 }
 
-// When compiling to web using trunk:
 #[cfg(target_arch = "wasm32")]
-fn main() {
-    // Redirect `log` message to `console.log` and friends:
-    eframe::WebLogger::init(log::LevelFilter::Debug).ok();
+mod wasm_helpers {
+    use web_sys::wasm_bindgen::JsCast;
+    pub(super) fn get_canvas_element_by_id(canvas_id: &str) -> Option<web_sys::HtmlCanvasElement> {
+        let document = web_sys::window()?.document()?;
+        let canvas = document.get_element_by_id(canvas_id)?;
+        canvas.dyn_into::<web_sys::HtmlCanvasElement>().ok()
+    }
 
-    let web_options = eframe::WebOptions::default();
+    pub(super) fn get_canvas_element_by_id_or_die(canvas_id: &str) -> web_sys::HtmlCanvasElement {
+        get_canvas_element_by_id(canvas_id)
+            .unwrap_or_else(|| panic!("Failed to find canvas with id {canvas_id:?}"))
+    }
 
-    fn get_loading_text() -> Option<web_sys::Element> {
+    pub(super) fn get_loading_text() -> Option<web_sys::Element> {
         web_sys::window()
             .and_then(|w| w.document())
             .and_then(|d| d.get_element_by_id("loading_text"))
     }
+}
+
+// When compiling to web using trunk:
+#[cfg(target_arch = "wasm32")]
+fn main() {
+    use wasm_helpers::*;
+    // Redirect `log` message to `console.log` and friends:
+    eframe::WebLogger::init(log::LevelFilter::Debug).ok();
+
+    let webgpu_supported = web_sys::window().unwrap().navigator().gpu().is_truthy();
+
+    let web_options = eframe::WebOptions::default();
 
     let previous_hook = std::panic::take_hook();
     std::panic::set_hook(Box::new(move |panic_info| {
         // Show in the HTML that start has failed
-        get_loading_text().map(|e| {
-            e.set_inner_html(&format!(
-                r#"
+        let Some(loading_el_ref) = get_loading_text() else {
+            unreachable!()
+        };
+
+        loading_el_ref.set_inner_html(&format!(
+            r#"
     <p> The app has crashed. See the developer console for details. </p>
     <p style="font-size:10px" align="left">
         {panic_info}
@@ -56,23 +77,34 @@ fn main() {
         Reload the page to try again.
     </p>
 "#
-            ))
-        });
+        ));
         // Propagate panic info to the previously registered panic hook
         previous_hook(panic_info);
     }));
 
-    wasm_bindgen_futures::spawn_local(async {
-        eframe::WebRunner::new()
-            .start(
-                "the_canvas_id", // hardcode it
-                web_options,
-                Box::new(|cc| Ok(Box::new(mcmc_demo::TemplateApp::new(cc)))),
-            )
-            .await
-            .expect("failed to start eframe");
+    if webgpu_supported {
+        wasm_bindgen_futures::spawn_local(async {
+            eframe::WebRunner::new()
+                .start(
+                    get_canvas_element_by_id_or_die("the_canvas_id"),
+                    web_options,
+                    Box::new(|cc| Ok(Box::new(mcmc_demo::TemplateApp::new(cc)))),
+                )
+                .await
+                .expect("failed to start eframe");
 
-        // loaded successfully, remove the loading indicator
-        get_loading_text().map(|e| e.remove());
-    });
+            // loaded successfully, remove the loading indicator
+            get_loading_text().map(|e| e.remove());
+        });
+    } else {
+        let Some(loading_el_ref) = get_loading_text() else {
+            unreachable!()
+        };
+
+        loading_el_ref.set_inner_html(&format!(
+            r#"
+    <p> This app currently requires WebGPU </p>
+"#
+        ));
+    }
 }
