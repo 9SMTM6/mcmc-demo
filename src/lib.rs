@@ -3,6 +3,8 @@
 mod app;
 mod settings;
 mod visualizations;
+mod target_distributions;
+mod simulation;
 // fix compilation warnings from generated code
 #[allow(
     elided_lifetimes_in_paths,

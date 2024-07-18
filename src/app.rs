@@ -1,9 +1,7 @@
 use egui::{self, Pos2, Shadow, Vec2};
 
 use crate::{
-    settings::{self, DistrEditKind, Settings},
-    shaders::types::NormalDistribution,
-    visualizations::{self, CanvasPainter, MultiModalGaussian},
+    settings::{self, DistrEditKind, Settings}, shaders::types::NormalDistribution, target_distributions::multimodal_gaussian::MultiModalGaussian, visualizations::{self, CanvasPainter}
 };
 
 #[cfg_attr(feature="persistence", 
