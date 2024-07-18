@@ -1,6 +1,8 @@
 use std::f32::consts::PI;
 
-use crate::{shaders::types::NormalDistribution, simulation::random_walk_metropolis_hastings::AlgoVec};
+use crate::{
+    shaders::types::NormalDistribution, simulation::random_walk_metropolis_hastings::AlgoVec,
+};
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Clone)]
@@ -49,14 +51,18 @@ impl MultiModalGaussian {
 
         let mut normalization = 0.0;
 
-
-        for NormalDistribution{position: gauss_pos, scale, variance} in self.gaussians.iter() {
+        for NormalDistribution {
+            position: gauss_pos,
+            scale,
+            variance,
+        } in self.gaussians.iter()
+        {
             let gauss_pos = AlgoVec::new(gauss_pos[0], gauss_pos[1]);
             let gauss_normalize = 1.0 / f32::sqrt(2.0 * PI * variance);
             let sq_dist = f32::powi(position.metric_distance(&gauss_pos), 2);
 
             let prob_contrib = gauss_normalize * f32::exp(-sq_dist / (2.0 * variance));
-            combined_prob_density+= scale * prob_contrib;
+            combined_prob_density += scale * prob_contrib;
             normalization += scale;
         }
 

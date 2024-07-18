@@ -1,7 +1,11 @@
 use egui::{self, Pos2, Shadow, Vec2};
 
 use crate::{
-    settings::{self, DistrEditKind, Settings}, shaders::types::NormalDistribution, simulation::{self, random_walk_metropolis_hastings::Algo}, target_distributions::multimodal_gaussian::MultiModalGaussian, visualizations::{self, CanvasPainter}
+    settings::{self, DistrEditKind, Settings},
+    shaders::types::NormalDistribution,
+    simulation::random_walk_metropolis_hastings::Algo,
+    target_distributions::multimodal_gaussian::MultiModalGaussian,
+    visualizations::{self, CanvasPainter},
 };
 
 #[cfg_attr(feature="persistence", 

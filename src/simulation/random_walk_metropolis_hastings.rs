@@ -1,7 +1,10 @@
 use egui::{Color32, Pos2};
 use rand::distributions::Distribution;
 
-use crate::{app::ndc_to_canvas_coord, target_distributions::multimodal_gaussian::MultiModalGaussian, visualizations::CanvasPainter};
+use crate::{
+    app::ndc_to_canvas_coord, target_distributions::multimodal_gaussian::MultiModalGaussian,
+    visualizations::CanvasPainter,
+};
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 pub enum AlgoParams {
@@ -55,7 +58,7 @@ impl Algo {
         let acceptance_ratio = self.target_distr.acceptance_ratio(proposal, current);
         let accept_distr = rand_distr::Uniform::new_inclusive(0.0, 1.0);
         let accept = accept_distr.sample(&mut rand::thread_rng()) <= acceptance_ratio;
-        self.accepted.push(if accept {proposal} else {current})
+        self.accepted.push(if accept { proposal } else { current })
     }
 }
 

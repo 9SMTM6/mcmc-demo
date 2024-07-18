@@ -8,8 +8,8 @@ use wgpu::{BufferBinding, BufferUsages, RenderPipeline, RenderPipelineDescriptor
 
 use crate::shaders::types::{NormalDistribution, ResolutionInfo};
 use crate::shaders::{fullscreen_quad, multimodal_gaussian};
-use crate::visualizations::CanvasPainter;
 use crate::target_distributions::multimodal_gaussian::MultiModalGaussian;
+use crate::visualizations::CanvasPainter;
 
 use super::resolution_uniform::create_buffer_init_descr;
 
