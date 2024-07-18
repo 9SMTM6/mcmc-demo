@@ -105,7 +105,7 @@ impl eframe::App for TemplateApp {
                     .outer_margin(egui::Margin::default())
                     .show(ui, |ui| {
                         let px_size = ui.available_size();
-                        let (rect, _response) =
+                        let (rect, response) =
                             ui.allocate_exact_size(px_size, egui::Sense::click_and_drag());
                         // last painted element wins.
                         let painter = ui.painter();
@@ -128,7 +128,7 @@ impl eframe::App for TemplateApp {
                                 )
                             });
 
-                            if _response.drag_started() {
+                            if response.drag_started() {
                                 let el =
                                     self.gaussian.gaussians.iter().enumerate().find(|(_, el)| {
                                         // todo: move to pixels here, precisely the size of the centers I draw, or something proportional to that.
@@ -151,7 +151,7 @@ impl eframe::App for TemplateApp {
                                 }
                             }
 
-                            if _response.drag_stopped() {
+                            if response.drag_stopped() {
                                 *distr_edit_kind = DistrEditKind::Stateless;
                             };
 
@@ -159,7 +159,7 @@ impl eframe::App for TemplateApp {
                                 *distr_edit_kind
                             {
                                 let new_pos = Pos2::from(orig_location)
-                                    + if _response.dragged() {
+                                    + if response.dragged() {
                                         current_loc.unwrap().to_vec2()
                                             - start_loc.unwrap().to_vec2()
                                     } else {
