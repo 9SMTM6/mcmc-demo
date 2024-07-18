@@ -1,7 +1,7 @@
 use egui::{self, Pos2, Shadow, Vec2};
 
 use crate::{
-    settings::{self, DistrEditKind, Settings}, shaders::types::NormalDistribution, target_distributions::multimodal_gaussian::MultiModalGaussian, visualizations::{self, CanvasPainter}
+    settings::{self, DistrEditKind, Settings}, shaders::types::NormalDistribution, simulation::{self, random_walk_metropolis_hastings::Algo}, target_distributions::multimodal_gaussian::MultiModalGaussian, visualizations::{self, CanvasPainter}
 };
 
 #[cfg_attr(feature="persistence", 
@@ -12,6 +12,7 @@ use crate::{
 )]
 #[derive(Default)]
 pub struct TemplateApp {
+    algo: Algo,
     gaussian: MultiModalGaussian,
     settings: settings::Settings,
 }
@@ -19,10 +20,13 @@ pub struct TemplateApp {
 impl TemplateApp {
     /// Called once before the first frame.
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        let state = Self::get_state(cc);
+        let mut state = Self::get_state(cc);
         state
             .gaussian
             .init_gaussian_pipeline(cc.wgpu_render_state.as_ref().unwrap());
+        for _ in 0..9000 {
+            state.algo.step();
+        }
         state
     }
 
@@ -114,6 +118,7 @@ impl eframe::App for TemplateApp {
                         visualizations::PredictionVariance::new(current_spot, 200.0)
                             .paint(painter, rect);
                         visualizations::SamplingPoint::new(current_spot, 0.65).paint(painter, rect);
+                        self.algo.paint(painter, rect);
                         if let Settings::EditDistribution(ref mut distr_edit_kind) = self.settings {
                             // dunno where this is placed, which coordinate system this uses etc.
                             // But when combined with sensing a drag_and_drop this SHOULD provide me with enough info to find
@@ -180,12 +185,12 @@ impl eframe::App for TemplateApp {
     }
 }
 
-fn ndc_to_canvas_coord(ndc: egui::Pos2, canvas_size: egui::Vec2) -> egui::Pos2 {
+pub fn ndc_to_canvas_coord(ndc: egui::Pos2, canvas_size: egui::Vec2) -> egui::Pos2 {
     ((ndc.to_vec2() + egui::Vec2::splat(1.0)) / 2.0 * canvas_size.max_elem()).to_pos2()
 }
 
 #[allow(dead_code)]
-fn canvas_coord_to_ndc(canvas_coord: egui::Pos2, canvas_rect: egui::Vec2) -> egui::Pos2 {
+pub fn canvas_coord_to_ndc(canvas_coord: egui::Pos2, canvas_rect: egui::Vec2) -> egui::Pos2 {
     (canvas_coord / canvas_rect.max_elem()) * 2.0 - Vec2::splat(1.0)
 }
 
