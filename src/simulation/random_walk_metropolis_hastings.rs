@@ -37,16 +37,35 @@ impl AlgoParams {
 }
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
+#[derive(Default, Clone)]
+struct AcceptRecord {
+    location: AlgoVec,
+    remain_count: u32,
+}
+
+
+#[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 pub struct Algo {
-    pub accepted: Vec<AlgoVec>,
-    pub rejected: Vec<AlgoVec>,
+    current_loc: AcceptRecord,
+    max_remain_count: u32,
+    // should be HashMap<AlgoVec, i32> or similar,
+    // but this is an issue as the f32 in AlgoVec isnt Eq.
+    // So IDK how to do this right.
+    accepted: Vec<AcceptRecord>,
+    rejected: Vec<AlgoVec>,
     params: AlgoParams,
 }
 
 impl Default for Algo {
     fn default() -> Self {
         Self {
-            accepted: vec![AlgoVec::from_element(0.0)],
+            // TODO: make start point configurable
+            current_loc: AcceptRecord {
+                location: AlgoVec::from_element(0.0),
+                ..Default::default()
+            },
+            max_remain_count: 0,
+            accepted: vec![],
             rejected: vec![],
             params: AlgoParams::GaussianProposal { sigma: 0.2 },
         }
@@ -57,29 +76,43 @@ impl Algo {
     pub fn step(
         &mut self,
         target_distr: &MultiModalGaussian,
-        gaussian_rng: &mut SRngGaussianIter<impl Rng + SeedableRng>,
+        proposal_rng: &mut SRngGaussianIter<impl Rng + SeedableRng>,
         accept_rng: &mut SRngPercIter<impl Rng + SeedableRng>,
     ) {
-        let current = *self.accepted.last().unwrap();
-        let proposal = self.params.propose(current, gaussian_rng);
-        let acceptance_ratio = target_distr.acceptance_ratio(proposal, current);
+        let current = &mut self.current_loc;
+        let proposal = self.params.propose(current.location, proposal_rng);
+        let acceptance_ratio = target_distr.acceptance_ratio(proposal, current.location);
         let accept = accept_rng.unwrapped_next() <= acceptance_ratio;
-        self.accepted.push(if accept { proposal } else { current });
-        if !accept {
+        // self.current_loc = if accept { proposal } else { current };
+        if accept {
+            self.accepted.push(self.current_loc.clone());
+            self.current_loc = AcceptRecord {
+                location: proposal,
+                remain_count: 0,
+            };
+        } else {
+            current.remain_count+=1;
+            self.max_remain_count = self.max_remain_count.max(current.remain_count);
             self.rejected.push(proposal);
         };
     }
 }
 
+const LOWEST_ALPHA: f32 = 0.3;
+
 impl CanvasPainter for Algo {
     fn paint(&self, painter: &egui::Painter, rect: egui::Rect) {
-        for step in self.accepted.iter() {
-            let step = ndc_to_canvas_coord(Pos2::new(step.x, step.y), rect.size());
-            painter.circle_filled(step, 3.0, Color32::BLUE);
+        for AcceptRecord {location, remain_count} in self.accepted.iter() {
+            let step = ndc_to_canvas_coord(Pos2::new(location.x, location.y), rect.size());
+            let factor = *remain_count as f32 / self.max_remain_count as f32;
+            // with the above there may be a point where most accepted points are very close to 0, this seeks to always have them above a certain threshold.
+            let log_factor = f32::log2(1.0 + factor) / f32::log2(2.0);
+            let renormalized_factor = log_factor * (1.0 - LOWEST_ALPHA) + LOWEST_ALPHA;
+            painter.circle_filled(step, 3.0, Color32::RED.gamma_multiply(renormalized_factor));
         }
         for step in self.rejected.iter() {
             let step = ndc_to_canvas_coord(Pos2::new(step.x, step.y), rect.size());
-            painter.circle_filled(step, 3.0, Color32::YELLOW);
+            painter.circle_filled(step, 3.0, Color32::YELLOW.gamma_multiply(LOWEST_ALPHA));
         }
     }
 }
