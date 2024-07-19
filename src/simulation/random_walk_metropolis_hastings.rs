@@ -1,10 +1,12 @@
 use egui::{Color32, Pos2};
-use rand::distributions::Distribution;
+use rand::{Rng, SeedableRng};
 
 use crate::{
     app::ndc_to_canvas_coord, target_distributions::multimodal_gaussian::MultiModalGaussian,
     visualizations::CanvasPainter,
 };
+
+use super::{SRngGaussianIter, SRngPercIter};
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 pub enum AlgoParams {
@@ -21,44 +23,51 @@ impl Default for AlgoParams {
 pub type AlgoVec = na::Vector2<f32>;
 
 impl AlgoParams {
-    fn propose(&self, start_loc: AlgoVec) -> AlgoVec {
+    fn propose(
+        &self,
+        start_loc: AlgoVec,
+        gaussian_rng: &mut SRngGaussianIter<impl Rng + SeedableRng>,
+    ) -> AlgoVec {
         let Self::GaussianProposal { sigma } = self;
-        // TODO: dont reconstruct for every proposal.
-        // Perhaps simply use one rand_distr::StandardNormal
-        let normal_x = rand_distr::Normal::new(start_loc.x, *sigma).unwrap();
-        let normal_y = rand_distr::Normal::new(start_loc.y, *sigma).unwrap();
-        AlgoVec::new(
-            normal_x.sample(&mut rand::thread_rng()),
-            normal_y.sample(&mut rand::thread_rng()),
-        )
+
+        let normal_x = start_loc.x + gaussian_rng.unwrapped_next() * (*sigma);
+        let normal_y = start_loc.y + gaussian_rng.unwrapped_next() * (*sigma);
+        AlgoVec::new(normal_x, normal_y)
     }
 }
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 pub struct Algo {
     pub accepted: Vec<AlgoVec>,
+    pub rejected: Vec<AlgoVec>,
     params: AlgoParams,
-    target_distr: MultiModalGaussian,
 }
 
 impl Default for Algo {
     fn default() -> Self {
         Self {
             accepted: vec![AlgoVec::from_element(0.0)],
-            params: AlgoParams::GaussianProposal { sigma: 0.4 },
-            target_distr: MultiModalGaussian::default(),
+            rejected: vec![],
+            params: AlgoParams::GaussianProposal { sigma: 0.2 },
         }
     }
 }
 
 impl Algo {
-    pub fn step(&mut self) {
+    pub fn step(
+        &mut self,
+        target_distr: &MultiModalGaussian,
+        gaussian_rng: &mut SRngGaussianIter<impl Rng + SeedableRng>,
+        accept_rng: &mut SRngPercIter<impl Rng + SeedableRng>,
+    ) {
         let current = *self.accepted.last().unwrap();
-        let proposal = self.params.propose(current);
-        let acceptance_ratio = self.target_distr.acceptance_ratio(proposal, current);
-        let accept_distr = rand_distr::Uniform::new_inclusive(0.0, 1.0);
-        let accept = accept_distr.sample(&mut rand::thread_rng()) <= acceptance_ratio;
-        self.accepted.push(if accept { proposal } else { current })
+        let proposal = self.params.propose(current, gaussian_rng);
+        let acceptance_ratio = target_distr.acceptance_ratio(proposal, current);
+        let accept = accept_rng.unwrapped_next() <= acceptance_ratio;
+        self.accepted.push(if accept { proposal } else { current });
+        if !accept {
+            self.rejected.push(proposal);
+        };
     }
 }
 
@@ -67,6 +76,10 @@ impl CanvasPainter for Algo {
         for step in self.accepted.iter() {
             let step = ndc_to_canvas_coord(Pos2::new(step.x, step.y), rect.size());
             painter.circle_filled(step, 3.0, Color32::BLUE);
+        }
+        for step in self.rejected.iter() {
+            let step = ndc_to_canvas_coord(Pos2::new(step.x, step.y), rect.size());
+            painter.circle_filled(step, 3.0, Color32::YELLOW);
         }
     }
 }

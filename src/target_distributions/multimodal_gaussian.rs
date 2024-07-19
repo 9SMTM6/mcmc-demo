@@ -5,7 +5,7 @@ use crate::{
 };
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct MultiModalGaussian {
     pub gaussians: Vec<NormalDistribution>,
 }

@@ -3,7 +3,7 @@ use egui::{self, Pos2, Shadow, Vec2};
 use crate::{
     settings::{self, DistrEditKind, Settings},
     shaders::types::NormalDistribution,
-    simulation::random_walk_metropolis_hastings::Algo,
+    simulation::{random_walk_metropolis_hastings::Algo, SRngGaussianIter, SRngPercIter},
     target_distributions::multimodal_gaussian::MultiModalGaussian,
     visualizations::{self, CanvasPainter},
 };
@@ -28,8 +28,14 @@ impl TemplateApp {
         state
             .gaussian
             .init_gaussian_pipeline(cc.wgpu_render_state.as_ref().unwrap());
-        for _ in 0..9000 {
-            state.algo.step();
+        let mut gaussian_distr_iter = SRngGaussianIter::<rand_pcg::Pcg32>::new([42; 16]);
+        let mut uniform_distr_iter = SRngPercIter::<rand_pcg::Pcg32>::new([42; 16]);
+        for _ in 0..4000 {
+            state.algo.step(
+                &state.gaussian,
+                &mut gaussian_distr_iter,
+                &mut uniform_distr_iter,
+            );
         }
         state
     }
@@ -117,12 +123,12 @@ impl eframe::App for TemplateApp {
                         let painter = ui.painter();
                         let current_spot: Pos2 = [300.0, 400.0].into();
                         self.gaussian.paint(painter, rect * ctx.pixels_per_point());
+                        self.algo.paint(painter, rect);
                         visualizations::Arrow::new(current_spot, [100.0, 100.0])
                             .paint(painter, rect);
                         visualizations::PredictionVariance::new(current_spot, 200.0)
                             .paint(painter, rect);
                         visualizations::SamplingPoint::new(current_spot, 0.65).paint(painter, rect);
-                        self.algo.paint(painter, rect);
                         if let Settings::EditDistribution(ref mut distr_edit_kind) = self.settings {
                             // dunno where this is placed, which coordinate system this uses etc.
                             // But when combined with sensing a drag_and_drop this SHOULD provide me with enough info to find
