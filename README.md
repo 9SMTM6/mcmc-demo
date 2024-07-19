@@ -1,68 +1,16 @@
 # TODO:
 
-## Rid me of the pain of wgpu boilerplate for wgsl shaders
+## Non-Batched execution
 
-Use either 
-https://lib.rs/crates/include-wgsl-oil
-or 
-https://lib.rs/crates/wgsl_to_wgpu
-or its fork
-https://lib.rs/crates/wgsl_bindgen
-the reason for the fork seems to be this discussion:
-https://github.com/ScanMountGoat/wgsl_to_wgpu/issues/50
-and here are the features the fork promises over the original
-https://github.com/Swoorup/wgsl-bindgen?tab=readme-ov-file#differences-from-the-wgsl_to_wgpu-fork
-consider that this comes presumably with more dependencies and the gotchas that were listed as reasons for the refusal of the PR that lead to the fork. Perhaps start with the original and see if thats good enough.
+Currently I only support batched execution, to quickly see results of different configurations.
+In the future I also want to support a substep execution such as in the [original inspiration](https://chi-feng.github.io/mcmc-demo/app.html?algorithm=RandomWalkMH&target=banana).
 
-Since at least the last 2 of these can be done during build-time, they presumably will NOT increase web bundle size, critical for me. If deploying these, check for that.
+## Support more PRNG and low-discrepancy randomness
 
-also https://lib.rs/crates/wgsl-minifier
-
-## Size-reductions:
-
-Possibilities:
-
-* (DONE) wasm-opt
-* disable webgl compat layer
-* (DONE) disable persistence
-* (DONE) disable default_fonts on egui
-* (DONEISH, gzip) compression on browser
-
-All together were able to reduce size from ~7.3MB to ~1MB
-
-I enabled all by the webgl_compat disable and brotli by default in `trunk build --release`.
-
-### Compression
-GH-Pages doesnt support brotli, so gzip it is.
-
-In addition to all other optimizations, brotli manages to reduce WASM size further from ~2.4MB to ~1MB without webgl_compat etc, ~5MB to ~1.5MB with.
-
-`brotli dist/mcmc_demo-*_bg.wasm`
-
-Integrating it would be harder, trunk doesnt support it, and I'm unsure if thats a great idea, since I dont think (?) brotli can stream decompression, which in turn means that the ability to stream-run wasm in browsers for faster interactivity is gone.
-
-Just checked, but yeah, brotli supports streaming. Theres also a feature request for trunk that adds sompression, but there was no progress: https://github.com/trunk-rs/trunk/issues/91
-
-Also note that zstd is also an option. Its better still than brotli in most tests. But Safari doesnt support it: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Encoding
-I also just checked, and with default settings, while compression was A LOT faster, it also lead to worse compression ratio with webgl_compat.
-
-### Wasm-opt
-
-`wasm-opt -O2 --fast-math mcmc_demo-95a84b4d1a0af565_bg.wasm -o mcmc_demo-95a84b4d1a0af565_bg.opt.wasm`
-
-Went from ~7.5 MB to ~5.5 MB in my testing
-
-Optimizing with `-Oz` did not make a difference in my testing. Neither for wasm-opt nor cargo.
-
-### Disable WebGL compat
-
-No good reason for that currently, and Serde takes up a bunch of space
-
-went from ~7.5 MB to ~4.0 MB
-
-### disable persistance
-
-requires removal of serde and persisence feature on eframe
+https://en.wikipedia.org/wiki/Quasi-Monte_Carlo_method
+https://crates.io/crates/sobol_burley
+https://crates.io/crates/halton
+https://crates.io/crates/quasirandom
 
 # eframe template
 
