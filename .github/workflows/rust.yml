@@ -20,9 +20,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-        with:
-          profile: minimal
-          toolchain: "stable"
       - uses: actions-rs/cargo@v1
         with:
           command: check
@@ -35,10 +32,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
-          profile: minimal
-          toolchain: "stable"
           components: rustfmt
-          target: wasm32-unknown-unknown
+          targets: wasm32-unknown-unknown
       - uses: actions-rs/cargo@v1
         with:
           command: check
@@ -50,9 +45,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-        with:
-          profile: minimal
-          toolchain: "stable"
       - run: sudo apt-get install libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxkbcommon-dev libssl-dev
       - uses: actions-rs/cargo@v1
         with:
@@ -66,8 +58,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
-          profile: minimal
-          toolchain: "stable"
           components: rustfmt
       - uses: actions-rs/cargo@v1
         with:
@@ -81,8 +71,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
-          profile: minimal
-          toolchain: "stable"
           components: clippy
       - uses: actions-rs/cargo@v1
         with:
@@ -96,8 +84,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
-          profile: minimal
-          toolchain: "stable"
           targets: wasm32-unknown-unknown
       - name: Download and install Trunk binary
         run: wget -qO- https://github.com/thedodd/trunk/releases/latest/download/trunk-x86_64-unknown-linux-gnu.tar.gz | tar -xzf-
@@ -136,9 +122,7 @@ jobs:
     - uses: actions/checkout@master
     - uses: dtolnay/rust-toolchain@stable
       with:
-        profile: minimal
-        toolchain: "stable"
-        target: ${{ matrix.TARGET }}
+        targets: ${{ matrix.TARGET }}
         override: true
 
     - uses: actions-rs/cargo@v1
@@ -155,6 +139,8 @@ jobs:
         name: mcmc_demo-${{ matrix.TARGET }}${{ matrix.EXTENSION }}
         path: mcmc_demo-${{ matrix.TARGET }}${{ matrix.EXTENSION }}
 
+    # this requires read-write permissions on the repo:
+    # https://github.com/svenstaro/upload-release-action/issues/70
     - uses: svenstaro/upload-release-action@v2
       name: Upload binaries to release
       if: ${{ github.event_name == 'push' }}
