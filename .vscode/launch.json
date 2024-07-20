@@ -7,16 +7,16 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in library 'mcmc_demo'",
+            "name": "Debug unit tests in library 'mcmc-demo'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
                     "--lib",
-                    "--package=mcmc_demo"
+                    "--package=mcmc-demo"
                 ],
                 "filter": {
-                    "name": "mcmc_demo",
+                    "name": "mcmc-demo",
                     "kind": "lib"
                 }
             },
@@ -26,15 +26,15 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'mcmc_demo'",
+            "name": "Debug executable 'mcmc-demo'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=mcmc_demo",
-                    "--package=mcmc_demo"
+                    "--bin=mcmc-demo",
+                    "--package=mcmc-demo"
                 ],
                 "filter": {
-                    "name": "mcmc_demo",
+                    "name": "mcmc-demo",
                     "kind": "bin"
                 }
             },
@@ -44,16 +44,16 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'mcmc_demo'",
+            "name": "Debug unit tests in executable 'mcmc-demo'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                    "--bin=mcmc_demo",
-                    "--package=mcmc_demo"
+                    "--bin=mcmc-demo",
+                    "--package=mcmc-demo"
                 ],
                 "filter": {
-                    "name": "mcmc_demo",
+                    "name": "mcmc-demo",
                     "kind": "bin"
                 }
             },

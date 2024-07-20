@@ -1,5 +1,5 @@
 [package]
-name = "mcmc_demo"
+name = "mcmc-demo"
 version = "0.1.0"
 authors = ["Samuel Maier <9smtm6@gmail.com>"]
 edition = "2021"

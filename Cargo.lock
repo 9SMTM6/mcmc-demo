@@ -1391,7 +1391,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "mcmc_demo"
+name = "mcmc-demo"
 version = "0.1.0"
 dependencies = [
  "bytemuck",
