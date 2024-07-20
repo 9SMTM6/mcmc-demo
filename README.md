@@ -5,6 +5,38 @@
 Currently I only support batched execution, to quickly see results of different configurations.
 In the future I also want to support a substep execution such as in the [original inspiration](https://chi-feng.github.io/mcmc-demo/app.html?algorithm=RandomWalkMH&target=banana).
 
+## Execution of batches on web
+
+To be able to efficiently execute batches in the background on the web we would need a bunch of things to fall into place.
+We want to be able to execute that task in a background thread.
+However for that to work we need wasm-threads, and theres a few issues with using this.
+
+WASM threads rely on sharedarraybuffers, and these need some headers to be active on the webpage, as described here:
+* https://web.dev/articles/webassembly-threads
+* https://web.dev/articles/coop-coep
+
+Checking the deployed github page, these headers are not set by default, and setting headers for github pages isnt allowed by default:
+https://stackoverflow.com/questions/14798589/github-pages-http-headers
+
+One of the answers suggests setting the headers with `<meta http-equiv="HEADER">`, however that doesnt work for these headers:
+* not listed here: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/meta#http-equiv
+* someone tried it and it did not work: https://www.reddit.com/r/WebAssembly/comments/tuinyg/run_wasm_from_github_pages_possible/
+
+There are suggestes solutions, but AFAICT these require you to serve (or proxy) the artifacts on another domain (pages.dev if using cloudflare). Note, this may also allow me to use brotli instead of gzip compression.
+
+Even with these headers, compatibility is questionable, as at least in the beginning mobile browsers did not enable this feature, because it eats resources (as it leads to another process for that page specifically): 
+
+> [https://web.dev/articles/webassembly-threads] However, this mitigation was still limited only to Chrome desktop, as Site Isolation is a fairly expensive feature, and couldn't be enabled by default for all sites on low-memory mobile devices nor was it yet implemented by other vendors.
+
+Also note the difficulties in using threads in Rust because of the generic `wasm32-unknown-unknown` target rust uses:
+
+> [https://web.dev/articles/webassembly-threads] If Wasm is intended to be used in a web environment, any interaction with JavaScript APIs is left to external libraries and tooling like wasm-bindgen and wasm-pack. Unfortunately, this means that the standard library is not aware of Web Workers and standard APIs such as std::thread won't work when compiled to WebAssembly.
+
+
+Altogether I'm not sure of the right route. Supporting threads seems like a lot of work with unknown end result.
+
+An alternative might be simply using a promise with wasm_bindgen_futures and hoping that the browsers manage to make it not suck. Its unlikely this will use proper threads, but ...
+
 ## Support more PRNG and low-discrepancy randomness
 
 https://en.wikipedia.org/wiki/Quasi-Monte_Carlo_method
