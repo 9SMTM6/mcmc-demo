@@ -20,6 +20,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      - name: Rust Cache # cache the rust build artefacts
+        uses: Swatinem/rust-cache@v1
       - run: cargo check --all-features --all-targets
 
   test:
@@ -28,6 +30,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      - name: Rust Cache # cache the rust build artefacts
+        uses: Swatinem/rust-cache@v1
       # why is that here?
       # - run: sudo apt-get install libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxkbcommon-dev libssl-dev
       - run: cargo test --lib
@@ -40,6 +44,8 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt
+      - name: Rust Cache # cache the rust build artefacts
+        uses: Swatinem/rust-cache@v1
       - run: cargo fmt --all -- --check
 
   clippy:
@@ -50,6 +56,8 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
+      - name: Rust Cache # cache the rust build artefacts
+        uses: Swatinem/rust-cache@v1
       - run: cargo clippy --workspace --all-targets --all-features --  -D warnings -W clippy::all
 
   trunk:
@@ -60,6 +68,8 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-unknown-unknown
+      - name: Rust Cache # cache the rust build artefacts
+        uses: Swatinem/rust-cache@v1
       - name: Download and install Trunk binary
         run: wget -qO- https://github.com/thedodd/trunk/releases/latest/download/trunk-x86_64-unknown-linux-gnu.tar.gz | tar -xzf-
       - name: Build
@@ -110,6 +120,9 @@ jobs:
     - uses: dtolnay/rust-toolchain@stable
       with:
         targets: ${{ matrix.TARGET }}
+    
+    - name: Rust Cache # cache the rust build artefacts
+      uses: Swatinem/rust-cache@v1
 
     - if: ${{ !matrix.cross }}
       name: Cargo Build
