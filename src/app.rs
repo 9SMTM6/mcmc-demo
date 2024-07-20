@@ -92,7 +92,7 @@ impl eframe::App for TemplateApp {
         });
 
         #[allow(clippy::collapsible_else_if)]
-        egui::Window::new("Settings").show(ctx, |ui| {
+        egui::Window::new("Simulation").show(ctx, |ui| {
             if matches!(self.settings, Settings::EditDistribution(_)) {
                 if ui.button("Stop Editing Distribution").clicked() {
                     self.settings = Settings::Default;
