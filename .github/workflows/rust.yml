@@ -97,14 +97,15 @@ jobs:
       matrix:
         include:
         - os: macos-latest
-          # macos-latest seems to already run on arm64:
+          # macos-latest seems to already run on arm64(=aarch64):
           # https://docs.github.com/en/actions/using-jobs/choosing-the-runner-for-a-job#standard-github-hosted-runners-for-public-repositories
           TARGET: aarch64-apple-darwin
 
         - os: macos-latest
-          # even though the runner uses arm64, MacOS on arm64 seems to support building for amd64.
-          # which makes sense, would be bad for devs otherwise. 
           TARGET: x86_64-apple-darwin
+          # even though the runner uses arm64, MacOS on arm64 seems to support building for amd64.
+          # which makes sense, would be bad for devs otherwise.
+          cross: false 
 
         - os: ubuntu-latest
           TARGET: aarch64-unknown-linux-gnu
@@ -118,10 +119,10 @@ jobs:
           EXTENSION: .exe
 
     steps:
-    - name: Install cross for linux
+    - name: Install cross
       # Github doesnt have runners with exotic architectures (eg. arm64/aarch64 on anything but macos). 
       # Thus we use cross.
-      # It's necessary to use an up-to-date cross from the git repository to avoid glibc problems
+      # It's necessary to use an up-to-date cross from the git repository to avoid glibc problems on linux
       # Ref: https://github.com/cross-rs/cross/issues/1510
       if: matrix.cross
       run: |
