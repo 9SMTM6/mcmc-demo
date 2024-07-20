@@ -100,16 +100,13 @@ jobs:
           TARGET: aarch64-apple-darwin
 
         - os: macos-latest
-          TARGET: x86_64-apple-darwin
+          TARGET: aarch64-apple-darwin
 
         - os: ubuntu-latest
-          TARGET: arm-unknown-linux-musleabihf
+          TARGET: aarch64-unknown-linux-gnu
 
         - os: ubuntu-latest
-          TARGET: armv7-unknown-linux-musleabihf
-
-        - os: ubuntu-latest
-          TARGET: x86_64-unknown-linux-musl
+          TARGET: x86_64-unknown-linux-gnu
 
         - os: windows-latest
           TARGET: x86_64-pc-windows-msvc
@@ -123,13 +120,8 @@ jobs:
     - uses: dtolnay/rust-toolchain@stable
       with:
         targets: ${{ matrix.TARGET }}
-        override: true
 
-    - uses: actions-rs/cargo@v1
-      with:
-        use-cross: true
-        command: build
-        args: --verbose --release --target=${{ matrix.TARGET }}
+    - run: cargo build --verbose --release --target=${{ matrix.TARGET }}
 
     - name: Rename
       run: cp target/${{ matrix.TARGET }}/release/mcmc_demo${{ matrix.EXTENSION }} mcmc_demo-${{ matrix.TARGET }}${{ matrix.EXTENSION }}
