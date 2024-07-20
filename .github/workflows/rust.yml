@@ -120,12 +120,14 @@ jobs:
     - uses: dtolnay/rust-toolchain@stable
       with:
         targets: ${{ matrix.TARGET }}
-    
+
     - name: Rust Cache # cache the rust build artefacts
       uses: Swatinem/rust-cache@v1
       with:
         # this is required to avoid failures due to caching of artifacts for different architectures
-        # (I think)
+        # The reason is the potential usage of cross.
+        # The cache checks the rustc host which doesn't record us targeting
+        # different architectures (and native) with cross on the generic ubuntu-latest.
         key: ${{ matrix.TARGET }}
 
     - if: ${{ !matrix.cross }}
