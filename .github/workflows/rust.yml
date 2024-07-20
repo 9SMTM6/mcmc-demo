@@ -123,6 +123,10 @@ jobs:
     
     - name: Rust Cache # cache the rust build artefacts
       uses: Swatinem/rust-cache@v1
+      with:
+        # this is required to avoid failures due to caching of artifacts for different architectures
+        # (I think)
+        key: ${{ matrix.TARGET }}
 
     - if: ${{ !matrix.cross }}
       name: Cargo Build
