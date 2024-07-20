@@ -105,7 +105,6 @@ jobs:
         run: ./trunk build
 
   build:
-    if: false
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false

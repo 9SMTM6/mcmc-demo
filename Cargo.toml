@@ -10,7 +10,7 @@ all-features = true
 targets = ["x86_64-unknown-linux-gnu", "wasm32-unknown-unknown"]
 
 [features]
-default = ["persistence", "shipped_fonts", "webgl_compat"]
+default = ["persistence", "shipped_fonts", "webgl_compat", "x11"]
 persistence = ["dep:serde", "eframe/persistence", "rand/serde1", "rand_distr/serde1", "na/serde-serialize"]
 webgl_compat = ["wgpu/webgl"]
 x11 = ["eframe/x11"]
