@@ -37,6 +37,16 @@ Altogether I'm not sure of the right route. Supporting threads seems like a lot 
 
 An alternative might be simply using a promise with wasm_bindgen_futures and hoping that the browsers manage to make it not suck. Its unlikely this will use proper threads, but ...
 
+## Allocator for shipped linux binaries
+
+Linux releases are built with musl in the provided pipeline.
+
+This may cause performance regressions compared to glibc.
+
+See https://superuser.com/a/1820423.
+
+Benchmark from 2021: https://github.com/BurntSushi/ripgrep/issues/1691. Not a huge difference IMO, and even if feature gated I'd like to avoid yet another dependency. I might benchmark this at some point, but since my application also does a bunch of other things benchmarking this isnt entirely trivial, so I'll get to it if I ever do.
+
 ## Support more PRNG and low-discrepancy randomness
 
 https://en.wikipedia.org/wiki/Quasi-Monte_Carlo_method
