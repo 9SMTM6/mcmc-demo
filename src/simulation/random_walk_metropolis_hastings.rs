@@ -43,7 +43,6 @@ struct AcceptRecord {
     remain_count: u32,
 }
 
-
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 pub struct Algo {
     current_loc: AcceptRecord,
@@ -91,7 +90,7 @@ impl Algo {
                 remain_count: 0,
             };
         } else {
-            current.remain_count+=1;
+            current.remain_count += 1;
             self.max_remain_count = self.max_remain_count.max(current.remain_count);
             self.rejected.push(proposal);
         };
@@ -102,13 +101,21 @@ const LOWEST_ALPHA: f32 = 0.3;
 
 impl CanvasPainter for Algo {
     fn paint(&self, painter: &egui::Painter, rect: egui::Rect) {
-        for AcceptRecord {location, remain_count} in self.accepted.iter() {
+        for AcceptRecord {
+            location,
+            remain_count,
+        } in self.accepted.iter()
+        {
             let canvas_loc = ndc_to_canvas_coord(Pos2::new(location.x, location.y), rect.size());
             let factor = (*remain_count + 1) as f32 / (self.max_remain_count + 1) as f32;
             // with the above there may be a point where most accepted points are very close to 0, this seeks to always have them above a certain threshold.
             let log_factor = f32::log2(1.0 + factor) / f32::log2(2.0);
             let renormalized_factor = log_factor * (1.0 - LOWEST_ALPHA) + LOWEST_ALPHA;
-            painter.circle_filled(canvas_loc, 3.0, Color32::RED.gamma_multiply(renormalized_factor));
+            painter.circle_filled(
+                canvas_loc,
+                3.0,
+                Color32::RED.gamma_multiply(renormalized_factor),
+            );
         }
         for step in self.rejected.iter() {
             let step = ndc_to_canvas_coord(Pos2::new(step.x, step.y), rect.size());
