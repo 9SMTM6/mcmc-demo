@@ -39,6 +39,8 @@ An alternative might be simply using a promise with wasm_bindgen_futures and hop
 
 ## Allocator for shipped linux binaries
 
+OUT OF DATE: Because of build issues we switched to glibc anyways.
+
 Linux releases are built with musl in the provided pipeline.
 
 This may cause performance regressions compared to glibc.

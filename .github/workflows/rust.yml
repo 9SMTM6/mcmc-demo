@@ -20,8 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - name: Rust Cache # cache the rust build artefacts
-        uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
       - run: cargo check --all-features --all-targets
 
   test:
@@ -30,8 +29,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - name: Rust Cache # cache the rust build artefacts
-        uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
       # why is that here?
       # - run: sudo apt-get install libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxkbcommon-dev libssl-dev
       - run: cargo test --lib
@@ -44,8 +42,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt
-      - name: Rust Cache # cache the rust build artefacts
-        uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
       - run: cargo fmt --all -- --check
 
   clippy:
@@ -56,8 +53,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
-      - name: Rust Cache # cache the rust build artefacts
-        uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
       - run: cargo clippy --workspace --all-targets --all-features --  -D warnings -W clippy::all
 
   trunk:
@@ -68,8 +64,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-unknown-unknown
-      - name: Rust Cache # cache the rust build artefacts
-        uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
       - name: Download and install Trunk binary
         run: wget -qO- https://github.com/thedodd/trunk/releases/latest/download/trunk-x86_64-unknown-linux-gnu.tar.gz | tar -xzf-
       - name: Build
@@ -97,6 +92,10 @@ jobs:
           cross: true
 
         - os: ubuntu-latest
+          TARGET: armv7-unknown-linux-gnueabihf
+          cross: true
+
+        - os: ubuntu-latest
           TARGET: x86_64-unknown-linux-gnu
 
         - os: windows-latest
@@ -121,8 +120,8 @@ jobs:
       with:
         targets: ${{ matrix.TARGET }}
 
-    - name: Rust Cache # cache the rust build artefacts
-      uses: Swatinem/rust-cache@v1
+    - name: Rust Cache 
+      uses: Swatinem/rust-cache@v2
       with:
         # this is required to avoid failures due to caching of artifacts for different architectures
         # The reason is the potential usage of cross.
