@@ -50,7 +50,7 @@ where
 
     #[inline(always)]
     fn next(&mut self) -> Option<f32> {
-        Some(self.rng.sample(Uniform::new_inclusive(0.0, 1.0)))
+        Some(self.rng.sample(self.distr))
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {

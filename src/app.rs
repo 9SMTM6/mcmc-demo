@@ -19,17 +19,17 @@ use crate::{
 )]
 pub struct TemplateApp {
     algo: Algo,
-    gaussian: MultiModalGaussian,
+    target_distr: MultiModalGaussian,
     settings: settings::Settings,
     gaussian_distr_iter: SRngGaussianIter<rand_pcg::Pcg32>,
-    uniform_distr_iter: SRngPercIter<rand_pcg::Lcg64Xsh32>,
+    uniform_distr_iter: SRngPercIter<rand_pcg::Pcg32>,
 }
 
 impl Default for TemplateApp {
     fn default() -> Self {
         Self {
             algo: Default::default(),
-            gaussian: Default::default(),
+            target_distr: Default::default(),
             settings: Default::default(),
             gaussian_distr_iter: SRngGaussianIter::<rand_pcg::Pcg32>::new([42; 16]),
             uniform_distr_iter: SRngPercIter::<rand_pcg::Pcg32>::new([42; 16]),
@@ -42,7 +42,7 @@ impl TemplateApp {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         let state = Self::get_state(cc);
         state
-            .gaussian
+            .target_distr
             .init_gaussian_pipeline(cc.wgpu_render_state.as_ref().unwrap());
         state
     }
@@ -127,7 +127,7 @@ impl eframe::App for TemplateApp {
             if ui.button("Batch step").clicked() {
                 for _ in 0..size.get_inner() {
                     self.algo.step(
-                        &self.gaussian,
+                        &self.target_distr,
                         &mut self.gaussian_distr_iter,
                         &mut self.uniform_distr_iter,
                     )
@@ -152,7 +152,7 @@ impl eframe::App for TemplateApp {
                         // last painted element wins.
                         let painter = ui.painter();
                         let current_spot: Pos2 = [300.0, 400.0].into();
-                        self.gaussian.paint(painter, rect * ctx.pixels_per_point());
+                        self.target_distr.paint(painter, rect * ctx.pixels_per_point());
                         self.algo.paint(painter, rect);
                         visualizations::Arrow::new(current_spot, [100.0, 100.0])
                             .paint(painter, rect);
@@ -173,7 +173,7 @@ impl eframe::App for TemplateApp {
 
                             if response.drag_started() {
                                 let el =
-                                    self.gaussian.gaussians.iter().enumerate().find(|(_, el)| {
+                                    self.target_distr.gaussians.iter().enumerate().find(|(_, el)| {
                                         // todo: move to pixels here, precisely the size of the centers I draw, or something proportional to that.
                                         (start_loc.unwrap().to_vec2() - Vec2::from(el.position))
                                             .length()
@@ -208,11 +208,11 @@ impl eframe::App for TemplateApp {
                                     } else {
                                         Vec2::splat(0.0)
                                     };
-                                self.gaussian.gaussians[idx].position = new_pos.into();
+                                self.target_distr.gaussians[idx].position = new_pos.into();
                             }
 
                             // draw centers of gaussians
-                            for ele in self.gaussian.gaussians.iter_mut() {
+                            for ele in self.target_distr.gaussians.iter_mut() {
                                 painter.circle_filled(
                                     ndc_to_canvas_coord(ele.position.into(), rect.size()),
                                     5.0,
