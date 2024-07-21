@@ -561,7 +561,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b28bfe653d79bd16c77f659305b195b82bb5ce0c0eb2a4846b82ddbd77586813"
 dependencies = [
  "bitflags 2.6.0",
- "libloading 0.8.4",
+ "libloading 0.7.4",
  "winapi",
 ]
 
@@ -830,6 +830,18 @@ source = "git+https://github.com/emilk/egui?branch=master#b2d74eaef603324ff2e471
 dependencies = [
  "bytemuck",
  "serde",
+]
+
+[[package]]
+name = "enum_dispatch"
+version = "0.3.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "aa18ce2bc66555b3218614519ac839ddb759a7d6720732f979ef8d13be147ecd"
+dependencies = [
+ "once_cell",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.71",
 ]
 
 [[package]]
@@ -1397,6 +1409,7 @@ dependencies = [
  "bytemuck",
  "eframe",
  "egui",
+ "enum_dispatch",
  "env_logger",
  "getrandom",
  "log",

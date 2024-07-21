@@ -39,10 +39,10 @@ mod wasm_helpers {
             .unwrap_or_else(|| panic!("Failed to find canvas with id {canvas_id:?}"))
     }
 
-    pub(super) fn get_loading_text() -> Option<web_sys::Element> {
+    pub(super) fn get_issue_text() -> Option<web_sys::Element> {
         web_sys::window()
             .and_then(|w| w.document())
-            .and_then(|d| d.get_element_by_id("loading_text"))
+            .and_then(|d| d.get_element_by_id("issue_text"))
     }
 }
 
@@ -60,11 +60,11 @@ fn main() {
     let previous_hook = std::panic::take_hook();
     std::panic::set_hook(Box::new(move |panic_info| {
         // Show in the HTML that start has failed
-        let Some(loading_el_ref) = get_loading_text() else {
+        let Some(issue_el_ref) = get_issue_text() else {
             unreachable!()
         };
 
-        loading_el_ref.set_inner_html(&format!(
+        issue_el_ref.set_inner_html(&format!(
             r#"
     <p> The app has crashed. See the developer console for details. </p>
     <p style="font-size:10px" align="left">
@@ -94,16 +94,18 @@ fn main() {
                 .expect("failed to start eframe");
 
             // loaded successfully, remove the loading indicator
-            get_loading_text().map(|e| e.remove());
+            get_issue_text().map(|e| e.remove());
         });
     } else {
-        let Some(loading_el_ref) = get_loading_text() else {
+        let Some(loading_el_ref) = get_issue_text() else {
             unreachable!()
         };
 
         loading_el_ref.set_inner_html(&format!(
             r#"
-    <p> This app currently requires WebGPU </p>
+    <p> This app currently requires WebGPU. </p>
+    <p> Concretly this means, as of writing, Chrome (or Chromium) on Windows, or elsewhere with --enable-unsafe-webgpu. </p>
+    <p> Alternatively you can download an executable from the <a style="color: #ffffff" href="https://github.com/9SMTM6/mcmc-demo/releases"> Github release</a> page. </p>
 "#
         ));
     }

@@ -146,6 +146,12 @@ impl eframe::App for TemplateApp {
                     .inner_margin(egui::Margin::default())
                     .outer_margin(egui::Margin::default())
                     .show(ui, |ui| {
+                        // TODO: Adjust as seen in https://github.com/emilk/egui/blob/56df31ab489312014d57247db438ecd7189a710a/crates/egui_demo_lib/src/demo/paint_bezier.rs#L82
+                        // TODO: consider moving Settings::Edit* state into `ui.data_mut()` or similar.
+                        // ui.data(|map| {
+                        //     map.get_temp(id)
+                        //     map.insert_temp(id, value)
+                        // });
                         let px_size = ui.available_size();
                         let (rect, response) =
                             ui.allocate_exact_size(px_size, egui::Sense::click_and_drag());
