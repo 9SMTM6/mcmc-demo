@@ -13,7 +13,8 @@
     <!-- TODO: missing --fast-math flag to wasm-opt, which may make a difference. -->
     <!-- disabling webgl_compat makes a huge difference in size -->
     <!-- data-cargo-features="webgl_compat" -->
-    <link data-trunk rel="rust" data-wasm-opt="2" data-cargo-no-default-features /> 
+    <!-- I use reference type ec, sicne the currently hard dependency on WebGPU already foregoes any potential for backwards compat -->
+    <link data-trunk rel="rust" data-wasm-opt="2" data-reference-types data-weak-refs data-cargo-no-default-features /> 
     <!-- this is the base url relative to which other urls will be constructed. trunk will insert this from the public-url option -->
     <base data-trunk-public-url />
 
