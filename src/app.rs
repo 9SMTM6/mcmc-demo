@@ -3,7 +3,10 @@ use egui::{self, Pos2, Shadow, Vec2};
 use crate::{
     settings::{self, DistrEditKind, Settings},
     shaders::types::NormalDistribution,
-    simulation::{random_walk_metropolis_hastings::Algo, SRngGaussianIter, SRngPercIter},
+    simulation::{
+        random_walk_metropolis_hastings::{Algo, ProgressMode},
+        SRngGaussianIter, SRngPercIter,
+    },
     target_distributions::multimodal_gaussian::MultiModalGaussian,
     visualizations::{self, CanvasPainter},
 };
@@ -14,29 +17,33 @@ use crate::{
     // if we add new fields, give them default values when deserializing old state
     serde(default),
 )]
-#[derive(Default)]
 pub struct TemplateApp {
     algo: Algo,
     gaussian: MultiModalGaussian,
     settings: settings::Settings,
+    gaussian_distr_iter: SRngGaussianIter<rand_pcg::Pcg32>,
+    uniform_distr_iter: SRngPercIter<rand_pcg::Lcg64Xsh32>,
+}
+
+impl Default for TemplateApp {
+    fn default() -> Self {
+        Self {
+            algo: Default::default(),
+            gaussian: Default::default(),
+            settings: Default::default(),
+            gaussian_distr_iter: SRngGaussianIter::<rand_pcg::Pcg32>::new([42; 16]),
+            uniform_distr_iter: SRngPercIter::<rand_pcg::Pcg32>::new([42; 16]),
+        }
+    }
 }
 
 impl TemplateApp {
     /// Called once before the first frame.
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        let mut state = Self::get_state(cc);
+        let state = Self::get_state(cc);
         state
             .gaussian
             .init_gaussian_pipeline(cc.wgpu_render_state.as_ref().unwrap());
-        let mut gaussian_distr_iter = SRngGaussianIter::<rand_pcg::Pcg32>::new([42; 16]);
-        let mut uniform_distr_iter = SRngPercIter::<rand_pcg::Pcg32>::new([42; 16]);
-        for _ in 0..4000 {
-            state.algo.step(
-                &state.gaussian,
-                &mut gaussian_distr_iter,
-                &mut uniform_distr_iter,
-            );
-        }
         state
     }
 
@@ -104,6 +111,29 @@ impl eframe::App for TemplateApp {
                     self.settings = Settings::EditDistribution(settings::DistrEditKind::Stateless);
                 };
             };
+            let ProgressMode::Batched { ref mut size } = self.algo.params.progress_mode;
+            ui.add(
+                // egui::DragValue::new(&mut laaa)
+                //     .range(range),
+                unsafe {
+                    egui::Slider::new(
+                        size.get_inner_mut(),
+                        1..=(usize::MAX / usize::MAX.ilog2() as usize),
+                    )
+                }
+                .logarithmic(true)
+                .text("batchsize"),
+            );
+            if ui.button("Batch step").clicked() {
+                for _ in 0..size.get_inner() {
+                    self.algo.step(
+                        &self.gaussian,
+                        &mut self.gaussian_distr_iter,
+                        &mut self.uniform_distr_iter,
+                    )
+                }
+                // self.algo.step(&self.gaussian, , accept_rng)
+            }
             // egui::global_dark_light_mode_buttons(ui);
         });
 

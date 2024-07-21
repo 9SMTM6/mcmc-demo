@@ -9,14 +9,55 @@ use crate::{
 use super::{SRngGaussianIter, SRngPercIter};
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
-pub enum AlgoParams {
-    GaussianProposal { sigma: f32 },
+pub struct GaussianProposal {
+    sigma: f32,
 }
 
-impl Default for AlgoParams {
+impl Default for GaussianProposal {
     fn default() -> Self {
-        AlgoParams::GaussianProposal { sigma: 0.5 }
+        Self { sigma: 0.2 }
     }
+}
+
+#[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
+pub struct IPromiseThisIsNonZeroUsize(usize);
+
+impl IPromiseThisIsNonZeroUsize {
+    pub const fn new(val: usize) -> Self {
+        if val == 0 {
+            panic!("nonzero")
+        } else {
+            Self(val)
+        }
+    }
+
+    pub unsafe fn get_inner_mut(&mut self) -> &mut usize {
+        &mut self.0
+    }
+
+    pub fn get_inner(&self) -> usize {
+        self.0
+    }
+}
+
+#[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
+pub enum ProgressMode {
+    Batched { size: IPromiseThisIsNonZeroUsize },
+}
+
+impl Default for ProgressMode {
+    fn default() -> Self {
+        Self::Batched {
+            size: const { IPromiseThisIsNonZeroUsize::new(2000) },
+        }
+    }
+}
+
+#[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
+#[derive(Default)]
+pub struct AlgoParams {
+    pub proposal: GaussianProposal,
+    pub progress_mode: ProgressMode,
 }
 
 // horrible name but I cant think of something better RN.
@@ -28,10 +69,10 @@ impl AlgoParams {
         start_loc: AlgoVec,
         gaussian_rng: &mut SRngGaussianIter<impl Rng + SeedableRng>,
     ) -> AlgoVec {
-        let Self::GaussianProposal { sigma } = self;
+        let GaussianProposal { sigma } = self.proposal;
 
-        let normal_x = start_loc.x + gaussian_rng.unwrapped_next() * (*sigma);
-        let normal_y = start_loc.y + gaussian_rng.unwrapped_next() * (*sigma);
+        let normal_x = start_loc.x + gaussian_rng.unwrapped_next() * sigma;
+        let normal_y = start_loc.y + gaussian_rng.unwrapped_next() * sigma;
         AlgoVec::new(normal_x, normal_y)
     }
 }
@@ -39,8 +80,8 @@ impl AlgoParams {
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Default, Clone)]
 struct AcceptRecord {
-    location: AlgoVec,
-    remain_count: u32,
+    pub location: AlgoVec,
+    pub remain_count: u32,
 }
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
@@ -50,9 +91,9 @@ pub struct Algo {
     // should be HashMap<AlgoVec, i32> or similar,
     // but this is an issue as the f32 in AlgoVec isnt Eq.
     // So IDK how to do this right.
-    accepted: Vec<AcceptRecord>,
-    rejected: Vec<AlgoVec>,
-    params: AlgoParams,
+    history: Vec<AcceptRecord>,
+    rejected_history: Vec<AlgoVec>,
+    pub params: AlgoParams,
 }
 
 impl Default for Algo {
@@ -64,9 +105,9 @@ impl Default for Algo {
                 ..Default::default()
             },
             max_remain_count: 0,
-            accepted: vec![],
-            rejected: vec![],
-            params: AlgoParams::GaussianProposal { sigma: 0.2 },
+            history: vec![],
+            rejected_history: vec![],
+            params: Default::default(),
         }
     }
 }
@@ -84,7 +125,7 @@ impl Algo {
         let accept = accept_rng.unwrapped_next() <= acceptance_ratio;
         // self.current_loc = if accept { proposal } else { current };
         if accept {
-            self.accepted.push(self.current_loc.clone());
+            self.history.push(self.current_loc.clone());
             self.current_loc = AcceptRecord {
                 location: proposal,
                 remain_count: 0,
@@ -92,7 +133,7 @@ impl Algo {
         } else {
             current.remain_count += 1;
             self.max_remain_count = self.max_remain_count.max(current.remain_count);
-            self.rejected.push(proposal);
+            self.rejected_history.push(proposal);
         };
     }
 }
@@ -104,7 +145,7 @@ impl CanvasPainter for Algo {
         for AcceptRecord {
             location,
             remain_count,
-        } in self.accepted.iter()
+        } in self.history.iter()
         {
             let canvas_loc = ndc_to_canvas_coord(Pos2::new(location.x, location.y), rect.size());
             let factor = (*remain_count + 1) as f32 / (self.max_remain_count + 1) as f32;
@@ -117,7 +158,7 @@ impl CanvasPainter for Algo {
                 Color32::RED.gamma_multiply(renormalized_factor),
             );
         }
-        for step in self.rejected.iter() {
+        for step in self.rejected_history.iter() {
             let step = ndc_to_canvas_coord(Pos2::new(step.x, step.y), rect.size());
             painter.circle_filled(step, 3.0, Color32::YELLOW.gamma_multiply(LOWEST_ALPHA));
         }
