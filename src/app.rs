@@ -152,7 +152,8 @@ impl eframe::App for TemplateApp {
                         // last painted element wins.
                         let painter = ui.painter();
                         let current_spot: Pos2 = [300.0, 400.0].into();
-                        self.target_distr.paint(painter, rect * ctx.pixels_per_point());
+                        self.target_distr
+                            .paint(painter, rect * ctx.pixels_per_point());
                         self.algo.paint(painter, rect);
                         visualizations::Arrow::new(current_spot, [100.0, 100.0])
                             .paint(painter, rect);
@@ -172,13 +173,14 @@ impl eframe::App for TemplateApp {
                             });
 
                             if response.drag_started() {
-                                let el =
-                                    self.target_distr.gaussians.iter().enumerate().find(|(_, el)| {
+                                let el = self.target_distr.gaussians.iter().enumerate().find(
+                                    |(_, el)| {
                                         // todo: move to pixels here, precisely the size of the centers I draw, or something proportional to that.
                                         (start_loc.unwrap().to_vec2() - Vec2::from(el.position))
                                             .length()
                                             < 0.03
-                                    });
+                                    },
+                                );
                                 if let Some((
                                     idx,
                                     NormalDistribution {
