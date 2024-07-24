@@ -1,4 +1,5 @@
 #import constants::PI;
+#import helpers::canvas_coord_to_ndc;
 #import resolution_uniform_bind::resolution_info;
 #import fullscreen_quad;
 #import types::NormalDistribution;
@@ -6,14 +7,7 @@
 @group(1) @binding(0)
 var<storage, read> gauss_bases: array<NormalDistribution>;
 
-fn canvas_coord_to_ndc(canvas_coord: vec2<f32>, canvas_res: vec2<f32>) -> vec2<f32> {
-    return (canvas_coord / max(canvas_res.x, canvas_res.y)) * 2.0 - 1.0;
-}
-
-@fragment
-fn fs_main(@builtin(position) canvas_coords: vec4<f32>) -> @location(0) vec4<f32> {
-    let normalized_device_coords = canvas_coord_to_ndc(canvas_coords.xy, resolution_info.resolution);
-
+fn calc_gaussian_density(ndc_coord: vec2<f32>) -> f32 {
     var combined_prob_density = 0.0;
 
     var normalization = 0.0;
@@ -33,7 +27,7 @@ fn fs_main(@builtin(position) canvas_coords: vec4<f32>) -> @location(0) vec4<f32
 
         // for now we calcualte this here, we might test later if this is better or worse than calculating it once on the cpu and delivering it on each render.
         let gauss_normalize = inverseSqrt(2 * PI * variance);
-        let sq_dist = pow(distance(normalized_device_coords, position), 2.0);
+        let sq_dist = pow(distance(ndc_coord, position), 2.0);
 
         let prob_contrib = gauss_normalize * exp(-sq_dist / (2 * variance));
         combined_prob_density+= scale * prob_contrib;
@@ -41,6 +35,15 @@ fn fs_main(@builtin(position) canvas_coords: vec4<f32>) -> @location(0) vec4<f32
     }
 
     combined_prob_density /= normalization;
+
+    return combined_prob_density;
+}
+
+@fragment
+fn fs_main(@builtin(position) canvas_coords: vec4<f32>) -> @location(0) vec4<f32> {
+    let normalized_device_coords = canvas_coord_to_ndc(canvas_coords.xy, resolution_info.resolution);
+
+    let combined_prob_density = calc_gaussian_density(normalized_device_coords);
 
     // use log density instead. 
     // Adding 1 to the density to start at 0 for density zero, otherwise this is using illegal colorspaces.
