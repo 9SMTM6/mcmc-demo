@@ -1,3 +1,5 @@
+pub mod random_walk_metropolis_hastings;
+
 use egui::{
     epaint::{ColorMode, PathShape, PathStroke},
     Color32, Pos2, Shape, Stroke, Vec2,

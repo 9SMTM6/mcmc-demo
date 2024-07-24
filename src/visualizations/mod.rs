@@ -1,6 +1,6 @@
 pub use egui_based::{Arrow, PredictionVariance, SamplingPoint};
 
-mod egui_based;
+pub mod egui_based;
 pub mod shader_based;
 
 pub use shader_based::INITIAL_RENDER_SIZE;
