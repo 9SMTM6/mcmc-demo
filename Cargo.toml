@@ -49,7 +49,7 @@ wgsl_bindgen = "0.12.0"
 [profile.release]
 opt-level = 2 # fast and small wasm
 # opt-level = "z" #note the override of packages
-lto = true
+# lto = true
 # codegen-units = 1
 # panic = "abort"
 # strip = true
