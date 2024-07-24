@@ -8,9 +8,7 @@ use crate::{
         SRngGaussianIter, SRngPercIter,
     },
     target_distributions::multimodal_gaussian::MultiModalGaussian,
-    visualizations::{
-        self, shader_based::random_walk_metropolis_hastings::PointDisplay, CanvasPainter,
-    },
+    visualizations::{shader_based::random_walk_metropolis_hastings::PointDisplay, CanvasPainter},
 };
 
 #[cfg_attr(feature="persistence", 
@@ -161,15 +159,9 @@ impl eframe::App for TemplateApp {
                             ui.allocate_exact_size(px_size, egui::Sense::click_and_drag());
                         // last painted element wins.
                         let painter = ui.painter();
-                        let current_spot: Pos2 = [300.0, 400.0].into();
                         self.target_distr
                             .paint(painter, rect * ctx.pixels_per_point());
                         self.drawer.paint(painter, rect, &self.algo);
-                        visualizations::Arrow::new(current_spot, [100.0, 100.0])
-                            .paint(painter, rect);
-                        visualizations::PredictionVariance::new(current_spot, 200.0)
-                            .paint(painter, rect);
-                        visualizations::SamplingPoint::new(current_spot, 0.65).paint(painter, rect);
                         if let Settings::EditDistribution(ref mut distr_edit_kind) = self.settings {
                             // dunno where this is placed, which coordinate system this uses etc.
                             // But when combined with sensing a drag_and_drop this SHOULD provide me with enough info to find

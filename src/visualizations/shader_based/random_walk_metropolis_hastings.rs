@@ -3,6 +3,7 @@ use egui::{Color32, Pos2};
 use crate::{
     app::ndc_to_canvas_coord,
     simulation::random_walk_metropolis_hastings::{AcceptRecord, Algo},
+    visualizations::{self, CanvasPainter},
 };
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
@@ -47,6 +48,14 @@ impl PointDisplay {
                 let step = ndc_to_canvas_coord(Pos2::new(step.x, step.y), rect.size());
                 painter.circle_filled(step, self.radius, color.gamma_multiply(self.lowest_alpha));
             }
+        }
+        #[allow(unreachable_code)]
+        if false {
+            todo!();
+            let current_spot: Pos2 = [300.0, 400.0].into();
+            visualizations::Arrow::new(current_spot, [100.0, 100.0]).paint(painter, rect);
+            visualizations::PredictionVariance::new(current_spot, 200.0).paint(painter, rect);
+            visualizations::SamplingPoint::new(current_spot, 0.65).paint(painter, rect);
         }
     }
 }
