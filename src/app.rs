@@ -8,7 +8,9 @@ use crate::{
         SRngGaussianIter, SRngPercIter,
     },
     target_distributions::multimodal_gaussian::MultiModalGaussian,
-    visualizations::{self, CanvasPainter},
+    visualizations::{
+        self, shader_based::random_walk_metropolis_hastings::PointDisplay, CanvasPainter,
+    },
 };
 
 #[cfg_attr(feature="persistence", 
@@ -19,6 +21,7 @@ use crate::{
 )]
 pub struct TemplateApp {
     algo: Algo,
+    drawer: PointDisplay,
     target_distr: MultiModalGaussian,
     settings: settings::Settings,
     gaussian_distr_iter: SRngGaussianIter<rand_pcg::Pcg32>,
@@ -29,6 +32,7 @@ impl Default for TemplateApp {
     fn default() -> Self {
         Self {
             algo: Default::default(),
+            drawer: Default::default(),
             target_distr: Default::default(),
             settings: Default::default(),
             gaussian_distr_iter: SRngGaussianIter::<rand_pcg::Pcg32>::new([42; 16]),
@@ -160,7 +164,7 @@ impl eframe::App for TemplateApp {
                         let current_spot: Pos2 = [300.0, 400.0].into();
                         self.target_distr
                             .paint(painter, rect * ctx.pixels_per_point());
-                        self.algo.paint(painter, rect);
+                        self.drawer.paint(painter, rect, &self.algo);
                         visualizations::Arrow::new(current_spot, [100.0, 100.0])
                             .paint(painter, rect);
                         visualizations::PredictionVariance::new(current_spot, 200.0)
