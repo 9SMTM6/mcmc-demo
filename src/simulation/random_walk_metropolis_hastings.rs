@@ -1,6 +1,6 @@
 use rand::{Rng, SeedableRng};
 
-use crate::target_distributions::multimodal_gaussian::MultiModalGaussian;
+use crate::{shaders::types::RWMHAcceptRecord, target_distributions::multimodal_gaussian::MultiModalGaussian};
 
 use super::{SRngGaussianIter, SRngPercIter};
 
@@ -73,11 +73,16 @@ impl AlgoParams {
     }
 }
 
-#[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
-#[derive(Default, Clone)]
-pub struct AcceptRecord {
-    pub location: AlgoVec,
-    pub remain_count: u32,
+pub type AcceptRecord = RWMHAcceptRecord;
+
+impl Default for AcceptRecord {
+    fn default() -> Self {
+        Self {
+            position: Default::default(),
+            remain_count: 0,
+            _pad: [0],
+        }
+    }
 }
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
@@ -98,7 +103,7 @@ impl Default for Algo {
         Self {
             // TODO: make start point configurable
             current_loc: AcceptRecord {
-                location: AlgoVec::from_element(0.0),
+                position: [0.0; 2],
                 ..Default::default()
             },
             max_remain_count: 0,
@@ -118,16 +123,17 @@ impl Algo {
         accept_rng: &mut SRngPercIter<impl Rng + SeedableRng>,
     ) {
         let current = &mut self.current_loc;
-        let proposal = self.params.propose(current.location, proposal_rng);
-        let acceptance_ratio = target_distr.acceptance_ratio(proposal, current.location);
+        let proposal = self.params.propose(current.position.into(), proposal_rng);
+        let acceptance_ratio = target_distr.acceptance_ratio(proposal, current.position.into());
         let accept = accept_rng.unwrapped_next() <= acceptance_ratio;
         // self.current_loc = if accept { proposal } else { current };
         if accept {
             self.total_point_count += self.current_loc.remain_count + 1;
             self.history.push(self.current_loc.clone());
             self.current_loc = AcceptRecord {
-                location: proposal,
+                position: [proposal.x, proposal.y],
                 remain_count: 0,
+                _pad: [0; 1],
             };
         } else {
             current.remain_count += 1;

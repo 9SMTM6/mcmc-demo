@@ -28,11 +28,12 @@ impl Default for PointDisplay {
 impl PointDisplay {
     pub fn paint(&self, painter: &egui::Painter, rect: egui::Rect, algo: &Algo) {
         for AcceptRecord {
-            location,
+            position,
             remain_count,
+            ..
         } in algo.history.iter()
         {
-            let canvas_loc = ndc_to_canvas_coord(Pos2::new(location.x, location.y), rect.size());
+            let canvas_loc = ndc_to_canvas_coord(Pos2::new(position[0], position[1]), rect.size());
             let factor = (*remain_count + 1) as f32 / (algo.max_remain_count + 1) as f32;
             // with the above there may be a point where most accepted points are very close to 0, this seeks to always have them above a certain threshold.
             let log_factor = f32::log2(1.0 + factor) / f32::log2(2.0);
