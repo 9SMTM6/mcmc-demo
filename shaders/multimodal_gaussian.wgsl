@@ -19,7 +19,7 @@ fn calc_gaussian_density(ndc_coord: vec2<f32>) -> f32 {
         let variance = el.variance;
         let position = el.position;
 
-        // for now we calcualte this here, we might test later if this is better or worse than calculating it once on the cpu and delivering it on each render.
+        // for now we calculate this here, we might test later if this is better or worse than calculating it once on the cpu and delivering it on each render.
         let gauss_normalize = inverseSqrt(2 * PI * variance);
         let sq_dist = pow(distance(ndc_coord, position), 2.0);
 

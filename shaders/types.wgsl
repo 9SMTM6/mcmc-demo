@@ -25,6 +25,15 @@ struct RWAcceptRecord {
 //     history: array<RWAcceptRecord>,
 // }
 
-struct RejectRecord {
+struct RWRejectRecord {
     location: vec2<f32>,
+}
+
+struct RWCountInfo {
+    max_remain_count: u32,
+    total_point_count: u32,
+}
+
+struct DiffDisplayOptions {
+    window_radius: f32,
 }

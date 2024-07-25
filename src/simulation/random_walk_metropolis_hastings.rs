@@ -84,6 +84,7 @@ pub struct AcceptRecord {
 pub struct Algo {
     pub current_loc: AcceptRecord,
     pub max_remain_count: u32,
+    pub total_point_count: u32,
     // should be HashMap<AlgoVec, i32> or similar,
     // but this is an issue as the f32 in AlgoVec isnt Eq.
     // So IDK how to do this right.
@@ -101,7 +102,7 @@ impl Default for Algo {
                 ..Default::default()
             },
             max_remain_count: 0,
-            history: vec![],
+            total_point_count: 0,            history: vec![],
             rejected_history: vec![],
             params: Default::default(),
         }
@@ -121,6 +122,7 @@ impl Algo {
         let accept = accept_rng.unwrapped_next() <= acceptance_ratio;
         // self.current_loc = if accept { proposal } else { current };
         if accept {
+            self.total_point_count += self.current_loc.remain_count + 1;
             self.history.push(self.current_loc.clone());
             self.current_loc = AcceptRecord {
                 location: proposal,

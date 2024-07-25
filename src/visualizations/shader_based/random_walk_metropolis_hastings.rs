@@ -9,7 +9,7 @@ use crate::{
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 pub struct DiffDisplay {
-    pub radius: f32,
+    pub window_radius: f32,
 }
 
 impl DiffDisplay {
