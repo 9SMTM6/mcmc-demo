@@ -14,11 +14,11 @@ impl Default for MultiModalGaussian {
     fn default() -> Self {
         Self {
             gaussians: [
-                // NormalDistribution {
-                //     position: [-1.0, -1.0],
-                //     scale: 0.5,
-                //     variance: 0.14,
-                // },
+                NormalDistribution {
+                    position: [-1.0, -1.0],
+                    scale: 0.5,
+                    variance: 0.14,
+                },
                 NormalDistribution {
                     position: [0.2, -0.2],
                     scale: 0.6,

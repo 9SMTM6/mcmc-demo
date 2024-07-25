@@ -47,7 +47,7 @@ pub(super) fn get_gaussian_target_pair(device: &wgpu::Device, distr: &MultiModal
     let webgpu_debug_name = Some(file!());
     
     let buffer = device.create_buffer_init(&BufferInitDescriptor {
-        label: Some(file!()),
+        label: webgpu_debug_name,
         usage: BufferUsages::COPY_DST | BufferUsages::STORAGE,
         contents: bytemuck::cast_slice(distr.gaussians.as_slice()),
     });

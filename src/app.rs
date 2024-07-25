@@ -169,11 +169,16 @@ impl eframe::App for TemplateApp {
                             ui.allocate_exact_size(px_size, egui::Sense::click_and_drag());
                         // last painted element wins.
                         let painter = ui.painter();
-                        self.target_distr_render.as_ref().unwrap().paint(
-                            &self.target_distr,
-                            painter,
-                            rect * ctx.pixels_per_point(),
-                        );
+                        // TODO: this initialization is still completely screwed up.
+                        // Now it crashes.
+                        // Why, oh why, does there not seem to be a proper way to manage these wgpu resources in an egui app?
+                        self.target_distr_render
+                            .as_ref()
+                            .unwrap_or(&MultiModalGaussianDisplay::init_gaussian_pipeline(
+                                &self.target_distr,
+                                _frame.wgpu_render_state().unwrap(),
+                            ))
+                            .paint(&self.target_distr, painter, rect * ctx.pixels_per_point());
                         self.drawer.paint(painter, rect, &self.algo);
                         if let Settings::EditDistribution(ref mut distr_edit_kind) = self.settings {
                             // dunno where this is placed, which coordinate system this uses etc.
