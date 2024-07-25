@@ -38,7 +38,8 @@ fn calc_approx_density(ndc_coord: vec2<f32>) -> f32 {
             prob_unnorm += remain_count + 1;
         }
     }
-    return f32(prob_unnorm) / f32(total_point_count);
+    // count_info.max_remain_count
+    return f32(prob_unnorm) / f32(count_info.max_remain_count * 30);
 }
 
 @fragment
@@ -50,14 +51,15 @@ fn fs_main(@builtin(position) canvas_coords: vec4<f32>) -> @location(0) vec4<f32
     let approx_density = calc_approx_density(normalized_device_coords);
 
     let diff = target_density - approx_density;
+    let diff_paint = percentage_logscaled(abs(diff));
 
     var color = vec3(0.0);
 
-    if sign(diff) == -1 {
-        color[0] = abs(diff);
+    if sign(diff) == 1 {
+        color[1] = diff_paint;
     } else {
-        color[1] = abs(diff)/2.0;
-        color[2] = abs(diff)/2.0;
+        color[2] = sqrt(diff_paint);
+        color[0] = sqrt(diff_paint);
     }
 
     return vec4(color, 1.0);
