@@ -2,7 +2,7 @@
 #import canvas_ndc_conversion::canvas_coord_to_ndc;
 #import helpers::percentage_logscaled;
 #import multimodal_gaussian::{gauss_bases, calc_gaussian_density}
-#import fullscreen_quad;
+#import "fullscreen_quad.vertex.wgsl";
 #import types::{RWAcceptRecord, RejectRecord};
 
 @group(2) @binding(0)

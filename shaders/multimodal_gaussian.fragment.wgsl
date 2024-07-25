@@ -2,7 +2,7 @@
 #import multimodal_gaussian::calc_gaussian_density;
 #import helpers::percentage_logscaled;
 #import canvas_ndc_conversion::canvas_coord_to_ndc;
-#import fullscreen_quad;
+#import "fullscreen_quad.vertex.wgsl";
 #import types::NormalDistribution;
 
 @fragment

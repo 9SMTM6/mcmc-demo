@@ -1,7 +1,7 @@
 #import constants::PI;
 #import helpers::{percentage_logscaled};
 #import canvas_ndc_conversion::canvas_coord_to_ndc;
-#import fullscreen_quad;
+#import "fullscreen_quad.vertex.wgsl";
 #import types::NormalDistribution;
 
 @group(1) @binding(0)
