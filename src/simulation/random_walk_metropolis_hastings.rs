@@ -102,7 +102,8 @@ impl Default for Algo {
                 ..Default::default()
             },
             max_remain_count: 0,
-            total_point_count: 0,            history: vec![],
+            total_point_count: 0,
+            history: vec![],
             rejected_history: vec![],
             params: Default::default(),
         }
