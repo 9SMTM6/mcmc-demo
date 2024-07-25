@@ -43,9 +43,12 @@ impl MultiModalGaussianDisplay {
 }
 
 /// this can also be used elsewhere, e.g. diff_display.
-pub(super) fn get_gaussian_target_pair(device: &wgpu::Device, distr: &MultiModalGaussian) -> WgpuBufferBindGroupPair {
+pub(super) fn get_gaussian_target_pair(
+    device: &wgpu::Device,
+    distr: &MultiModalGaussian,
+) -> WgpuBufferBindGroupPair {
     let webgpu_debug_name = Some(file!());
-    
+
     let buffer = device.create_buffer_init(&BufferInitDescriptor {
         label: webgpu_debug_name,
         usage: BufferUsages::COPY_DST | BufferUsages::STORAGE,
@@ -54,9 +57,7 @@ pub(super) fn get_gaussian_target_pair(device: &wgpu::Device, distr: &MultiModal
 
     let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
         label: webgpu_debug_name,
-        layout: &multimodal_gaussian::bind_groups::WgpuBindGroup1::get_bind_group_layout(
-            device,
-        ),
+        layout: &multimodal_gaussian::bind_groups::WgpuBindGroup1::get_bind_group_layout(device),
         entries: &multimodal_gaussian::bind_groups::WgpuBindGroupLayout1 {
             gauss_bases: BufferBinding {
                 buffer: &buffer,
@@ -67,10 +68,7 @@ pub(super) fn get_gaussian_target_pair(device: &wgpu::Device, distr: &MultiModal
         .entries(),
     });
 
-    WgpuBufferBindGroupPair {
-        bind_group,
-        buffer,
-    }
+    WgpuBufferBindGroupPair { bind_group, buffer }
 }
 
 impl MultiModalGaussianDisplay {

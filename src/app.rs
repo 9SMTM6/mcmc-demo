@@ -132,7 +132,7 @@ impl eframe::App for TemplateApp {
                 unsafe {
                     egui::Slider::new(
                         size.get_inner_mut(),
-                        // TODO: Increase limit of... storage buffer size or whatever to maximum allowed, 
+                        // TODO: Increase limit of... storage buffer size or whatever to maximum allowed,
                         // use that maximum here to determine slider maximum, by determining how much space is left, roughly.
                         1..=(usize::MAX / usize::MAX.ilog2() as usize),
                     )
@@ -191,8 +191,13 @@ impl eframe::App for TemplateApp {
                                 &self.algo,
                                 _frame.wgpu_render_state().unwrap(),
                             ))
-                            .paint(painter, rect * ctx.pixels_per_point(), &self.algo, &self.target_distr);
-                        
+                            .paint(
+                                painter,
+                                rect * ctx.pixels_per_point(),
+                                &self.algo,
+                                &self.target_distr,
+                            );
+
                         self.drawer.paint(painter, rect, &self.algo);
                         if let Settings::EditDistribution(ref mut distr_edit_kind) = self.settings {
                             // dunno where this is placed, which coordinate system this uses etc.

@@ -89,16 +89,21 @@ struct PipelineStateHolder {
 }
 
 impl DiffDisplay {
-
     #[allow(unused_variables)]
-    pub fn paint(&self, painter: &egui::Painter, rect: egui::Rect, algo: &RWMH, target: &MultiModalGaussian) {
+    pub fn paint(
+        &self,
+        painter: &egui::Painter,
+        rect: egui::Rect,
+        algo: &RWMH,
+        target: &MultiModalGaussian,
+    ) {
         painter.add(eframe::egui_wgpu::Callback::new_paint_callback(
             rect,
             RenderCall {
                 algo_state: algo.clone(),
                 px_size: rect.size().into(),
                 targets: target.gaussians.clone(),
-            }
+            },
         ));
     }
 
@@ -148,7 +153,7 @@ impl DiffDisplay {
         // Because the graphics pipeline must have the same lifetime as the egui render pass,
         // instead of storing the pipeline in our struct, we insert it into the
         // `callback_resources` type map, which is stored alongside the render pass.
-        // let None = 
+        // let None =
         render_state
             .renderer
             .write()

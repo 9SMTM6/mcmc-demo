@@ -1,6 +1,8 @@
 use rand::{Rng, SeedableRng};
 
-use crate::{shaders::types::RWMHAcceptRecord, target_distributions::multimodal_gaussian::MultiModalGaussian};
+use crate::{
+    shaders::types::RWMHAcceptRecord, target_distributions::multimodal_gaussian::MultiModalGaussian,
+};
 
 use super::{SRngGaussianIter, SRngPercIter};
 
@@ -113,7 +115,11 @@ impl Default for RWMH {
             max_remain_count: 0,
             total_point_count: 0,
             // ugly hack around forbidden buffersize zero
-            history: vec![RWMHAcceptRecord{_pad: [0; 1], position: [0.0; 2], remain_count: 0}],
+            history: vec![RWMHAcceptRecord {
+                _pad: [0; 1],
+                position: [0.0; 2],
+                remain_count: 0,
+            }],
             rejected_history: vec![],
             params: Default::default(),
         }
