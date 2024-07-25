@@ -3,15 +3,18 @@ use std::mem::size_of_val;
 use std::num::NonZero;
 
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
-use wgpu::util::BufferInitDescriptor;
-use wgpu::{util::DeviceExt, BindGroup, Buffer};
-use wgpu::{BufferBinding, BufferUsages, RenderPipeline, RenderPipelineDescriptor};
+use wgpu::{
+    util::{BufferInitDescriptor, DeviceExt},
+    BindGroup, Buffer, BufferBinding, BufferUsages, RenderPipeline, RenderPipelineDescriptor,
+};
 
-use crate::shaders::types::{NormalDistribution, ResolutionInfo};
-use crate::shaders::{fullscreen_quad, multimodal_gaussian};
+use crate::shaders::{
+    fullscreen_quad, multimodal_gaussian,
+    types::{NormalDistribution, ResolutionInfo},
+};
 use crate::target_distributions::multimodal_gaussian::MultiModalGaussian;
 
-use super::resolution_uniform::create_buffer_init_descr;
+use super::{resolution_uniform::get_resolution_pair, WgpuBufferBindGroupPair};
 
 struct MultiModalGaussPipeline {
     pipeline: RenderPipeline,
@@ -36,6 +39,36 @@ impl MultiModalGaussianDisplay {
                 elements: distr.gaussians.clone(),
             },
         ));
+    }
+}
+
+fn get_gaussian_target_pair(device: &wgpu::Device, distr: &MultiModalGaussian) -> WgpuBufferBindGroupPair {
+    let webgpu_debug_name = Some(file!());
+    
+    let buffer = device.create_buffer_init(&BufferInitDescriptor {
+        label: Some(file!()),
+        usage: BufferUsages::COPY_DST | BufferUsages::STORAGE,
+        contents: bytemuck::cast_slice(distr.gaussians.as_slice()),
+    });
+
+    let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        label: webgpu_debug_name,
+        layout: &multimodal_gaussian::bind_groups::WgpuBindGroup1::get_bind_group_layout(
+            device,
+        ),
+        entries: &multimodal_gaussian::bind_groups::WgpuBindGroupLayout1 {
+            gauss_bases: BufferBinding {
+                buffer: &buffer,
+                offset: 0,
+                size: NonZero::new(size_of_val(distr.gaussians.as_slice()) as u64),
+            },
+        }
+        .entries(),
+    });
+
+    WgpuBufferBindGroupPair {
+        bind_group,
+        buffer,
     }
 }
 
@@ -64,43 +97,15 @@ impl MultiModalGaussianDisplay {
             primitive: Default::default(),
         });
 
-        let resolution_buffer = device.create_buffer_init(&create_buffer_init_descr());
+        let WgpuBufferBindGroupPair {
+            bind_group: resolution_bind_group,
+            buffer: resolution_buffer,
+        } = get_resolution_pair(device);
 
-        let resolution_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: webgpu_debug_name,
-            layout: &multimodal_gaussian::bind_groups::WgpuBindGroup0::get_bind_group_layout(
-                device,
-            ),
-            entries: &multimodal_gaussian::bind_groups::WgpuBindGroupLayout0 {
-                resolution_info: BufferBinding {
-                    buffer: &resolution_buffer,
-                    offset: 0,
-                    size: NonZero::new(16),
-                },
-            }
-            .entries(),
-        });
-
-        let elements_buffer = device.create_buffer_init(&BufferInitDescriptor {
-            label: Some(file!()),
-            usage: BufferUsages::COPY_DST | BufferUsages::STORAGE,
-            contents: bytemuck::cast_slice(distr.gaussians.as_slice()),
-        });
-
-        let elements_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: webgpu_debug_name,
-            layout: &multimodal_gaussian::bind_groups::WgpuBindGroup1::get_bind_group_layout(
-                device,
-            ),
-            entries: &multimodal_gaussian::bind_groups::WgpuBindGroupLayout1 {
-                gauss_bases: BufferBinding {
-                    buffer: &elements_buffer,
-                    offset: 0,
-                    size: NonZero::new(size_of_val(distr.gaussians.as_slice()) as u64),
-                },
-            }
-            .entries(),
-        });
+        let WgpuBufferBindGroupPair {
+            bind_group: elements_bind_group,
+            buffer: elements_buffer,
+        } = get_gaussian_target_pair(device, distr);
 
         // Because the graphics pipeline must have the same lifetime as the egui render pass,
         // instead of storing the pipeline in our struct, we insert it into the
