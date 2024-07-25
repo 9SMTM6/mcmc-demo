@@ -67,24 +67,16 @@ impl MultiModalGaussianDisplay {
 
         let resolution_buffer = device.create_buffer_init(&create_buffer_init_descr());
 
-        let resolution_bindings = multimodal_gaussian::bind_groups::WgpuBindGroupLayout0 {
-            resolution_info: BufferBinding {
-                buffer: &resolution_buffer,
-                offset: 0,
-                size: NonZero::new(16),
-            },
-        };
-
-        // dunno what that is for...
-        // let bind_group = test_fixed_gaussian::bind_groups::WgpuBindGroup0::from_bindings(device, bindings);
-
-        let res_bind_group_layout =
-            multimodal_gaussian::bind_groups::WgpuBindGroup0::get_bind_group_layout(device);
-
         let resolution_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: webgpu_debug_name,
-            layout: &res_bind_group_layout,
-            entries: &resolution_bindings.entries(),
+            layout: &multimodal_gaussian::bind_groups::WgpuBindGroup0::get_bind_group_layout(device),
+            entries: &multimodal_gaussian::bind_groups::WgpuBindGroupLayout0 {
+                resolution_info: BufferBinding {
+                    buffer: &resolution_buffer,
+                    offset: 0,
+                    size: NonZero::new(16),
+                },
+            }.entries(),
         });
 
         let elements_buffer = device.create_buffer_init(&BufferInitDescriptor {
@@ -93,21 +85,16 @@ impl MultiModalGaussianDisplay {
             contents: bytemuck::cast_slice(distr.gaussians.as_slice()),
         });
 
-        let el_bindings = multimodal_gaussian::bind_groups::WgpuBindGroupLayout1 {
-            gauss_bases: BufferBinding {
-                buffer: &elements_buffer,
-                offset: 0,
-                size: NonZero::new(size_of_val(distr.gaussians.as_slice()) as u64),
-            },
-        };
-
-        let el_bind_group_layout =
-            multimodal_gaussian::bind_groups::WgpuBindGroup1::get_bind_group_layout(device);
-
         let elements_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: webgpu_debug_name,
-            layout: &el_bind_group_layout,
-            entries: &el_bindings.entries(),
+            layout: &multimodal_gaussian::bind_groups::WgpuBindGroup1::get_bind_group_layout(device),
+            entries: &multimodal_gaussian::bind_groups::WgpuBindGroupLayout1 {
+                gauss_bases: BufferBinding {
+                    buffer: &elements_buffer,
+                    offset: 0,
+                    size: NonZero::new(size_of_val(distr.gaussians.as_slice()) as u64),
+                },
+            }.entries(),
         });
 
         // Because the graphics pipeline must have the same lifetime as the egui render pass,
