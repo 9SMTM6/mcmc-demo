@@ -1,4 +1,4 @@
-pub mod random_walk_metropolis_hastings;
+pub mod point_display;
 
 use egui::{
     epaint::{ColorMode, PathShape, PathStroke},

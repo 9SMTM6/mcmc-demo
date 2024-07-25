@@ -8,7 +8,7 @@ use crate::{
         SRngGaussianIter, SRngPercIter,
     },
     target_distributions::multimodal_gaussian::MultiModalGaussian,
-    visualizations::{egui_based::random_walk_metropolis_hastings::PointDisplay, CanvasPainter},
+    visualizations::{egui_based::point_display::PointDisplay, CanvasPainter},
 };
 
 #[cfg_attr(feature="persistence", 
