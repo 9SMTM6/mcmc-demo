@@ -1,5 +1,5 @@
 #import constants::PI;
-#import helpers::canvas_coord_to_ndc;
+#import helpers::{canvas_coord_to_ndc, percentage_logscaled};
 #import resolution_uniform_bind::resolution_info;
 #import fullscreen_quad;
 #import types::NormalDistribution;
@@ -11,12 +11,6 @@ fn calc_gaussian_density(ndc_coord: vec2<f32>) -> f32 {
     var combined_prob_density = 0.0;
 
     var normalization = 0.0;
-
-    // TODO: consider how to do log-density display, which is what original does.
-    // it does a bunch of math which 
-    // 1. takes time to implement and 
-    // 2. I'm not sure whether it would be faster to calculate this on the gpu in every shader
-    //  and reduce data transfer or to calculate that on the cpu beforehand (and for that to work we also need to pass in the arrays anyways) 
 
     for (var i = 0u; i < arrayLength(&gauss_bases); i+=1u) {
         let el = gauss_bases[i];
@@ -37,18 +31,4 @@ fn calc_gaussian_density(ndc_coord: vec2<f32>) -> f32 {
     combined_prob_density /= normalization;
 
     return combined_prob_density;
-}
-
-@fragment
-fn fs_main(@builtin(position) canvas_coords: vec4<f32>) -> @location(0) vec4<f32> {
-    let normalized_device_coords = canvas_coord_to_ndc(canvas_coords.xy, resolution_info.resolution);
-
-    let combined_prob_density = calc_gaussian_density(normalized_device_coords);
-
-    // use log density instead. 
-    // Adding 1 to the density to start at 0 for density zero, otherwise this is using illegal colorspaces.
-    // Then normalizing to maximum.
-    let log_combined_prob_density = log(1 + combined_prob_density) / log(2.0);
-
-    return vec4(vec3(0, log_combined_prob_density, 0), 1.0);
 }
