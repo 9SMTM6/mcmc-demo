@@ -24,6 +24,7 @@ pub struct TemplateApp {
     algo: Rwmh,
     drawer: PointDisplay,
     target_distr: MultiModalGaussian,
+    #[allow(dead_code)]
     target_distr_render: Option<MultiModalGaussianDisplay>,
     diff_render: Option<DiffDisplay>,
     settings: settings::Settings,
