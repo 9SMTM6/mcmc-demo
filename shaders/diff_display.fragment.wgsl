@@ -3,28 +3,32 @@
 #import helpers::percentage_logscaled;
 #import multimodal_gaussian::{gauss_bases, calc_gaussian_density}
 #import "fullscreen_quad.vertex.wgsl";
-#import types::{RWAcceptRecord, RWRejectRecord, RWCountInfo, DiffDisplayOptions};
+#import types::{RWMHAcceptRecord, RWMHRejectRecord, RWMHCountInfo, DiffDisplayOptions};
+
+// if reintroduced, increase bindgroup id on others again.
+// @group(2) @binding(0)
+// var<uniform> diff_display_options: DiffDisplayOptions;
 
 @group(2) @binding(0)
-var<uniform> diff_display_options: DiffDisplayOptions;
+var<storage, read> accepted: array<RWMHAcceptRecord>;
 
-@group(3) @binding(0)
-var<storage, read> accepted: array<RWAcceptRecord>;
+// @group(2) @binding(1)
+// var<storage, read> rejected: array<RWMHRejectRecord>;
 
-// @group(3) @binding(1)
-// var<storage, read> rejected: array<RWRejectRecord>;
-
-@group(3) @binding(1)
-var<uniform> count_info: RWCountInfo;
+@group(2) @binding(1)
+var<uniform> count_info: RWMHCountInfo;
 
 fn calc_approx_density(ndc_coord: vec2<f32>) -> f32 {
     let total_point_count = count_info.total_point_count;
 
-    let window_radius = diff_display_options.window_radius;
+    let window_radius = 0.1;
+    // let window_radius = diff_display_options.window_radius;
 
     var prob_unnorm: u32 = 0;
 
-    for (var i = 0u; i < arrayLength(&accepted); i+=1u) {
+    // REALLY ugly fix, but I need to start at 1 so that I never submit
+    // a zero sized buffer, which otherwise causes WebGPU to refuse the draw call.
+    for (var i = 1u; i < arrayLength(&accepted); i+=1u) {
         let el = accepted[i];
 
         let position = el.position;

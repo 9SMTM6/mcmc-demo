@@ -10,7 +10,7 @@ use crate::{
     target_distributions::multimodal_gaussian::MultiModalGaussian,
     visualizations::{
         egui_based::point_display::PointDisplay,
-        shader_based::multimodal_gaussian::MultiModalGaussianDisplay,
+        shader_based::{diff_display::DiffDisplay, multimodal_gaussian::MultiModalGaussianDisplay},
     },
 };
 
@@ -25,6 +25,7 @@ pub struct TemplateApp {
     drawer: PointDisplay,
     target_distr: MultiModalGaussian,
     target_distr_render: Option<MultiModalGaussianDisplay>,
+    diff_render: Option<DiffDisplay>,
     settings: settings::Settings,
     gaussian_distr_iter: SRngGaussianIter<rand_pcg::Pcg32>,
     uniform_distr_iter: SRngPercIter<rand_pcg::Pcg32>,
@@ -37,6 +38,7 @@ impl Default for TemplateApp {
             drawer: Default::default(),
             target_distr: Default::default(),
             target_distr_render: None,
+            diff_render: None,
             settings: Default::default(),
             gaussian_distr_iter: SRngGaussianIter::<rand_pcg::Pcg32>::new([42; 16]),
             uniform_distr_iter: SRngPercIter::<rand_pcg::Pcg32>::new([42; 16]),
@@ -174,13 +176,23 @@ impl eframe::App for TemplateApp {
                         // TODO: this initialization is still completely screwed up.
                         // Now it crashes.
                         // Why, oh why, does there not seem to be a proper way to manage these wgpu resources in an egui app?
-                        self.target_distr_render
+                        // self.target_distr_render
+                        //     .as_ref()
+                        //     .unwrap_or(&MultiModalGaussianDisplay::init_gaussian_pipeline(
+                        //         &self.target_distr,
+                        //         _frame.wgpu_render_state().unwrap(),
+                        //     ))
+                        //     .paint(&self.target_distr, painter, rect * ctx.pixels_per_point());
+                        self.diff_render
                             .as_ref()
-                            .unwrap_or(&MultiModalGaussianDisplay::init_gaussian_pipeline(
+                            .unwrap_or(&DiffDisplay::init_pipeline(
+                                0.1,
                                 &self.target_distr,
+                                &self.algo,
                                 _frame.wgpu_render_state().unwrap(),
                             ))
-                            .paint(&self.target_distr, painter, rect * ctx.pixels_per_point());
+                            .paint(painter, rect * ctx.pixels_per_point(), &self.algo, &self.target_distr);
+                        
                         self.drawer.paint(painter, rect, &self.algo);
                         if let Settings::EditDistribution(ref mut distr_edit_kind) = self.settings {
                             // dunno where this is placed, which coordinate system this uses etc.

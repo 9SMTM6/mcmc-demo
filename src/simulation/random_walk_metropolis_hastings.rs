@@ -112,7 +112,8 @@ impl Default for RWMH {
             },
             max_remain_count: 0,
             total_point_count: 0,
-            history: vec![],
+            // ugly hack around forbidden buffersize zero
+            history: vec![RWMHAcceptRecord{_pad: [0; 1], position: [0.0; 2], remain_count: 0}],
             rejected_history: vec![],
             params: Default::default(),
         }
