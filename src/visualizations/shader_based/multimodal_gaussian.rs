@@ -1,3 +1,4 @@
+use std::marker::PhantomData;
 use std::mem::size_of_val;
 use std::num::NonZero;
 
@@ -9,21 +10,8 @@ use wgpu::{BufferBinding, BufferUsages, RenderPipeline, RenderPipelineDescriptor
 use crate::shaders::types::{NormalDistribution, ResolutionInfo};
 use crate::shaders::{fullscreen_quad, multimodal_gaussian};
 use crate::target_distributions::multimodal_gaussian::MultiModalGaussian;
-use crate::visualizations::CanvasPainter;
 
 use super::resolution_uniform::create_buffer_init_descr;
-
-impl CanvasPainter for MultiModalGaussian {
-    fn paint(&self, painter: &egui::Painter, rect: egui::Rect) {
-        painter.add(eframe::egui_wgpu::Callback::new_paint_callback(
-            rect,
-            RenderCall {
-                px_size: rect.size().into(),
-                elements: self.gaussians.clone(),
-            },
-        ));
-    }
-}
 
 struct MultiModalGaussPipeline {
     pipeline: RenderPipeline,
@@ -33,8 +21,27 @@ struct MultiModalGaussPipeline {
     elements_buffer: Buffer,
 }
 
-impl MultiModalGaussian {
-    pub fn init_gaussian_pipeline(&self, render_state: &RenderState) {
+
+#[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
+pub struct MultiModalGaussianDisplay {
+    // color: Color32,
+    prevent_construct: PhantomData<()>
+}
+
+impl MultiModalGaussianDisplay {
+    pub fn paint(&self, distr: &MultiModalGaussian, painter: &egui::Painter, rect: egui::Rect) {
+        painter.add(eframe::egui_wgpu::Callback::new_paint_callback(
+            rect,
+            RenderCall {
+                px_size: rect.size().into(),
+                elements: distr.gaussians.clone(),
+            },
+        ));
+    }
+}
+
+impl MultiModalGaussianDisplay {
+    pub fn init_gaussian_pipeline(distr: &MultiModalGaussian, render_state: &RenderState) -> Self {
         let device = &render_state.device;
 
         let webgpu_debug_name = Some(file!());
@@ -83,14 +90,14 @@ impl MultiModalGaussian {
         let elements_buffer = device.create_buffer_init(&BufferInitDescriptor {
             label: Some(file!()),
             usage: BufferUsages::COPY_DST | BufferUsages::STORAGE,
-            contents: bytemuck::cast_slice(self.gaussians.as_slice()),
+            contents: bytemuck::cast_slice(distr.gaussians.as_slice()),
         });
 
         let el_bindings = multimodal_gaussian::bind_groups::WgpuBindGroupLayout1 {
             gauss_bases: BufferBinding {
                 buffer: &elements_buffer,
                 offset: 0,
-                size: NonZero::new(size_of_val(self.gaussians.as_slice()) as u64),
+                size: NonZero::new(size_of_val(distr.gaussians.as_slice()) as u64),
             },
         };
 
@@ -121,6 +128,9 @@ impl MultiModalGaussian {
         else {
             panic!("pipeline already present?!")
         };
+        return Self {
+            prevent_construct: PhantomData,
+        }
     }
 }
 

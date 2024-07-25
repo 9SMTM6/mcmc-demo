@@ -8,7 +8,10 @@ use crate::{
         SRngGaussianIter, SRngPercIter,
     },
     target_distributions::multimodal_gaussian::MultiModalGaussian,
-    visualizations::{egui_based::point_display::PointDisplay, CanvasPainter},
+    visualizations::{
+        egui_based::point_display::PointDisplay,
+        shader_based::multimodal_gaussian::MultiModalGaussianDisplay,
+    },
 };
 
 #[cfg_attr(feature="persistence", 
@@ -21,6 +24,7 @@ pub struct TemplateApp {
     algo: Algo,
     drawer: PointDisplay,
     target_distr: MultiModalGaussian,
+    target_distr_render: Option<MultiModalGaussianDisplay>,
     settings: settings::Settings,
     gaussian_distr_iter: SRngGaussianIter<rand_pcg::Pcg32>,
     uniform_distr_iter: SRngPercIter<rand_pcg::Pcg32>,
@@ -32,6 +36,7 @@ impl Default for TemplateApp {
             algo: Default::default(),
             drawer: Default::default(),
             target_distr: Default::default(),
+            target_distr_render: None,
             settings: Default::default(),
             gaussian_distr_iter: SRngGaussianIter::<rand_pcg::Pcg32>::new([42; 16]),
             uniform_distr_iter: SRngPercIter::<rand_pcg::Pcg32>::new([42; 16]),
@@ -43,10 +48,14 @@ impl TemplateApp {
     /// Called once before the first frame.
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         let state = Self::get_state(cc);
-        state
-            .target_distr
-            .init_gaussian_pipeline(cc.wgpu_render_state.as_ref().unwrap());
-        state
+        assert!(state.target_distr_render.is_none());
+        Self {
+            target_distr_render: Some(MultiModalGaussianDisplay::init_gaussian_pipeline(
+                &state.target_distr,
+                cc.wgpu_render_state.as_ref().unwrap(),
+            )),
+            ..state
+        }
     }
 
     pub fn get_state(cc: &eframe::CreationContext<'_>) -> Self {
@@ -159,8 +168,11 @@ impl eframe::App for TemplateApp {
                             ui.allocate_exact_size(px_size, egui::Sense::click_and_drag());
                         // last painted element wins.
                         let painter = ui.painter();
-                        self.target_distr
-                            .paint(painter, rect * ctx.pixels_per_point());
+                        self.target_distr_render.as_ref().unwrap().paint(
+                            &self.target_distr,
+                            painter,
+                            rect * ctx.pixels_per_point(),
+                        );
                         self.drawer.paint(painter, rect, &self.algo);
                         if let Settings::EditDistribution(ref mut distr_edit_kind) = self.settings {
                             // dunno where this is placed, which coordinate system this uses etc.
