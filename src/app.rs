@@ -4,7 +4,7 @@ use crate::{
     settings::{self, DistrEditKind, Settings},
     shaders::types::NormalDistribution,
     simulation::{
-        random_walk_metropolis_hastings::{ProgressMode, RWMH},
+        random_walk_metropolis_hastings::{ProgressMode, Rwmh},
         SRngGaussianIter, SRngPercIter,
     },
     target_distributions::multimodal_gaussian::MultiModalGaussian,
@@ -21,7 +21,7 @@ use crate::{
     serde(default),
 )]
 pub struct TemplateApp {
-    algo: RWMH,
+    algo: Rwmh,
     drawer: PointDisplay,
     target_distr: MultiModalGaussian,
     target_distr_render: Option<MultiModalGaussianDisplay>,

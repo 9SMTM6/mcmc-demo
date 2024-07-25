@@ -80,6 +80,7 @@ impl AlgoParams {
 
 pub type AcceptRecord = RWMHAcceptRecord;
 
+#[allow(clippy::derivable_impls)]
 impl Default for AcceptRecord {
     fn default() -> Self {
         Self {
@@ -92,7 +93,7 @@ impl Default for AcceptRecord {
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Clone)]
-pub struct RWMH {
+pub struct Rwmh {
     pub current_loc: AcceptRecord,
     pub max_remain_count: u32,
     pub total_point_count: u32,
@@ -104,7 +105,7 @@ pub struct RWMH {
     pub params: AlgoParams,
 }
 
-impl Default for RWMH {
+impl Default for Rwmh {
     fn default() -> Self {
         Self {
             // TODO: make start point configurable
@@ -126,7 +127,7 @@ impl Default for RWMH {
     }
 }
 
-impl RWMH {
+impl Rwmh {
     pub fn step(
         &mut self,
         target_distr: &MultiModalGaussian,
@@ -140,7 +141,7 @@ impl RWMH {
         // self.current_loc = if accept { proposal } else { current };
         if accept {
             self.total_point_count += self.current_loc.remain_count + 1;
-            self.history.push(self.current_loc.clone());
+            self.history.push(self.current_loc);
             self.current_loc = AcceptRecord {
                 position: [proposal.x, proposal.y],
                 remain_count: 0,

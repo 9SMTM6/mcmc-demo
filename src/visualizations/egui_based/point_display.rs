@@ -2,7 +2,7 @@ use egui::{Color32, Pos2};
 
 use crate::{
     app::ndc_to_canvas_coord,
-    simulation::random_walk_metropolis_hastings::{AcceptRecord, RWMH},
+    simulation::random_walk_metropolis_hastings::{AcceptRecord, Rwmh},
     visualizations::{self, CanvasPainter},
 };
 
@@ -26,7 +26,7 @@ impl Default for PointDisplay {
 }
 
 impl PointDisplay {
-    pub fn paint(&self, painter: &egui::Painter, rect: egui::Rect, algo: &RWMH) {
+    pub fn paint(&self, painter: &egui::Painter, rect: egui::Rect, algo: &Rwmh) {
         for AcceptRecord {
             position,
             remain_count,

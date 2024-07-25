@@ -15,7 +15,7 @@ use crate::{
         self, diff_display, fullscreen_quad,
         types::{NormalDistribution, RWMHAcceptRecord, RWMHCountInfo, ResolutionInfo},
     },
-    simulation::random_walk_metropolis_hastings::{AcceptRecord, RWMH},
+    simulation::random_walk_metropolis_hastings::{AcceptRecord, Rwmh},
     target_distributions::multimodal_gaussian::MultiModalGaussian,
     visualizations::{
         self,
@@ -94,7 +94,7 @@ impl DiffDisplay {
         &self,
         painter: &egui::Painter,
         rect: egui::Rect,
-        algo: &RWMH,
+        algo: &Rwmh,
         target: &MultiModalGaussian,
     ) {
         painter.add(eframe::egui_wgpu::Callback::new_paint_callback(
@@ -111,7 +111,7 @@ impl DiffDisplay {
         // TODO: this doesnt actually do anything yet
         window_radius: f32,
         distr: &MultiModalGaussian,
-        algo: &RWMH,
+        algo: &Rwmh,
         render_state: &RenderState,
     ) -> Self {
         let device = &render_state.device;
@@ -171,17 +171,17 @@ impl DiffDisplay {
         // else {
         //     panic!("pipeline already present?!")
         // };
-        return Self {
+        Self {
             window_radius,
             prevent_construct: PhantomData,
-        };
+        }
     }
 }
 
 struct RenderCall {
     px_size: [f32; 2],
     targets: Vec<NormalDistribution>,
-    algo_state: RWMH,
+    algo_state: Rwmh,
 }
 
 impl CallbackTrait for RenderCall {
