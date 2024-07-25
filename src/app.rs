@@ -4,7 +4,7 @@ use crate::{
     settings::{self, DistrEditKind, Settings},
     shaders::types::NormalDistribution,
     simulation::{
-        random_walk_metropolis_hastings::{Algo, ProgressMode},
+        random_walk_metropolis_hastings::{ProgressMode, RWMH},
         SRngGaussianIter, SRngPercIter,
     },
     target_distributions::multimodal_gaussian::MultiModalGaussian,
@@ -21,7 +21,7 @@ use crate::{
     serde(default),
 )]
 pub struct TemplateApp {
-    algo: Algo,
+    algo: RWMH,
     drawer: PointDisplay,
     target_distr: MultiModalGaussian,
     target_distr_render: Option<MultiModalGaussianDisplay>,
@@ -130,6 +130,8 @@ impl eframe::App for TemplateApp {
                 unsafe {
                     egui::Slider::new(
                         size.get_inner_mut(),
+                        // TODO: Increase limit of... storage buffer size or whatever to maximum allowed, 
+                        // use that maximum here to determine slider maximum, by determining how much space is left, roughly.
                         1..=(usize::MAX / usize::MAX.ilog2() as usize),
                     )
                 }

@@ -5,6 +5,7 @@ use crate::{shaders::types::RWMHAcceptRecord, target_distributions::multimodal_g
 use super::{SRngGaussianIter, SRngPercIter};
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
+#[derive(Clone)]
 pub struct GaussianProposal {
     sigma: f32,
 }
@@ -16,6 +17,7 @@ impl Default for GaussianProposal {
 }
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
+#[derive(Clone)]
 pub struct IPromiseThisIsNonZeroUsize(usize);
 
 impl IPromiseThisIsNonZeroUsize {
@@ -37,6 +39,7 @@ impl IPromiseThisIsNonZeroUsize {
 }
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
+#[derive(Clone)]
 pub enum ProgressMode {
     Batched { size: IPromiseThisIsNonZeroUsize },
 }
@@ -50,7 +53,7 @@ impl Default for ProgressMode {
 }
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct AlgoParams {
     pub proposal: GaussianProposal,
     pub progress_mode: ProgressMode,
@@ -86,7 +89,8 @@ impl Default for AcceptRecord {
 }
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
-pub struct Algo {
+#[derive(Clone)]
+pub struct RWMH {
     pub current_loc: AcceptRecord,
     pub max_remain_count: u32,
     pub total_point_count: u32,
@@ -98,7 +102,7 @@ pub struct Algo {
     pub params: AlgoParams,
 }
 
-impl Default for Algo {
+impl Default for RWMH {
     fn default() -> Self {
         Self {
             // TODO: make start point configurable
@@ -115,7 +119,7 @@ impl Default for Algo {
     }
 }
 
-impl Algo {
+impl RWMH {
     pub fn step(
         &mut self,
         target_distr: &MultiModalGaussian,
