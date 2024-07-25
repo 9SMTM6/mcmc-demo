@@ -1,6 +1,6 @@
 #import constants::PI;
-#import helpers::{canvas_coord_to_ndc, percentage_logscaled};
-#import resolution_uniform_bind::resolution_info;
+#import helpers::{percentage_logscaled};
+#import canvas_ndc_conversion::canvas_coord_to_ndc;
 #import fullscreen_quad;
 #import types::NormalDistribution;
 
