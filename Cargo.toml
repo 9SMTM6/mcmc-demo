@@ -11,7 +11,7 @@ targets = ["x86_64-unknown-linux-gnu", "wasm32-unknown-unknown"]
 
 [features]
 default = ["persistence", "shipped_fonts", "webgl_compat", "x11"]
-persistence = ["dep:serde", "eframe/persistence", "rand/serde1", "rand_distr/serde1", "rand_pcg/serde1", "na/serde-serialize"]
+persistence = ["dep:serde", "eframe/persistence", "rand/serde1", "rand_distr/serde1", "rand_pcg/serde1", "nalgebra/serde-serialize"]
 webgl_compat = ["wgpu/webgl"]
 x11 = ["eframe/x11"]
 shipped_fonts = ["eframe/default_fonts"]
@@ -25,7 +25,7 @@ log = "0.4"
 serde = { version = "1", features = ["derive"], optional = true }
 wgpu = { version = "0.20.0", features = ["webgpu"] }
 bytemuck = { version = "1.16.0" }
-na = { package = "nalgebra", version = "0.33.0" }
+nalgebra = { version = "0.33.0" }
 getrandom = { version = "0.2.15", features = ["js"] }
 rand_pcg = "0.3.1"
 rand_distr = "0.4.3"

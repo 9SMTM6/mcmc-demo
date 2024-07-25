@@ -57,7 +57,7 @@ pub struct AlgoParams {
 }
 
 // horrible name but I cant think of something better RN.
-pub type AlgoVec = na::Vector2<f32>;
+pub type AlgoVec = nalgebra::Vector2<f32>;
 
 impl AlgoParams {
     fn propose(
