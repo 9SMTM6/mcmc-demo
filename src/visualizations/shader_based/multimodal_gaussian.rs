@@ -21,11 +21,10 @@ struct MultiModalGaussPipeline {
     elements_buffer: Buffer,
 }
 
-
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 pub struct MultiModalGaussianDisplay {
     // color: Color32,
-    prevent_construct: PhantomData<()>
+    prevent_construct: PhantomData<()>,
 }
 
 impl MultiModalGaussianDisplay {
@@ -69,14 +68,17 @@ impl MultiModalGaussianDisplay {
 
         let resolution_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: webgpu_debug_name,
-            layout: &multimodal_gaussian::bind_groups::WgpuBindGroup0::get_bind_group_layout(device),
+            layout: &multimodal_gaussian::bind_groups::WgpuBindGroup0::get_bind_group_layout(
+                device,
+            ),
             entries: &multimodal_gaussian::bind_groups::WgpuBindGroupLayout0 {
                 resolution_info: BufferBinding {
                     buffer: &resolution_buffer,
                     offset: 0,
                     size: NonZero::new(16),
                 },
-            }.entries(),
+            }
+            .entries(),
         });
 
         let elements_buffer = device.create_buffer_init(&BufferInitDescriptor {
@@ -87,14 +89,17 @@ impl MultiModalGaussianDisplay {
 
         let elements_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: webgpu_debug_name,
-            layout: &multimodal_gaussian::bind_groups::WgpuBindGroup1::get_bind_group_layout(device),
+            layout: &multimodal_gaussian::bind_groups::WgpuBindGroup1::get_bind_group_layout(
+                device,
+            ),
             entries: &multimodal_gaussian::bind_groups::WgpuBindGroupLayout1 {
                 gauss_bases: BufferBinding {
                     buffer: &elements_buffer,
                     offset: 0,
                     size: NonZero::new(size_of_val(distr.gaussians.as_slice()) as u64),
                 },
-            }.entries(),
+            }
+            .entries(),
         });
 
         // Because the graphics pipeline must have the same lifetime as the egui render pass,
@@ -117,7 +122,7 @@ impl MultiModalGaussianDisplay {
         };
         return Self {
             prevent_construct: PhantomData,
-        }
+        };
     }
 }
 
