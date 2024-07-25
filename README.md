@@ -1,11 +1,30 @@
 # TODO:
 
+## Scaling of distributions and approximations
+
+For the approximation, distribution scaling doesn't work currently, since we've got difficulties scaling it. For distribution scaling we would have to integrate it for normalization. For every change, currently every render.
+Alternatives: Max-Scaling. Still problematic for approximation, but perhaps doable if we scan all values with some "lower resolution" compute shader. But that would excascerbate the current scaling issue, since then this would have to happen before render and for every subsequent one.
+
+Alternatively we could use the render shader as a compute shader of sorts, and use it for normalization with 1 frame delay. IDK if thats gonna go well with eguis energy saving render approach, and it also leads to artifacts/flickering, which may be an accessibility issue (this application is already not accessible, but this would hurt another groups than so far).
+
+## Problematic approach to diff rendering
+
+The approach I took to rendering/calculating the approximation doesn't scale at all.
+The issue is (probably) that EVERY fragment shader (every pixel) will read every approximation point. That won't do.
+We would need to split this up, but thats not really easy, and probably goes kind of deep into game development adjacent topics, which I dont really want to do.
+
+## Find a way to Profile performance issues
+
+Generally I should find a way to profile webgpu render. Currently I'm mostly guessing from past reference points, and while I'm decently certain in my conclusions, it would be nice to have confirmation, and some foresight into upcoming issues ("will solving this just lead to another very close bottleneck", which is currently stopping me from some experimentations).
+
 ## Non-Batched execution
 
 Currently I only support batched execution, to quickly see results of different configurations.
 In the future I also want to support a substep execution such as in the [original inspiration](https://chi-feng.github.io/mcmc-demo/app.html?algorithm=RandomWalkMH&target=banana).
 
 ## Execution of batches on web
+
+Note: This is not actually the primary issue, though annoying. In memory size was problematic occasionally, but primary issues were render speed / sie on VRAM (i think?). Especially in the diff approach. More to come about this.
 
 To be able to efficiently execute batches in the background on the web we would need a bunch of things to fall into place.
 We want to be able to execute that task in a background thread.
