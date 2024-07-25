@@ -11,10 +11,10 @@ struct ResolutionInfo {
     _pad: vec2<f32>,
 }
 
-struct RWAcceptRecord {
+struct RWMHAcceptRecord {
     position: vec2<f32>,
     remain_count: u32,
-    _pad: f32,
+    _pad: array<u32, 1>,
 }
 
 // has issues.
@@ -25,11 +25,11 @@ struct RWAcceptRecord {
 //     history: array<RWAcceptRecord>,
 // }
 
-struct RWRejectRecord {
+struct RWMHRejectRecord {
     location: vec2<f32>,
 }
 
-struct RWCountInfo {
+struct RWMHCountInfo {
     max_remain_count: u32,
     total_point_count: u32,
 }

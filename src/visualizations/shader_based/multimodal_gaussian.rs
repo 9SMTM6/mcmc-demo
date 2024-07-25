@@ -42,7 +42,8 @@ impl MultiModalGaussianDisplay {
     }
 }
 
-fn get_gaussian_target_pair(device: &wgpu::Device, distr: &MultiModalGaussian) -> WgpuBufferBindGroupPair {
+/// this can also be used elsewhere, e.g. diff_display.
+pub(super) fn get_gaussian_target_pair(device: &wgpu::Device, distr: &MultiModalGaussian) -> WgpuBufferBindGroupPair {
     let webgpu_debug_name = Some(file!());
     
     let buffer = device.create_buffer_init(&BufferInitDescriptor {

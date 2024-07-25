@@ -27,6 +27,12 @@ pub fn get_resolution_pair(device: &wgpu::Device) -> WgpuBufferBindGroupPair {
 
     let resolution_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
         label: webgpu_debug_name,
+        // I use the bindgroups out of the multimodal_gaussian namespace here, 
+        // but since these bind-groups are defined in common files, these can also be used for other
+        // shaders, such as diff_display.
+        // 
+        // Sadly I could not find a way to structure the files in such a way that I could make this easy to tell.
+        // Rusts nominal type-checking is also none-the-wiser, since the generic wgpu types for buffer and bindgroup erase this info.
         layout: &multimodal_gaussian::bind_groups::WgpuBindGroup0::get_bind_group_layout(device),
         entries: &multimodal_gaussian::bind_groups::WgpuBindGroupLayout0 {
             resolution_info: BufferBinding {
