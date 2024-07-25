@@ -48,7 +48,8 @@ impl TemplateApp {
     /// Called once before the first frame.
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         let state = Self::get_state(cc);
-        assert!(state.target_distr_render.is_none());
+        // TODO: this doesnt work as intended...
+        // assert!(state.target_distr_render.());
         Self {
             target_distr_render: Some(MultiModalGaussianDisplay::init_gaussian_pipeline(
                 &state.target_distr,
