@@ -47,5 +47,14 @@ fn fs_main(@builtin(position) canvas_coords: vec4<f32>) -> @location(0) vec4<f32
 
     let diff = target_density - approx_density;
 
-    return vec4(vec3(0, abs(diff), 0), 1.0);
+    var color = vec3(0.0);
+
+    if sign(diff) == -1 {
+        color[0] = abs(diff);
+    } else {
+        color[1] = abs(diff)/2.0;
+        color[2] = abs(diff)/2.0;
+    }
+
+    return vec4(color, 1.0);
 }
