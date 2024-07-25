@@ -22,10 +22,10 @@ fn create_buffer_init_descr() -> wgpu::util::BufferInitDescriptor<'static> {
 pub fn get_resolution_pair(device: &wgpu::Device) -> WgpuBufferBindGroupPair {
     let webgpu_debug_name = Some(file!());
 
-    let resolution_buffer =
+    let buffer =
         device.create_buffer_init(&create_buffer_init_descr());
 
-    let resolution_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+    let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
         label: webgpu_debug_name,
         // I use the bindgroups out of the multimodal_gaussian namespace here, 
         // but since these bind-groups are defined in common files, these can also be used for other
@@ -36,7 +36,7 @@ pub fn get_resolution_pair(device: &wgpu::Device) -> WgpuBufferBindGroupPair {
         layout: &multimodal_gaussian::bind_groups::WgpuBindGroup0::get_bind_group_layout(device),
         entries: &multimodal_gaussian::bind_groups::WgpuBindGroupLayout0 {
             resolution_info: BufferBinding {
-                buffer: &resolution_buffer,
+                buffer: &buffer,
                 offset: 0,
                 size: NonZero::new(16),
             },
@@ -45,7 +45,7 @@ pub fn get_resolution_pair(device: &wgpu::Device) -> WgpuBufferBindGroupPair {
     });
 
     WgpuBufferBindGroupPair {
-        bind_group: resolution_bind_group,
-        buffer: resolution_buffer,
+        bind_group,
+        buffer,
     }
 }
