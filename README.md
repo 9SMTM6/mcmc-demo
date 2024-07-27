@@ -1,5 +1,19 @@
 # TODO:
 
+## Compute shader
+
+I dont know if any of the below ideas for speeding up the diff rendering would work out. And in the end, dont think I'll get much use out of knowing how to do that (meanign I'll forget it anyways).
+
+One thing where the probability of reuse is much higher, and that more connects to my past knowledge, is compute shaders.
+Its a bit annoying to go away from the ability to render everything in real time always, but at the same time that lifts hard limits that were always going to be there with the previous approach - whether we were close to reaching them or not.
+
+I currently envison this approach (lets see how much of this I'll get):
+
+1. determine device limits to divide work accordingly
+2. since we don't render directly anymore, I've got much more freedom in mixing approach. So I intend to break up the determination of the approx distribution into multiple sets of reference points.
+3. I will use a compute shader to texture, probably. Maybe just a storage buffer. I'll see.
+4. In order to avoid numerical stability issues I'll probably add some normalization after N steps. I have to decide on a proper strategy for that. Perhaps I can actually do it based on current maximum instead. Most of these strategies will lead to systemctic errors in the precision, since rounding might happen in different situations, but I'm fine with that.
+
 ## Scaling of distributions and approximations
 
 For the approximation, distribution scaling doesn't work currently, since we've got difficulties scaling it. For distribution scaling we would have to integrate it for normalization. For every change, currently every render.
