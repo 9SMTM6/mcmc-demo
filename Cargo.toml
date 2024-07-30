@@ -11,14 +11,25 @@ targets = ["x86_64-unknown-linux-gnu", "wasm32-unknown-unknown"]
 
 [features]
 default = ["persistence", "shipped_fonts", "webgl_compat", "x11"]
-persistence = ["dep:serde", "eframe/persistence", "rand/serde1", "rand_distr/serde1", "rand_pcg/serde1", "nalgebra/serde-serialize"]
+persistence = [
+    "dep:serde",
+    "eframe/persistence",
+    "rand/serde1",
+    "rand_distr/serde1",
+    "rand_pcg/serde1",
+    "nalgebra/serde-serialize",
+]
 webgl_compat = ["wgpu/webgl"]
 x11 = ["eframe/x11"]
 shipped_fonts = ["eframe/default_fonts"]
+profile = ["dep:puffin", "dep:puffin_http", "eframe/puffin"]
 
 [dependencies]
 egui = "0.28.1"
-eframe = { version = "0.28.1", default-features = false, features = ["wgpu", "wayland"] }
+eframe = { version = "0.28.1", default-features = false, features = [
+    "wgpu",
+    "wayland",
+] }
 log = "0.4"
 
 # You only need serde if you want app persistence:
@@ -32,6 +43,8 @@ rand_distr = "0.4.3"
 rand = { version = "0.8.5", features = ["log"] }
 web-sys = { version = "0.3.69", features = ["Navigator", "Gpu"] }
 enum_dispatch = "0.3.13"
+puffin = { version = "0.19.0", optional = true }
+puffin_http = { version = "0.16.0", optional = true }
 
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]

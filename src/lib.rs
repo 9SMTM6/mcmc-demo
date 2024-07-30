@@ -1,6 +1,7 @@
 #![warn(clippy::all, rust_2018_idioms, rust_2024_compatibility)]
 
 mod app;
+pub mod profile;
 mod settings;
 mod simulation;
 mod target_distributions;

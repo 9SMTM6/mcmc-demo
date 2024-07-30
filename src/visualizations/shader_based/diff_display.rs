@@ -11,6 +11,7 @@ use wgpu::{
 
 use crate::{
     app::ndc_to_canvas_coord,
+    profile, profile_scope,
     shaders::{
         self, diff_display, fullscreen_quad,
         types::{NormalDistribution, RWMHAcceptRecord, RWMHCountInfo, ResolutionInfo},
@@ -236,6 +237,7 @@ impl CallbackTrait for RenderCall {
         render_pass: &mut wgpu::RenderPass<'a>,
         callback_resources: &'a eframe::egui_wgpu::CallbackResources,
     ) {
+        profile_scope!("draw diff_display");
         let PipelineStateHolder {
             pipeline,
             resolution_bind_group,

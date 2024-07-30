@@ -7,6 +7,8 @@ fn main() -> eframe::Result<()> {
     use mcmc_demo::INITIAL_RENDER_SIZE;
 
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
+    #[cfg(feature = "profile")]
+    mcmc_demo::profile::start_puffin_server();
 
     let native_options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
