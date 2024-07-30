@@ -9,10 +9,17 @@ Its a bit annoying to go away from the ability to render everything in real time
 
 I currently envison this approach (lets see how much of this I'll get):
 
+0. still use max-scaling. With near-uniform distributions we otherwise get a far to depressed dynamic range where things actually happen.
 1. determine device limits to divide work accordingly
-2. since we don't render directly anymore, I've got much more freedom in mixing approach. So I intend to break up the determination of the approx distribution into multiple sets of reference points.
-3. I will use a compute shader to texture, probably. Maybe just a storage buffer. I'll see.
-4. In order to avoid numerical stability issues I'll probably add some normalization after N steps. I have to decide on a proper strategy for that. Perhaps I can actually do it based on current maximum instead. Most of these strategies will lead to systemctic errors in the precision, since rounding might happen in different situations, but I'm fine with that.
+2. since we don't render directly anymore, I've got much more freedom in splitting up the workload, concretely optimizing for typical buffers. So I intend to break up the determination of the approx distribution into multiple sets of reference points.
+3. do it in a cumpute shader
+4. The result can be stored either:
+    * in a texture. 
+    * a storage buffer
+5. the storage will never have to leave the GPU. Compute it once, read the result it in a fragment shader where the actual colors are determined
+6. with that I could also consider decoupling calculation resolution and render resolution, but I think for now I'll keep them coupled
+7. In order to avoid numerical stability issues I'll probably add some normalization after N steps. I have to decide on a proper strategy for that. Perhaps I can actually do it based on current maximum instead. Most of these strategies will lead to systemctic errors in the precision, since rounding might happen in different situations, but I'm fine with that.
+8. I should probably introduce some kind of loading (compute) visualization...
 
 ## Scaling of distributions and approximations
 
