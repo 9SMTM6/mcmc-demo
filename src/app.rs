@@ -30,6 +30,7 @@ pub struct TemplateApp {
     settings: settings::Settings,
     gaussian_distr_iter: SRngGaussianIter<rand_pcg::Pcg32>,
     uniform_distr_iter: SRngPercIter<rand_pcg::Pcg32>,
+    #[cfg(feature = "profile")]
     backend_panel: super::profile::backend_panel::BackendPanel,
 }
 
@@ -44,6 +45,7 @@ impl Default for TemplateApp {
             settings: Default::default(),
             gaussian_distr_iter: SRngGaussianIter::<rand_pcg::Pcg32>::new([42; 16]),
             uniform_distr_iter: SRngPercIter::<rand_pcg::Pcg32>::new([42; 16]),
+            #[cfg(feature = "profile")]
             backend_panel: Default::default(),
         }
     }
@@ -62,40 +64,6 @@ impl TemplateApp {
             )),
             ..state
         }
-    }
-
-    fn backend_panel(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
-        // The backend-panel can be toggled on/off.
-        // We show a little animation when the user switches it.
-        let is_open = self.backend_panel.open || ctx.memory(|mem| mem.everything_is_visible());
-
-        egui::SidePanel::left("backend_panel")
-            .resizable(false)
-            .show_animated(ctx, is_open, |ui| {
-                ui.vertical_centered(|ui| {
-                    ui.heading("💻 Backend");
-                });
-
-                ui.separator();
-                self.backend_panel_contents(ui, frame);
-            });
-    }
-
-    fn backend_panel_contents(&mut self, ui: &mut egui::Ui, frame: &mut eframe::Frame) {
-        self.backend_panel.ui(ui, frame);
-
-        ui.separator();
-
-        ui.horizontal(|ui| {
-            if ui
-                .button("Reset egui")
-                .on_hover_text("Forget scroll, positions, sizes etc")
-                .clicked()
-            {
-                ui.ctx().memory_mut(|mem| *mem = Default::default());
-                ui.close_menu();
-            }
-        });
     }
 
     pub fn get_state(cc: &eframe::CreationContext<'_>) -> Self {
@@ -129,6 +97,43 @@ impl TemplateApp {
     }
 }
 
+#[cfg(feature = "profile")]
+impl TemplateApp {
+    fn backend_panel(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+        // The backend-panel can be toggled on/off.
+        // We show a little animation when the user switches it.
+        let is_open = self.backend_panel.open || ctx.memory(|mem| mem.everything_is_visible());
+
+        egui::SidePanel::left("backend_panel")
+            .resizable(false)
+            .show_animated(ctx, is_open, |ui| {
+                ui.vertical_centered(|ui| {
+                    ui.heading("💻 Backend");
+                });
+
+                ui.separator();
+                self.backend_panel_contents(ui, frame);
+            });
+    }
+
+    fn backend_panel_contents(&mut self, ui: &mut egui::Ui, frame: &mut eframe::Frame) {
+        self.backend_panel.ui(ui, frame);
+
+        ui.separator();
+
+        ui.horizontal(|ui| {
+            if ui
+                .button("Reset egui")
+                .on_hover_text("Forget scroll, positions, sizes etc")
+                .clicked()
+            {
+                ui.ctx().memory_mut(|mem| *mem = Default::default());
+                ui.close_menu();
+            }
+        });
+    }
+}
+
 impl eframe::App for TemplateApp {
     /// Called by the frame work to save state before shutdown.
     #[cfg(feature = "persistence")]
@@ -146,16 +151,20 @@ impl eframe::App for TemplateApp {
                 if ui.button("Reset State").clicked() {
                     *self = Default::default();
                 }
+                #[cfg(feature = "profile")]
                 ui.toggle_value(&mut self.backend_panel.open, "Backend");
                 egui::warn_if_debug_build(ui);
             })
         });
 
-        self.backend_panel.update(ctx, frame);
+        #[cfg(feature = "profile")]
+        {
+            self.backend_panel.update(ctx, frame);
 
-        self.backend_panel(ctx, frame);
+            self.backend_panel(ctx, frame);
 
-        self.backend_panel.end_of_frame(ctx);
+            self.backend_panel.end_of_frame(ctx);
+        }
 
         #[allow(clippy::collapsible_else_if)]
         egui::Window::new("Simulation").show(ctx, |ui| {

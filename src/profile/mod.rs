@@ -1,4 +1,6 @@
+#[cfg(feature = "profile")]
 pub mod backend_panel;
+#[cfg(feature = "profile")]
 pub mod frame_history;
 
 #[macro_export]
