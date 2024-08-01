@@ -122,7 +122,8 @@ impl MultiModalGaussianDisplay {
                     elements_buffer,
                 })
         else {
-            panic!("pipeline already present?!")
+            return Self {prevent_construct: PhantomData}
+            // panic!("pipeline already present?!")
         };
         Self {
             prevent_construct: PhantomData,

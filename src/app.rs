@@ -1,8 +1,7 @@
-use egui::{self, Pos2, Shadow, Vec2};
+use egui::{self, Shadow, Vec2};
 
 use crate::{
-    settings::{self, DistrEditKind, Settings},
-    shaders::types::NormalDistribution,
+    settings::{self, Settings},
     simulation::{
         random_walk_metropolis_hastings::{ProgressMode, Rwmh},
         SRngGaussianIter, SRngPercIter,
@@ -100,7 +99,7 @@ impl eframe::App for TemplateApp {
     }
 
     /// Called each time the UI needs repainting, which may be many times per second.
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         // Put your widgets into a `SidePanel`, `TopBottomPanel`, `CentralPanel`, `Window` or `Area`.
         // For inspiration and more examples, go to https://emilk.github.io/egui
 
@@ -169,95 +168,60 @@ impl eframe::App for TemplateApp {
                         //     map.get_temp(id)
                         //     map.insert_temp(id, value)
                         // });
+                        // see: https://github.com/emilk/egui/blob/37b1e1504db14697c39ce1c3bb5e58f4f2b819bf/crates/egui_demo_lib/src/demo/password.rs#L46
                         let px_size = ui.available_size();
                         let (rect, response) =
-                            ui.allocate_exact_size(px_size, egui::Sense::click_and_drag());
+                            ui.allocate_exact_size(px_size, egui::Sense::hover());
                         // last painted element wins.
                         let painter = ui.painter();
                         // TODO: this initialization is still completely screwed up.
                         // Now it crashes.
                         // Why, oh why, does there not seem to be a proper way to manage these wgpu resources in an egui app?
-                        // self.target_distr_render
+                        self.target_distr_render
+                            .as_ref()
+                            .unwrap_or(&MultiModalGaussianDisplay::init_gaussian_pipeline(
+                                &self.target_distr,
+                                frame.wgpu_render_state().unwrap(),
+                            ))
+                            .paint(&self.target_distr, painter, rect * ctx.pixels_per_point());
+                        // self.diff_render
                         //     .as_ref()
-                        //     .unwrap_or(&MultiModalGaussianDisplay::init_gaussian_pipeline(
+                        //     .unwrap_or(&DiffDisplay::init_pipeline(
+                        //         0.1,
                         //         &self.target_distr,
+                        //         &self.algo,
                         //         _frame.wgpu_render_state().unwrap(),
                         //     ))
-                        //     .paint(&self.target_distr, painter, rect * ctx.pixels_per_point());
-                        self.diff_render
-                            .as_ref()
-                            .unwrap_or(&DiffDisplay::init_pipeline(
-                                0.1,
-                                &self.target_distr,
-                                &self.algo,
-                                _frame.wgpu_render_state().unwrap(),
-                            ))
-                            .paint(
-                                painter,
-                                rect * ctx.pixels_per_point(),
-                                &self.algo,
-                                &self.target_distr,
-                            );
+                        //     .paint(
+                        //         painter,
+                        //         rect * ctx.pixels_per_point(),
+                        //         &self.algo,
+                        //         &self.target_distr,
+                        //     );
 
                         self.drawer.paint(painter, rect, &self.algo);
-                        if let Settings::EditDistribution(ref mut distr_edit_kind) = self.settings {
-                            // dunno where this is placed, which coordinate system this uses etc.
-                            // But when combined with sensing a drag_and_drop this SHOULD provide me with enough info to find
-                            // the gauss center (if any) that drags correspond to.
-                            let map_to_ndc = |loc| canvas_coord_to_ndc(loc, rect.size());
-                            let (start_loc, current_loc) = ui.input(|input_state| {
-                                (
-                                    input_state.pointer.press_origin().map(map_to_ndc),
-                                    input_state.pointer.interact_pos().map(map_to_ndc),
-                                )
-                            });
-
-                            if response.drag_started() {
-                                let el = self.target_distr.gaussians.iter().enumerate().find(
-                                    |(_, el)| {
-                                        // todo: move to pixels here, precisely the size of the centers I draw, or something proportional to that.
-                                        (start_loc.unwrap().to_vec2() - Vec2::from(el.position))
-                                            .length()
-                                            < 0.03
-                                    },
+                        if let Settings::EditDistribution(_) = self.settings {
+                            // // draw centers of gaussians
+                            for (idx, ele) in self.target_distr.gaussians.iter_mut().enumerate() {
+                                let pos = ndc_to_canvas_coord(ele.position.into(), rect.size());
+                                const CIRCLE_SIZE: f32 = 5.0;
+                                let pos_sense_rect =
+                                    egui::Rect::from_center_size(pos, Vec2::splat(CIRCLE_SIZE));
+                                let pos_resp = ui.interact(
+                                    pos_sense_rect,
+                                    response.id.with(idx),
+                                    egui::Sense::drag(),
                                 );
-                                if let Some((
-                                    idx,
-                                    NormalDistribution {
-                                        position: orig_location,
-                                        ..
-                                    },
-                                )) = el
-                                {
-                                    *distr_edit_kind = DistrEditKind::MoveCenter {
-                                        idx,
-                                        orig_location: *orig_location,
-                                    }
-                                }
-                            }
+                                let pos = rect.clamp(pos + pos_resp.drag_delta());
 
-                            if response.drag_stopped() {
-                                *distr_edit_kind = DistrEditKind::Stateless;
-                            };
+                                let ndc_pos = canvas_coord_to_ndc(pos, rect.size());
 
-                            if let DistrEditKind::MoveCenter { idx, orig_location } =
-                                *distr_edit_kind
-                            {
-                                let new_pos = Pos2::from(orig_location)
-                                    + if response.dragged() {
-                                        current_loc.unwrap().to_vec2()
-                                            - start_loc.unwrap().to_vec2()
-                                    } else {
-                                        Vec2::splat(0.0)
-                                    };
-                                self.target_distr.gaussians[idx].position = new_pos.into();
-                            }
+                                ele.position[0] = ndc_pos.x;
+                                ele.position[1] = ndc_pos.y;
 
-                            // draw centers of gaussians
-                            for ele in self.target_distr.gaussians.iter_mut() {
                                 painter.circle_filled(
-                                    ndc_to_canvas_coord(ele.position.into(), rect.size()),
-                                    5.0,
+                                    pos,
+                                    CIRCLE_SIZE,
                                     egui::Color32::RED,
                                 );
                             }
