@@ -77,6 +77,8 @@ impl TemplateApp {
             ] {
                 *fill_color = fill_color.gamma_multiply(0.40);
             }
+            // TODO: fix interactive elems. Should actually show interactive cursor.
+            // visuals.interact_cursor = Some(egui::CursorIcon::PointingHand);
             visuals.window_shadow = Shadow::NONE;
         });
 
@@ -162,7 +164,6 @@ impl eframe::App for TemplateApp {
                     .inner_margin(egui::Margin::default())
                     .outer_margin(egui::Margin::default())
                     .show(ui, |ui| {
-                        // TODO: Adjust as seen in https://github.com/emilk/egui/blob/56df31ab489312014d57247db438ecd7189a710a/crates/egui_demo_lib/src/demo/paint_bezier.rs#L82
                         // TODO: consider moving Settings::Edit* state into `ui.data_mut()` or similar.
                         // ui.data(|map| {
                         //     map.get_temp(id)
@@ -219,10 +220,15 @@ impl eframe::App for TemplateApp {
                                 ele.position[0] = ndc_pos.x;
                                 ele.position[1] = ndc_pos.y;
 
-                                painter.circle_filled(
+                                let pos_active = pos_resp.clicked() || pos_resp.dragged() || pos_resp.hovered();
+
+                                painter.circle_stroke(
                                     pos,
                                     CIRCLE_SIZE,
-                                    egui::Color32::RED,
+                                    egui::Stroke {
+                                        color: egui::Color32::RED.gamma_multiply(if pos_active {1.0} else {0.9}),
+                                        width: if pos_active {2.0} else {1.0},
+                                    },
                                 );
                             }
                         }
