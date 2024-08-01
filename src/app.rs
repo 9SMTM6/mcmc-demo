@@ -13,7 +13,7 @@ use crate::{
     },
 };
 
-#[cfg_attr(feature="persistence", 
+#[cfg_attr(feature="persistence",
     // We derive Deserialize/Serialize so we can persist app state on shutdown.
     derive(serde::Deserialize, serde::Serialize),
     // if we add new fields, give them default values when deserializing old state
@@ -77,8 +77,7 @@ impl TemplateApp {
             ] {
                 *fill_color = fill_color.gamma_multiply(0.40);
             }
-            // TODO: fix interactive elems. Should actually show interactive cursor.
-            // visuals.interact_cursor = Some(egui::CursorIcon::PointingHand);
+            visuals.interact_cursor = Some(egui::CursorIcon::PointingHand);
             visuals.window_shadow = Shadow::NONE;
         });
 
@@ -208,11 +207,18 @@ impl eframe::App for TemplateApp {
                                 const CIRCLE_SIZE: f32 = 5.0;
                                 let pos_sense_rect =
                                     egui::Rect::from_center_size(pos, Vec2::splat(CIRCLE_SIZE));
-                                let pos_resp = ui.interact(
-                                    pos_sense_rect,
-                                    response.id.with(idx),
-                                    egui::Sense::drag(),
-                                );
+                                let mut pos_resp = ui
+                                    .interact(
+                                        pos_sense_rect,
+                                        response.id.with(idx),
+                                        egui::Sense::drag(),
+                                    )
+                                    .on_hover_cursor(egui::CursorIcon::Grab);
+                                if pos_resp.dragged() {
+                                    pos_resp = pos_resp
+                                        .on_hover_and_drag_cursor(egui::CursorIcon::Grabbing);
+                                }
+                                // .on_hover_and_drag_cursor(egui::CursorIcon::Grabbing);
                                 let pos = rect.clamp(pos + pos_resp.drag_delta());
 
                                 let ndc_pos = canvas_coord_to_ndc(pos, rect.size());
@@ -220,14 +226,19 @@ impl eframe::App for TemplateApp {
                                 ele.position[0] = ndc_pos.x;
                                 ele.position[1] = ndc_pos.y;
 
-                                let pos_active = pos_resp.clicked() || pos_resp.dragged() || pos_resp.hovered();
+                                let pos_active =
+                                    pos_resp.clicked() || pos_resp.dragged() || pos_resp.hovered();
 
                                 painter.circle_stroke(
                                     pos,
                                     CIRCLE_SIZE,
                                     egui::Stroke {
-                                        color: egui::Color32::RED.gamma_multiply(if pos_active {1.0} else {0.9}),
-                                        width: if pos_active {2.0} else {1.0},
+                                        color: egui::Color32::RED.gamma_multiply(if pos_active {
+                                            1.0
+                                        } else {
+                                            0.9
+                                        }),
+                                        width: if pos_active { 2.0 } else { 1.0 },
                                     },
                                 );
                             }
