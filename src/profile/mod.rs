@@ -1,3 +1,6 @@
+pub mod backend_panel;
+pub mod frame_history;
+
 #[macro_export]
 macro_rules! profile_scope {
     ($scope_name:expr) => {
