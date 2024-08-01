@@ -1458,6 +1458,7 @@ dependencies = [
  "rand_distr",
  "rand_pcg",
  "serde",
+ "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
  "wgpu",

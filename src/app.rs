@@ -25,6 +25,7 @@ pub struct TemplateApp {
     target_distr: MultiModalGaussian,
     #[allow(dead_code)]
     target_distr_render: Option<MultiModalGaussianDisplay>,
+    #[allow(dead_code)]
     diff_render: Option<DiffDisplay>,
     settings: settings::Settings,
     gaussian_distr_iter: SRngGaussianIter<rand_pcg::Pcg32>,
