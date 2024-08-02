@@ -1,5 +1,4 @@
 use std::marker::PhantomData;
-use std::mem::size_of_val;
 use std::num::NonZero;
 
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
@@ -62,7 +61,7 @@ pub(super) fn get_gaussian_target_pair(
             gauss_bases: BufferBinding {
                 buffer: &buffer,
                 offset: 0,
-                size: NonZero::new(size_of_val(distr.gaussians.as_slice()) as u64),
+                size: NonZero::new(buffer.size()),
             },
         }
         .entries(),

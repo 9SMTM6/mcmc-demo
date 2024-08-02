@@ -48,11 +48,9 @@ fn get_approx_triple(
         contents: bytemuck::cast_slice(approx_points.as_slice()),
     });
 
-    let info_buffer_size = size_of::<shaders::types::RWMHCountInfo>() as u64;
-
     let info_buffer = device.create_buffer(&BufferDescriptor {
         label: webgpu_debug_name,
-        size: info_buffer_size,
+        size: size_of::<shaders::types::RWMHCountInfo>() as u64,
         usage: BufferUsages::COPY_DST | BufferUsages::UNIFORM,
         mapped_at_creation: false,
     });
@@ -64,12 +62,12 @@ fn get_approx_triple(
             accepted: BufferBinding {
                 buffer: &accept_buffer,
                 offset: 0,
-                size: NonZero::new(size_of_val(approx_points.as_slice()) as u64),
+                size: NonZero::new(accept_buffer.size()),
             },
             count_info: BufferBinding {
                 buffer: &info_buffer,
                 offset: 0,
-                size: NonZero::new(info_buffer_size),
+                size: NonZero::new(info_buffer.size()),
             },
         }
         .entries(),
@@ -90,7 +88,6 @@ struct PipelineStateHolder {
 }
 
 impl DiffDisplay {
-    #[allow(unused_variables)]
     pub fn paint(
         &self,
         painter: &egui::Painter,
