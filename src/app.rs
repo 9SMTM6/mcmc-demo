@@ -55,9 +55,6 @@ impl Default for McmcDemo {
 impl McmcDemo {
     /// Called once before the first frame.
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        // This is also where you can customize the look and feel of egui using
-        // `cc.egui_ctx.set_visuals` and `cc.egui_ctx.set_fonts`.
-
         cc.egui_ctx.style_mut(|style| {
             let visuals = &mut style.visuals;
             // for fill_color in [
@@ -75,8 +72,6 @@ impl McmcDemo {
         });
 
         let state = Self::get_state(cc);
-        // TODO: this doesnt work as intended...
-        // assert!(state.target_distr_render.());
         let render_state = cc.wgpu_render_state.as_ref().unwrap();
         MultiModalGaussianDisplay::init_gaussian_pipeline(render_state);
         DiffDisplay::init_pipeline(render_state);
@@ -188,8 +183,6 @@ impl eframe::App for McmcDemo {
             };
             let ProgressMode::Batched { ref mut size } = self.algo.params.progress_mode;
             ui.add(
-                // egui::DragValue::new(&mut laaa)
-                //     .range(range),
                 unsafe {
                     egui::Slider::new(
                         size.get_inner_mut(),
@@ -209,9 +202,7 @@ impl eframe::App for McmcDemo {
                         &mut self.uniform_distr_iter,
                     )
                 }
-                // self.algo.step(&self.gaussian, , accept_rng)
             }
-            // egui::global_dark_light_mode_buttons(ui);
         });
 
         egui::CentralPanel::default()
@@ -234,9 +225,6 @@ impl eframe::App for McmcDemo {
                             ui.allocate_exact_size(px_size, egui::Sense::hover());
                         // last painted element wins.
                         let painter = ui.painter();
-                        // TODO: this initialization is still completely screwed up.
-                        // Now it crashes.
-                        // Why, oh why, does there not seem to be a proper way to manage these wgpu resources in an egui app?
                         // self.target_distr_render.paint(
                         //     &self.target_distr,
                         //     painter,
