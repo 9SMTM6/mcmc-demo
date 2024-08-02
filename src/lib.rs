@@ -11,7 +11,8 @@ mod visualizations;
     elided_lifetimes_in_paths,
     clippy::redundant_static_lifetimes,
     clippy::approx_constant,
-    clippy::needless_borrow
+    clippy::needless_borrow,
+    clippy::undocumented_unsafe_blocks,
 )]
 #[rustfmt::skip]
 mod shaders;
