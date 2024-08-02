@@ -31,7 +31,8 @@ impl PointDisplay {
             position,
             remain_count,
             ..
-        } in algo.history.iter()
+        } in algo.history.iter().skip(1)
+        // skipping the "hotfix" first empty element I added to avoid WebGPU bind exceptions
         {
             let canvas_loc = ndc_to_canvas_coord(Pos2::new(position[0], position[1]), rect.size());
             let factor = (*remain_count + 1) as f32 / (algo.max_remain_count + 1) as f32;
