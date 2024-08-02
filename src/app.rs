@@ -83,7 +83,7 @@ impl McmcDemo {
         state
     }
 
-    pub fn get_state(cc: &eframe::CreationContext<'_>) -> Self {
+    pub fn get_state(#[allow(unused_variables)] cc: &eframe::CreationContext<'_>) -> Self {
         // Load previous app state (if any).
         // Note that you must enable the `persistence` feature for this to work.
         #[cfg(feature = "persistence")]
@@ -140,7 +140,11 @@ impl eframe::App for McmcDemo {
     }
 
     /// Called each time the UI needs repainting, which may be many times per second.
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+    fn update(
+        &mut self,
+        ctx: &egui::Context,
+        #[allow(unused_variables)] frame: &mut eframe::Frame,
+    ) {
         // Put your widgets into a `SidePanel`, `TopBottomPanel`, `CentralPanel`, `Window` or `Area`.
         // For inspiration and more examples, go to https://emilk.github.io/egui
 
