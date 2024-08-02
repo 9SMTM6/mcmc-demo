@@ -38,15 +38,25 @@ pub struct DiffDisplay {
 
 fn get_approx_triple(
     device: &wgpu::Device,
-    approx_points: &Vec<shaders::types::RWMHAcceptRecord>,
+    approx_points: Option<&Vec<shaders::types::RWMHAcceptRecord>>,
 ) -> (BindGroup, Buffer, Buffer) {
     let webgpu_debug_name = Some(file!());
 
-    let accept_buffer = device.create_buffer_init(&BufferInitDescriptor {
-        label: webgpu_debug_name,
-        usage: BufferUsages::COPY_DST | BufferUsages::STORAGE,
-        contents: bytemuck::cast_slice(approx_points.as_slice()),
-    });
+    let accept_buf_use = BufferUsages::COPY_DST | BufferUsages::STORAGE;
+
+    let accept_buffer = match approx_points {
+        Some(approx_points) => device.create_buffer_init(&BufferInitDescriptor {
+            label: webgpu_debug_name,
+            usage: accept_buf_use,
+            contents: bytemuck::cast_slice(approx_points.as_slice()),
+        }),
+        None => device.create_buffer(&BufferDescriptor {
+            label: webgpu_debug_name,
+            usage: accept_buf_use,
+            mapped_at_creation: false,
+            size: 0,
+        }),
+    };
 
     let info_buffer = device.create_buffer(&BufferDescriptor {
         label: webgpu_debug_name,
@@ -143,10 +153,10 @@ impl DiffDisplay {
         let WgpuBufferBindGroupPair {
             bind_group: target_bind_group,
             buffer: target_buffer,
-        } = get_gaussian_target_pair(device, distr);
+        } = get_gaussian_target_pair(device, Some(distr));
 
         let (approx_bind_group, approx_accepted_buffer, approx_info_buffer) =
-            get_approx_triple(device, &algo.history);
+            get_approx_triple(device, Some(&algo.history));
 
         // Because the graphics pipeline must have the same lifetime as the egui render pass,
         // instead of storing the pipeline in our struct, we insert it into the

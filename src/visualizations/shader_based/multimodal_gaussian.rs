@@ -4,7 +4,8 @@ use std::num::NonZero;
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
-    BindGroup, Buffer, BufferBinding, BufferUsages, RenderPipeline, RenderPipelineDescriptor,
+    BindGroup, Buffer, BufferBinding, BufferDescriptor, BufferUsages, RenderPipeline,
+    RenderPipelineDescriptor,
 };
 
 use crate::shaders::{
@@ -44,15 +45,25 @@ impl MultiModalGaussianDisplay {
 /// this can also be used elsewhere, e.g. diff_display.
 pub(super) fn get_gaussian_target_pair(
     device: &wgpu::Device,
-    distr: &MultiModalGaussian,
+    distr: Option<&MultiModalGaussian>,
 ) -> WgpuBufferBindGroupPair {
     let webgpu_debug_name = Some(file!());
 
-    let buffer = device.create_buffer_init(&BufferInitDescriptor {
-        label: webgpu_debug_name,
-        usage: BufferUsages::COPY_DST | BufferUsages::STORAGE,
-        contents: bytemuck::cast_slice(distr.gaussians.as_slice()),
-    });
+    let buf_use = BufferUsages::COPY_DST | BufferUsages::STORAGE;
+
+    let buffer = match distr {
+        Some(distr) => device.create_buffer_init(&BufferInitDescriptor {
+            label: webgpu_debug_name,
+            usage: buf_use,
+            contents: bytemuck::cast_slice(distr.gaussians.as_slice()),
+        }),
+        None => device.create_buffer(&BufferDescriptor {
+            label: webgpu_debug_name,
+            usage: buf_use,
+            mapped_at_creation: false,
+            size: 0,
+        }),
+    };
 
     let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
         label: webgpu_debug_name,
@@ -103,7 +114,7 @@ impl MultiModalGaussianDisplay {
         let WgpuBufferBindGroupPair {
             bind_group: elements_bind_group,
             buffer: elements_buffer,
-        } = get_gaussian_target_pair(device, distr);
+        } = get_gaussian_target_pair(device, Some(distr));
 
         // Because the graphics pipeline must have the same lifetime as the egui render pass,
         // instead of storing the pipeline in our struct, we insert it into the
