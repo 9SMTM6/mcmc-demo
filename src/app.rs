@@ -27,7 +27,7 @@ pub struct McmcDemo {
     #[allow(dead_code)]
     target_distr_render: MultiModalGaussianDisplay,
     #[allow(dead_code)]
-    diff_render: Option<DiffDisplay>,
+    diff_render: DiffDisplay,
     settings: settings::Settings,
     gaussian_distr_iter: SRngGaussianIter<rand_pcg::Pcg32>,
     uniform_distr_iter: SRngPercIter<rand_pcg::Pcg32>,
@@ -42,7 +42,7 @@ impl Default for McmcDemo {
             drawer: Default::default(),
             target_distr: Default::default(),
             target_distr_render: MultiModalGaussianDisplay {},
-            diff_render: None,
+            diff_render: DiffDisplay { window_radius: 5.0 },
             settings: Default::default(),
             gaussian_distr_iter: SRngGaussianIter::<rand_pcg::Pcg32>::new([42; 16]),
             uniform_distr_iter: SRngPercIter::<rand_pcg::Pcg32>::new([42; 16]),
@@ -77,7 +77,9 @@ impl McmcDemo {
         let state = Self::get_state(cc);
         // TODO: this doesnt work as intended...
         // assert!(state.target_distr_render.());
-        MultiModalGaussianDisplay::init_gaussian_pipeline(cc.wgpu_render_state.as_ref().unwrap());
+        let render_state = cc.wgpu_render_state.as_ref().unwrap();
+        MultiModalGaussianDisplay::init_gaussian_pipeline(render_state);
+        DiffDisplay::init_pipeline(render_state);
         state
     }
 
@@ -231,25 +233,17 @@ impl eframe::App for McmcDemo {
                         // TODO: this initialization is still completely screwed up.
                         // Now it crashes.
                         // Why, oh why, does there not seem to be a proper way to manage these wgpu resources in an egui app?
-                        self.target_distr_render.paint(
-                            &self.target_distr,
+                        // self.target_distr_render.paint(
+                        //     &self.target_distr,
+                        //     painter,
+                        //     rect * ctx.pixels_per_point(),
+                        // );
+                        self.diff_render.paint(
                             painter,
                             rect * ctx.pixels_per_point(),
+                            &self.algo,
+                            &self.target_distr,
                         );
-                        // self.diff_render
-                        //     .as_ref()
-                        //     .unwrap_or(&DiffDisplay::init_pipeline(
-                        //         0.1,
-                        //         &self.target_distr,
-                        //         &self.algo,
-                        //         frame.wgpu_render_state().unwrap(),
-                        //     ))
-                        //     .paint(
-                        //         painter,
-                        //         rect * ctx.pixels_per_point(),
-                        //         &self.algo,
-                        //         &self.target_distr,
-                        //     );
 
                         self.drawer.paint(painter, rect, &self.algo);
                         if let Settings::EditDistribution(_) = self.settings {

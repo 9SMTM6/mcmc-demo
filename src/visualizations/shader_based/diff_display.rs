@@ -32,13 +32,13 @@ use super::resolution_uniform;
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 pub struct DiffDisplay {
+    // TODO: this doesnt actually do anything yet
     pub window_radius: f32,
-    prevent_construct: PhantomData<()>,
 }
 
 fn get_approx_triple(
     device: &wgpu::Device,
-    approx_points: Option<&Vec<shaders::types::RWMHAcceptRecord>>,
+    approx_points: Option<&[shaders::types::RWMHAcceptRecord]>,
 ) -> (BindGroup, Buffer, Buffer) {
     let webgpu_debug_name = Some(file!());
 
@@ -48,13 +48,13 @@ fn get_approx_triple(
         Some(approx_points) => device.create_buffer_init(&BufferInitDescriptor {
             label: webgpu_debug_name,
             usage: accept_buf_use,
-            contents: bytemuck::cast_slice(approx_points.as_slice()),
+            contents: bytemuck::cast_slice(approx_points),
         }),
         None => device.create_buffer(&BufferDescriptor {
             label: webgpu_debug_name,
             usage: accept_buf_use,
             mapped_at_creation: false,
-            size: 0,
+            size: 4,
         }),
     };
 
@@ -115,13 +115,7 @@ impl DiffDisplay {
         ));
     }
 
-    pub fn init_pipeline(
-        // TODO: this doesnt actually do anything yet
-        window_radius: f32,
-        distr: &MultiModalGaussian,
-        algo: &Rwmh,
-        render_state: &RenderState,
-    ) -> Self {
+    pub fn init_pipeline(render_state: &RenderState) {
         let device = &render_state.device;
 
         let webgpu_debug_name = Some(file!());
@@ -153,16 +147,15 @@ impl DiffDisplay {
         let WgpuBufferBindGroupPair {
             bind_group: target_bind_group,
             buffer: target_buffer,
-        } = get_gaussian_target_pair(device, Some(&distr.gaussians));
+        } = get_gaussian_target_pair(device, None);
 
         let (approx_bind_group, approx_accepted_buffer, approx_info_buffer) =
-            get_approx_triple(device, Some(&algo.history));
+            get_approx_triple(device, None);
 
         // Because the graphics pipeline must have the same lifetime as the egui render pass,
         // instead of storing the pipeline in our struct, we insert it into the
         // `callback_resources` type map, which is stored alongside the render pass.
-        // let None =
-        render_state
+        let None = render_state
             .renderer
             .write()
             .callback_resources
@@ -175,14 +168,10 @@ impl DiffDisplay {
                 approx_accepted_buffer,
                 approx_bind_group,
                 approx_info_buffer,
-            });
-        // else {
-        //     panic!("pipeline already present?!")
-        // };
-        Self {
-            window_radius,
-            prevent_construct: PhantomData,
-        }
+            })
+        else {
+            unreachable!("pipeline already present?!")
+        };
     }
 }
 
@@ -195,7 +184,7 @@ struct RenderCall {
 impl CallbackTrait for RenderCall {
     fn prepare(
         &self,
-        _device: &wgpu::Device,
+        device: &wgpu::Device,
         queue: &wgpu::Queue,
         // doesn't hold the viewport size
         _screen_descriptor: &eframe::egui_wgpu::ScreenDescriptor,
@@ -207,8 +196,25 @@ impl CallbackTrait for RenderCall {
             target_buffer,
             approx_accepted_buffer,
             approx_info_buffer,
+            target_bind_group,
+            approx_bind_group,
             ..
-        } = callback_resources.get().unwrap();
+        } = callback_resources.get_mut().unwrap();
+        let target = self.targets.as_slice();
+        if target_buffer.size() as usize != size_of_val(target) {
+            let WgpuBufferBindGroupPair { buffer, bind_group } =
+                get_gaussian_target_pair(device, Some(target));
+            *target_buffer = buffer;
+            *target_bind_group = bind_group;
+        }
+        let approx_accepted = self.algo_state.history.as_slice();
+        if approx_accepted_buffer.size() as usize != size_of_val(approx_accepted) {
+            let (bind_group, accept_buffer, info_buffer) =
+                get_approx_triple(device, Some(approx_accepted));
+            *approx_bind_group = bind_group;
+            *approx_accepted_buffer = accept_buffer;
+            *approx_info_buffer = info_buffer;
+        }
         queue.write_buffer(
             resolution_buffer,
             0,

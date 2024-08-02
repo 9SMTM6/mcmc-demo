@@ -18,9 +18,9 @@ use super::{resolution_uniform::get_resolution_pair, WgpuBufferBindGroupPair};
 struct MultiModalGaussPipeline {
     pipeline: RenderPipeline,
     resolution_bind_group: BindGroup,
-    elements_bind_group: BindGroup,
+    target_bind_group: BindGroup,
     resolution_buffer: Buffer,
-    elements_buffer: Buffer,
+    target_buffer: Buffer,
 }
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
@@ -130,9 +130,9 @@ impl MultiModalGaussianDisplay {
                 .insert(MultiModalGaussPipeline {
                     pipeline,
                     resolution_bind_group,
-                    elements_bind_group,
+                    target_bind_group: elements_bind_group,
                     resolution_buffer,
-                    elements_buffer,
+                    target_buffer: elements_buffer,
                 })
         else {
             unreachable!("pipeline already present?!")
@@ -157,10 +157,11 @@ impl CallbackTrait for RenderCall {
     ) -> Vec<wgpu::CommandBuffer> {
         let MultiModalGaussPipeline {
             resolution_buffer,
-            elements_buffer,
-            elements_bind_group,
+            target_buffer,
+            target_bind_group,
             ..
         } = callback_resources.get_mut().unwrap();
+        // TODO: figure that out
         // let MultiModalGaussPipeline {
         //     resolution_buffer,
         //     elements_buffer,
@@ -179,12 +180,12 @@ impl CallbackTrait for RenderCall {
         //         ret.unwrap()
         //     }
         // };
-        let elements = self.elements.as_slice();
-        if elements_buffer.size() as usize != size_of_val(elements) {
+        let target = self.elements.as_slice();
+        if target_buffer.size() as usize != size_of_val(target) {
             let WgpuBufferBindGroupPair { buffer, bind_group } =
-                get_gaussian_target_pair(device, Some(elements));
-            *elements_buffer = buffer;
-            *elements_bind_group = bind_group;
+                get_gaussian_target_pair(device, Some(target));
+            *target_buffer = buffer;
+            *target_bind_group = bind_group;
         }
         queue.write_buffer(
             resolution_buffer,
@@ -195,7 +196,7 @@ impl CallbackTrait for RenderCall {
             }]),
         );
         queue.write_buffer(
-            elements_buffer,
+            target_buffer,
             0,
             bytemuck::cast_slice(self.elements.as_slice()),
         );
@@ -211,7 +212,7 @@ impl CallbackTrait for RenderCall {
         let MultiModalGaussPipeline {
             pipeline,
             resolution_bind_group,
-            elements_bind_group,
+            target_bind_group: elements_bind_group,
             ..
         } = callback_resources.get().unwrap();
 
