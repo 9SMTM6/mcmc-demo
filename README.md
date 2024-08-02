@@ -38,6 +38,15 @@ We would need to split this up, but thats not really easy, and probably goes kin
 
 Generally I should find a way to profile webgpu render. Currently I'm mostly guessing from past reference points, and while I'm decently certain in my conclusions, it would be nice to have confirmation, and some foresight into upcoming issues ("will solving this just lead to another very close bottleneck", which is currently stopping me from some experimentations).
 
+Currently working:
+* with feature "profile"
+  * we start puffin, which can measure scope duration and gives a generic flame-graph from the rust side (no GPU)
+  * there appears a "backend" button which was largely copied from the egui demo and offers frametimes as well as informations about GPU allocations etc.
+
+Future ideas:
+* implement tracing from rust side for wgpu actions, blocked by: https://github.com/gfx-rs/wgpu/issues/5974
+* implement the stuff from https://webgpufundamentals.org/webgpu/lessons/webgpu-timing.html
+
 ## Non-Batched execution
 
 Currently I only support batched execution, to quickly see results of different configurations.
@@ -77,24 +86,13 @@ Altogether I'm not sure of the right route. Supporting threads seems like a lot 
 
 An alternative might be simply using a promise with wasm_bindgen_futures and hoping that the browsers manage to make it not suck. Its unlikely this will use proper threads, but ...
 
-## Allocator for shipped linux binaries
-
-OUT OF DATE: Because of build issues we switched to glibc anyways.
-
-Linux releases are built with musl in the provided pipeline.
-
-This may cause performance regressions compared to glibc.
-
-See https://superuser.com/a/1820423.
-
-Benchmark from 2021: https://github.com/BurntSushi/ripgrep/issues/1691. Not a huge difference IMO, and even if feature gated I'd like to avoid yet another dependency. I might benchmark this at some point, but since my application also does a bunch of other things benchmarking this isnt entirely trivial, so I'll get to it if I ever do.
-
 ## Support more PRNG and low-discrepancy randomness
 
-https://en.wikipedia.org/wiki/Quasi-Monte_Carlo_method
-https://crates.io/crates/sobol_burley
-https://crates.io/crates/halton
-https://crates.io/crates/quasirandom
+* actually make PRNG generic and allos choice in UI, currently hard-coded
+* https://en.wikipedia.org/wiki/Quasi-Monte_Carlo_method
+* https://crates.io/crates/sobol_burley
+* https://crates.io/crates/halton
+* https://crates.io/crates/quasirandom
 
 # eframe template
 
