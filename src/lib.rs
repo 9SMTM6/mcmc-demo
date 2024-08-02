@@ -15,5 +15,5 @@ mod visualizations;
 )]
 #[rustfmt::skip]
 mod shaders;
-pub use app::TemplateApp;
+pub use app::McmcDemo;
 pub use visualizations::INITIAL_RENDER_SIZE;

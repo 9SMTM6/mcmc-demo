@@ -19,7 +19,7 @@ use crate::{
     // if we add new fields, give them default values when deserializing old state
     serde(default),
 )]
-pub struct TemplateApp {
+pub struct McmcDemo {
     algo: Rwmh,
     drawer: PointDisplay,
     target_distr: MultiModalGaussian,
@@ -34,7 +34,7 @@ pub struct TemplateApp {
     backend_panel: super::profile::backend_panel::BackendPanel,
 }
 
-impl Default for TemplateApp {
+impl Default for McmcDemo {
     fn default() -> Self {
         Self {
             algo: Default::default(),
@@ -51,7 +51,7 @@ impl Default for TemplateApp {
     }
 }
 
-impl TemplateApp {
+impl McmcDemo {
     /// Called once before the first frame.
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         let state = Self::get_state(cc);
@@ -98,7 +98,7 @@ impl TemplateApp {
 }
 
 #[cfg(feature = "profile")]
-impl TemplateApp {
+impl McmcDemo {
     fn backend_panel(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         // The backend-panel can be toggled on/off.
         // We show a little animation when the user switches it.
@@ -134,7 +134,7 @@ impl TemplateApp {
     }
 }
 
-impl eframe::App for TemplateApp {
+impl eframe::App for McmcDemo {
     /// Called by the frame work to save state before shutdown.
     #[cfg(feature = "persistence")]
     fn save(&mut self, storage: &mut dyn eframe::Storage) {

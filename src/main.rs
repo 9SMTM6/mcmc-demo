@@ -23,7 +23,7 @@ fn main() -> eframe::Result<()> {
     eframe::run_native(
         "mcmc-demo",
         native_options,
-        Box::new(|cc| Ok(Box::new(mcmc_demo::TemplateApp::new(cc)))),
+        Box::new(|cc| Ok(Box::new(mcmc_demo::McmcDemo::new(cc)))),
     )
 }
 
@@ -90,7 +90,7 @@ fn main() {
                 .start(
                     get_canvas_element_by_id_or_die("the_canvas_id"),
                     web_options,
-                    Box::new(|cc| Ok(Box::new(mcmc_demo::TemplateApp::new(cc)))),
+                    Box::new(|cc| Ok(Box::new(mcmc_demo::McmcDemo::new(cc)))),
                 )
                 .await
                 .expect("failed to start eframe");
