@@ -14,6 +14,7 @@ mod visualizations;
     clippy::missing_const_for_fn,
     clippy::module_name_repetitions,
     clippy::pattern_type_mismatch,
+    clippy::unreadable_literal,
 )]
 #[rustfmt::skip]
 mod shaders;
