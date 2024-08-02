@@ -54,6 +54,7 @@ impl Default for McmcDemo {
 
 impl McmcDemo {
     /// Called once before the first frame.
+    #[allow(clippy::missing_panics_doc)]
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         cc.egui_ctx.style_mut(|style| {
             let visuals = &mut style.visuals;
@@ -72,7 +73,10 @@ impl McmcDemo {
         });
 
         let state = Self::get_state(cc);
-        let render_state = cc.wgpu_render_state.as_ref().unwrap();
+        let render_state = cc
+            .wgpu_render_state
+            .as_ref()
+            .expect("Compiling with WGPU enabled");
         MultiModalGaussianDisplay::init_gaussian_pipeline(render_state);
         DiffDisplay::init_pipeline(render_state);
         state
@@ -100,6 +104,7 @@ impl McmcDemo {
         egui::SidePanel::left("backend_panel")
             .resizable(false)
             .show_animated(ctx, is_open, |ui| {
+                #[allow(clippy::shadow_unrelated)]
                 ui.vertical_centered(|ui| {
                     ui.heading("💻 Backend");
                 });
@@ -114,6 +119,7 @@ impl McmcDemo {
 
         ui.separator();
 
+        #[allow(clippy::shadow_unrelated)]
         ui.horizontal(|ui| {
             if ui
                 .button("Reset egui")
@@ -144,6 +150,7 @@ impl eframe::App for McmcDemo {
         // For inspiration and more examples, go to https://emilk.github.io/egui
 
         egui::TopBottomPanel::bottom("footer").show(ctx, |ui| {
+            #[allow(clippy::shadow_unrelated)]
             ui.horizontal(|ui| {
                 if ui.button("Reset State").clicked() {
                     *self = Default::default();
@@ -174,7 +181,7 @@ impl eframe::App for McmcDemo {
                         position: [0.0, 0.0],
                         scale: 0.5,
                         variance: 0.2,
-                    })
+                    });
                 }
             } else {
                 if ui.button("Edit Distribution").clicked() {
@@ -183,6 +190,7 @@ impl eframe::App for McmcDemo {
             };
             let ProgressMode::Batched { ref mut size } = self.algo.params.progress_mode;
             ui.add(
+                // Safety: the slider begins at 1.
                 unsafe {
                     egui::Slider::new(
                         size.get_inner_mut(),
@@ -200,7 +208,7 @@ impl eframe::App for McmcDemo {
                         &self.target_distr,
                         &mut self.gaussian_distr_iter,
                         &mut self.uniform_distr_iter,
-                    )
+                    );
                 }
             }
         });
@@ -213,75 +221,78 @@ impl eframe::App for McmcDemo {
                     // remove margins here too
                     .inner_margin(egui::Margin::default())
                     .outer_margin(egui::Margin::default())
-                    .show(ui, |ui| {
-                        // TODO: consider moving Settings::Edit* state into `ui.data_mut()` or similar.
-                        // ui.data(|map| {
-                        //     map.get_temp(id)
-                        //     map.insert_temp(id, value)
-                        // });
-                        // see: https://github.com/emilk/egui/blob/37b1e1504db14697c39ce1c3bb5e58f4f2b819bf/crates/egui_demo_lib/src/demo/password.rs#L46
-                        let px_size = ui.available_size();
-                        let (rect, response) =
-                            ui.allocate_exact_size(px_size, egui::Sense::hover());
-                        // last painted element wins.
-                        let painter = ui.painter();
-                        // self.target_distr_render.paint(
-                        //     &self.target_distr,
-                        //     painter,
-                        //     rect * ctx.pixels_per_point(),
-                        // );
-                        self.diff_render.paint(
-                            painter,
-                            rect * ctx.pixels_per_point(),
-                            &self.algo,
-                            &self.target_distr,
-                        );
+                    .show(
+                        ui,
+                        #[allow(clippy::shadow_unrelated)]
+                        |ui| {
+                            // TODO: consider moving Settings::Edit* state into `ui.data_mut()` or similar.
+                            // ui.data(|map| {
+                            //     map.get_temp(id)
+                            //     map.insert_temp(id, value)
+                            // });
+                            // see: https://github.com/emilk/egui/blob/37b1e1504db14697c39ce1c3bb5e58f4f2b819bf/crates/egui_demo_lib/src/demo/password.rs#L46
+                            let px_size = ui.available_size();
+                            let (rect, response) =
+                                ui.allocate_exact_size(px_size, egui::Sense::hover());
+                            // last painted element wins.
+                            let painter = ui.painter();
+                            // self.target_distr_render.paint(
+                            //     &self.target_distr,
+                            //     painter,
+                            //     rect * ctx.pixels_per_point(),
+                            // );
+                            self.diff_render.paint(
+                                painter,
+                                rect * ctx.pixels_per_point(),
+                                &self.algo,
+                                &self.target_distr,
+                            );
 
-                        self.drawer.paint(painter, rect, &self.algo);
-                        if let Settings::EditDistribution(_) = self.settings {
-                            // // draw centers of gaussians
-                            for (idx, ele) in self.target_distr.gaussians.iter_mut().enumerate() {
-                                let pos = ndc_to_canvas_coord(ele.position.into(), rect.size());
-                                const CIRCLE_SIZE: f32 = 5.0;
-                                let pos_sense_rect =
-                                    egui::Rect::from_center_size(pos, Vec2::splat(CIRCLE_SIZE));
-                                let mut pos_resp = ui
-                                    .interact(
-                                        pos_sense_rect,
-                                        response.id.with(idx),
-                                        egui::Sense::drag(),
-                                    )
-                                    .on_hover_cursor(egui::CursorIcon::Grab);
-                                if pos_resp.dragged() {
-                                    pos_resp = pos_resp
-                                        .on_hover_and_drag_cursor(egui::CursorIcon::Grabbing);
+                            self.drawer.paint(painter, rect, &self.algo);
+                            if let Settings::EditDistribution(_) = self.settings {
+                                // // draw centers of gaussians
+                                for (idx, ele) in self.target_distr.gaussians.iter_mut().enumerate()
+                                {
+                                    let pos = ndc_to_canvas_coord(ele.position.into(), rect.size());
+                                    const CIRCLE_SIZE: f32 = 5.0;
+                                    let pos_sense_rect =
+                                        egui::Rect::from_center_size(pos, Vec2::splat(CIRCLE_SIZE));
+                                    let mut pos_resp = ui
+                                        .interact(
+                                            pos_sense_rect,
+                                            response.id.with(idx),
+                                            egui::Sense::drag(),
+                                        )
+                                        .on_hover_cursor(egui::CursorIcon::Grab);
+                                    if pos_resp.dragged() {
+                                        pos_resp = pos_resp
+                                            .on_hover_and_drag_cursor(egui::CursorIcon::Grabbing);
+                                    }
+                                    // .on_hover_and_drag_cursor(egui::CursorIcon::Grabbing);
+                                    let pos = rect.clamp(pos + pos_resp.drag_delta());
+
+                                    let ndc_pos = canvas_coord_to_ndc(pos, rect.size());
+
+                                    ele.position[0] = ndc_pos.x;
+                                    ele.position[1] = ndc_pos.y;
+
+                                    let pos_active = pos_resp.clicked()
+                                        || pos_resp.dragged()
+                                        || pos_resp.hovered();
+
+                                    painter.circle_stroke(
+                                        pos,
+                                        CIRCLE_SIZE,
+                                        egui::Stroke {
+                                            color: egui::Color32::RED
+                                                .gamma_multiply(if pos_active { 1.0 } else { 0.9 }),
+                                            width: if pos_active { 2.0 } else { 1.0 },
+                                        },
+                                    );
                                 }
-                                // .on_hover_and_drag_cursor(egui::CursorIcon::Grabbing);
-                                let pos = rect.clamp(pos + pos_resp.drag_delta());
-
-                                let ndc_pos = canvas_coord_to_ndc(pos, rect.size());
-
-                                ele.position[0] = ndc_pos.x;
-                                ele.position[1] = ndc_pos.y;
-
-                                let pos_active =
-                                    pos_resp.clicked() || pos_resp.dragged() || pos_resp.hovered();
-
-                                painter.circle_stroke(
-                                    pos,
-                                    CIRCLE_SIZE,
-                                    egui::Stroke {
-                                        color: egui::Color32::RED.gamma_multiply(if pos_active {
-                                            1.0
-                                        } else {
-                                            0.9
-                                        }),
-                                        width: if pos_active { 2.0 } else { 1.0 },
-                                    },
-                                );
                             }
-                        }
-                    });
+                        },
+                    );
             });
     }
 }

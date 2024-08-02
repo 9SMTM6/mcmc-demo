@@ -155,17 +155,17 @@ impl CallbackTrait for RenderCall {
         _egui_encoder: &mut wgpu::CommandEncoder,
         callback_resources: &mut eframe::egui_wgpu::CallbackResources,
     ) -> Vec<wgpu::CommandBuffer> {
-        let MultiModalGaussPipeline {
-            resolution_buffer,
-            target_buffer,
-            target_bind_group,
+        let &mut MultiModalGaussPipeline {
+            ref mut resolution_buffer,
+            ref mut target_buffer,
+            ref mut target_bind_group,
             ..
         } = callback_resources.get_mut().unwrap();
         // TODO: figure that out
-        // let MultiModalGaussPipeline {
-        //     resolution_buffer,
-        //     elements_buffer,
-        //     elements_bind_group,
+        // let &mut MultiModalGaussPipeline {
+        //     ref mut resolution_buffer,
+        //     ref mut target_buffer,
+        //     ref mut target_bind_group,
         //     ..
         // } = {
         //     let ret = callback_resources.get_mut::<MultiModalGaussPipeline>();
@@ -209,10 +209,10 @@ impl CallbackTrait for RenderCall {
         render_pass: &mut wgpu::RenderPass<'a>,
         callback_resources: &'a eframe::egui_wgpu::CallbackResources,
     ) {
-        let MultiModalGaussPipeline {
-            pipeline,
-            resolution_bind_group,
-            target_bind_group: elements_bind_group,
+        let &MultiModalGaussPipeline {
+            ref pipeline,
+            ref resolution_bind_group,
+            target_bind_group: ref elements_bind_group,
             ..
         } = callback_resources.get().unwrap();
 

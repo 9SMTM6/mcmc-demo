@@ -191,13 +191,13 @@ impl CallbackTrait for RenderCall {
         _egui_encoder: &mut wgpu::CommandEncoder,
         callback_resources: &mut eframe::egui_wgpu::CallbackResources,
     ) -> Vec<wgpu::CommandBuffer> {
-        let PipelineStateHolder {
-            resolution_buffer,
-            target_buffer,
-            approx_accepted_buffer,
-            approx_info_buffer,
-            target_bind_group,
-            approx_bind_group,
+        let &mut PipelineStateHolder {
+            ref resolution_buffer,
+            ref mut target_buffer,
+            ref mut approx_accepted_buffer,
+            ref mut approx_info_buffer,
+            ref mut target_bind_group,
+            ref mut approx_bind_group,
             ..
         } = callback_resources.get_mut().unwrap();
         let target = self.targets.as_slice();
@@ -251,11 +251,11 @@ impl CallbackTrait for RenderCall {
         callback_resources: &'a eframe::egui_wgpu::CallbackResources,
     ) {
         profile_scope!("draw diff_display");
-        let PipelineStateHolder {
-            pipeline,
-            resolution_bind_group,
-            target_bind_group,
-            approx_bind_group,
+        let &PipelineStateHolder {
+            ref pipeline,
+            ref resolution_bind_group,
+            ref target_bind_group,
+            ref approx_bind_group,
             ..
         } = callback_resources.get().unwrap();
 

@@ -35,7 +35,7 @@ impl IPromiseThisIsNonZeroUsize {
         &mut self.0
     }
 
-    pub fn get_inner(&self) -> usize {
+    pub const fn get_inner(&self) -> usize {
         self.0
     }
 }

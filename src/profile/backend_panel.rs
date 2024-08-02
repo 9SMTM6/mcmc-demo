@@ -1,3 +1,9 @@
+#![allow(
+    clippy::shadow_unrelated,
+    clippy::pattern_type_mismatch,
+    clippy::struct_excessive_bools,
+    clippy::missing_panics_doc
+)]
 /// How often we repaint the demo app by default
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum RunMode {

@@ -85,10 +85,15 @@ eframe = { git = "https://github.com/emilk/egui", branch = "master" }
 
 [lints.rust]
 unsafe-op-in-unsafe-fn = "warn"
+let_underscore_drop = "deny"
+rust_2024_compatibility = { level = "warn", priority = -1 }
+rust_2018_idioms = { level = "warn", priority = -1 }
 # unstable
 # must_not_suspend = "deny"
 
 [lints.clippy]
+all = { level = "warn", priority = -1 }
+needless_borrowed_reference = "allow"
 allow_attributes_without_reason = "warn"
 branches_sharing_code = "warn"
 checked_conversions = "warn"
@@ -99,13 +104,17 @@ expl_impl_clone_on_copy = "deny"
 float_cmp = "warn"
 fn_params_excessive_bools = "warn"
 indexing_slicing = "warn"
-let_underscore_drop = "deny"
 manual_ok_or = "warn"
 missing_const_for_fn = "warn"
 missing_errors_doc = "warn"
 missing_panics_doc = "warn"
 module_name_repetitions = "warn"
-multiple_crate_versions = "warn"
+# causes a bunch (!) of warnings, but all from dependencies.
+# could be solved by either making PRs to dependencies to unify,
+# or by [ignoring](https://rust-lang.github.io/rust-clippy/master/index.html#/multiple_crate_versions):
+# set `allowed-duplicate-crates`
+#
+# multiple_crate_versions = "warn"
 needless_pass_by_value = "warn"
 no_effect_underscore_binding = "warn"
 pattern_type_mismatch = "warn"

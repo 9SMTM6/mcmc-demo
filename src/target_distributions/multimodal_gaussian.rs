@@ -51,8 +51,8 @@ impl MultiModalGaussian {
 
         let mut normalization = 0.0;
 
-        for NormalDistribution {
-            position: gauss_pos,
+        for &NormalDistribution {
+            position: ref gauss_pos,
             scale,
             variance,
         } in self.gaussians.iter()

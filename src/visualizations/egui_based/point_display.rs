@@ -27,7 +27,7 @@ impl Default for PointDisplay {
 
 impl PointDisplay {
     pub fn paint(&self, painter: &egui::Painter, rect: egui::Rect, algo: &Rwmh) {
-        for AcceptRecord {
+        for &AcceptRecord {
             position,
             remain_count,
             ..
@@ -35,7 +35,7 @@ impl PointDisplay {
         // skipping the "hotfix" first empty element I added to avoid WebGPU bind exceptions
         {
             let canvas_loc = ndc_to_canvas_coord(Pos2::new(position[0], position[1]), rect.size());
-            let factor = (*remain_count + 1) as f32 / (algo.max_remain_count + 1) as f32;
+            let factor = (remain_count + 1) as f32 / (algo.max_remain_count + 1) as f32;
             // with the above there may be a point where most accepted points are very close to 0, this seeks to always have them above a certain threshold.
             let log_factor = f32::log2(1.0 + factor) / f32::log2(2.0);
             let renormalized_factor = log_factor * (1.0 - self.lowest_alpha) + self.lowest_alpha;

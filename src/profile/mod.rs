@@ -4,6 +4,7 @@ pub mod backend_panel;
 pub mod frame_history;
 
 #[macro_export]
+#[allow(clippy::module_name_repetitions)]
 macro_rules! profile_scope {
     ($scope_name:expr) => {
         #[cfg(feature = "profile")]
