@@ -1,4 +1,3 @@
-use std::marker::PhantomData;
 use std::num::NonZero;
 
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
@@ -26,8 +25,7 @@ struct MultiModalGaussPipeline {
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 pub struct MultiModalGaussianDisplay {
-    // color: Color32,
-    prevent_construct: PhantomData<()>,
+    // pub color: Color32,
 }
 
 impl MultiModalGaussianDisplay {
@@ -45,7 +43,7 @@ impl MultiModalGaussianDisplay {
 /// this can also be used elsewhere, e.g. diff_display.
 pub(super) fn get_gaussian_target_pair(
     device: &wgpu::Device,
-    distr: Option<&MultiModalGaussian>,
+    distr: Option<&[NormalDistribution]>,
 ) -> WgpuBufferBindGroupPair {
     let webgpu_debug_name = Some(file!());
 
@@ -55,13 +53,13 @@ pub(super) fn get_gaussian_target_pair(
         Some(distr) => device.create_buffer_init(&BufferInitDescriptor {
             label: webgpu_debug_name,
             usage: buf_use,
-            contents: bytemuck::cast_slice(distr.gaussians.as_slice()),
+            contents: bytemuck::cast_slice(distr),
         }),
         None => device.create_buffer(&BufferDescriptor {
             label: webgpu_debug_name,
             usage: buf_use,
             mapped_at_creation: false,
-            size: 0,
+            size: 4,
         }),
     };
 
@@ -82,12 +80,17 @@ pub(super) fn get_gaussian_target_pair(
 }
 
 impl MultiModalGaussianDisplay {
-    pub fn init_gaussian_pipeline(distr: &MultiModalGaussian, render_state: &RenderState) -> Self {
+    pub fn init_gaussian_pipeline(render_state: &RenderState) {
         let device = &render_state.device;
 
         let webgpu_debug_name = Some(file!());
 
         let layout = multimodal_gaussian::create_pipeline_layout(device);
+
+        // chrome: Bgra8Unorm
+        // native linux vulkan: Rgba8Unorm
+        // yup, its different.
+        log::warn!("{0:?}", render_state.target_format);
 
         let pipeline = device.create_render_pipeline(&RenderPipelineDescriptor {
             vertex: fullscreen_quad::vertex_state(
@@ -114,7 +117,7 @@ impl MultiModalGaussianDisplay {
         let WgpuBufferBindGroupPair {
             bind_group: elements_bind_group,
             buffer: elements_buffer,
-        } = get_gaussian_target_pair(device, Some(distr));
+        } = get_gaussian_target_pair(device, None);
 
         // Because the graphics pipeline must have the same lifetime as the egui render pass,
         // instead of storing the pipeline in our struct, we insert it into the
@@ -132,14 +135,8 @@ impl MultiModalGaussianDisplay {
                     elements_buffer,
                 })
         else {
-            return Self {
-                prevent_construct: PhantomData,
-            };
-            // panic!("pipeline already present?!")
+            unreachable!("pipeline already present?!")
         };
-        Self {
-            prevent_construct: PhantomData,
-        }
     }
 }
 
@@ -151,9 +148,9 @@ struct RenderCall {
 impl CallbackTrait for RenderCall {
     fn prepare(
         &self,
-        _device: &wgpu::Device,
+        device: &wgpu::Device,
         queue: &wgpu::Queue,
-        // doesn't hold the viewport size
+        // doesn't hold the viewport size (though something fairly similar?!)
         _screen_descriptor: &eframe::egui_wgpu::ScreenDescriptor,
         _egui_encoder: &mut wgpu::CommandEncoder,
         callback_resources: &mut eframe::egui_wgpu::CallbackResources,
@@ -161,8 +158,34 @@ impl CallbackTrait for RenderCall {
         let MultiModalGaussPipeline {
             resolution_buffer,
             elements_buffer,
+            elements_bind_group,
             ..
-        } = callback_resources.get().unwrap();
+        } = callback_resources.get_mut().unwrap();
+        // let MultiModalGaussPipeline {
+        //     resolution_buffer,
+        //     elements_buffer,
+        //     elements_bind_group,
+        //     ..
+        // } = {
+        //     let ret = callback_resources.get_mut::<MultiModalGaussPipeline>();
+        //     if ret.is_none() {
+        //         MultiModalGaussianDisplay::init_gaussian_pipeline(todo!(
+        //             "cant find no way to get this here"
+        //         ));
+        //         callback_resources
+        //             .get_mut::<MultiModalGaussPipeline>()
+        //             .unwrap()
+        //     } else {
+        //         ret.unwrap()
+        //     }
+        // };
+        let elements = self.elements.as_slice();
+        if elements_buffer.size() as usize != size_of_val(elements) {
+            let WgpuBufferBindGroupPair { buffer, bind_group } =
+                get_gaussian_target_pair(device, Some(elements));
+            *elements_buffer = buffer;
+            *elements_bind_group = bind_group;
+        }
         queue.write_buffer(
             resolution_buffer,
             0,

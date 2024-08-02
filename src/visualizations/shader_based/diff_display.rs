@@ -153,7 +153,7 @@ impl DiffDisplay {
         let WgpuBufferBindGroupPair {
             bind_group: target_bind_group,
             buffer: target_buffer,
-        } = get_gaussian_target_pair(device, Some(distr));
+        } = get_gaussian_target_pair(device, Some(&distr.gaussians));
 
         let (approx_bind_group, approx_accepted_buffer, approx_info_buffer) =
             get_approx_triple(device, Some(&algo.history));

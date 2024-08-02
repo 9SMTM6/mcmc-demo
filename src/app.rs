@@ -2,6 +2,7 @@ use egui::{self, Shadow, Vec2};
 
 use crate::{
     settings::{self, Settings},
+    shaders::types::NormalDistribution,
     simulation::{
         random_walk_metropolis_hastings::{ProgressMode, Rwmh},
         SRngGaussianIter, SRngPercIter,
@@ -24,7 +25,7 @@ pub struct McmcDemo {
     drawer: PointDisplay,
     target_distr: MultiModalGaussian,
     #[allow(dead_code)]
-    target_distr_render: Option<MultiModalGaussianDisplay>,
+    target_distr_render: MultiModalGaussianDisplay,
     #[allow(dead_code)]
     diff_render: Option<DiffDisplay>,
     settings: settings::Settings,
@@ -40,7 +41,7 @@ impl Default for McmcDemo {
             algo: Default::default(),
             drawer: Default::default(),
             target_distr: Default::default(),
-            target_distr_render: None,
+            target_distr_render: MultiModalGaussianDisplay {},
             diff_render: None,
             settings: Default::default(),
             gaussian_distr_iter: SRngGaussianIter::<rand_pcg::Pcg32>::new([42; 16]),
@@ -54,19 +55,6 @@ impl Default for McmcDemo {
 impl McmcDemo {
     /// Called once before the first frame.
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        let state = Self::get_state(cc);
-        // TODO: this doesnt work as intended...
-        // assert!(state.target_distr_render.());
-        Self {
-            target_distr_render: Some(MultiModalGaussianDisplay::init_gaussian_pipeline(
-                &state.target_distr,
-                cc.wgpu_render_state.as_ref().unwrap(),
-            )),
-            ..state
-        }
-    }
-
-    pub fn get_state(cc: &eframe::CreationContext<'_>) -> Self {
         // This is also where you can customize the look and feel of egui using
         // `cc.egui_ctx.set_visuals` and `cc.egui_ctx.set_fonts`.
 
@@ -86,6 +74,14 @@ impl McmcDemo {
             visuals.window_shadow = Shadow::NONE;
         });
 
+        let state = Self::get_state(cc);
+        // TODO: this doesnt work as intended...
+        // assert!(state.target_distr_render.());
+        MultiModalGaussianDisplay::init_gaussian_pipeline(cc.wgpu_render_state.as_ref().unwrap());
+        state
+    }
+
+    pub fn get_state(cc: &eframe::CreationContext<'_>) -> Self {
         // Load previous app state (if any).
         // Note that you must enable the `persistence` feature for this to work.
         #[cfg(feature = "persistence")]
@@ -142,7 +138,7 @@ impl eframe::App for McmcDemo {
     }
 
     /// Called each time the UI needs repainting, which may be many times per second.
-    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         // Put your widgets into a `SidePanel`, `TopBottomPanel`, `CentralPanel`, `Window` or `Area`.
         // For inspiration and more examples, go to https://emilk.github.io/egui
 
@@ -172,8 +168,13 @@ impl eframe::App for McmcDemo {
                 if ui.button("Stop Editing Distribution").clicked() {
                     self.settings = Settings::Default;
                 }
-                ui.add_enabled(false, egui::Button::new("Add Element"))
-                    .on_hover_text("TODO");
+                if ui.button("Add Element").clicked() {
+                    self.target_distr.gaussians.push(NormalDistribution {
+                        position: [0.0, 0.0],
+                        scale: 0.5,
+                        variance: 0.2,
+                    })
+                }
             } else {
                 if ui.button("Edit Distribution").clicked() {
                     self.settings = Settings::EditDistribution(settings::DistrEditKind::Stateless);
@@ -230,27 +231,25 @@ impl eframe::App for McmcDemo {
                         // TODO: this initialization is still completely screwed up.
                         // Now it crashes.
                         // Why, oh why, does there not seem to be a proper way to manage these wgpu resources in an egui app?
-                        // self.target_distr_render
+                        self.target_distr_render.paint(
+                            &self.target_distr,
+                            painter,
+                            rect * ctx.pixels_per_point(),
+                        );
+                        // self.diff_render
                         //     .as_ref()
-                        //     .unwrap_or(&MultiModalGaussianDisplay::init_gaussian_pipeline(
+                        //     .unwrap_or(&DiffDisplay::init_pipeline(
+                        //         0.1,
                         //         &self.target_distr,
+                        //         &self.algo,
                         //         frame.wgpu_render_state().unwrap(),
                         //     ))
-                        //     .paint(&self.target_distr, painter, rect * ctx.pixels_per_point());
-                        self.diff_render
-                            .as_ref()
-                            .unwrap_or(&DiffDisplay::init_pipeline(
-                                0.1,
-                                &self.target_distr,
-                                &self.algo,
-                                frame.wgpu_render_state().unwrap(),
-                            ))
-                            .paint(
-                                painter,
-                                rect * ctx.pixels_per_point(),
-                                &self.algo,
-                                &self.target_distr,
-                            );
+                        //     .paint(
+                        //         painter,
+                        //         rect * ctx.pixels_per_point(),
+                        //         &self.algo,
+                        //         &self.target_distr,
+                        //     );
 
                         self.drawer.paint(painter, rect, &self.algo);
                         if let Settings::EditDistribution(_) = self.settings {
