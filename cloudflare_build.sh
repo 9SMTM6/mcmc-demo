@@ -15,4 +15,4 @@ export PATH=$PATH:$HOME/.cargo/bin
 
 wget -qO- https://github.com/thedodd/trunk/releases/latest/download/trunk-x86_64-unknown-linux-gnu.tar.gz | tar -xzf-
 
-./trunk build --release --public-url mcmc-webgpu-demo.pages.dev
+./trunk build --release --public-url $CF_PAGES_URL
