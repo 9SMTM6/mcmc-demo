@@ -14,7 +14,7 @@ I currently envison this approach (lets see how much of this I'll get):
 2. since we don't render directly anymore, I've got much more freedom in splitting up the workload, concretely optimizing for typical buffers. So I intend to break up the determination of the approx distribution into multiple sets of reference points.
 3. do it in a cumpute shader
 4. The result can be stored either:
-    * in a texture. 
+    * in a texture.
     * a storage buffer
 5. the storage will never have to leave the GPU. Compute it once, read the result it in a fragment shader where the actual colors are determined
 6. with that I could also consider decoupling calculation resolution and render resolution, but I think for now I'll keep them coupled
@@ -54,7 +54,9 @@ In the future I also want to support a substep execution such as in the [origina
 
 ## Execution of batches on web
 
-Note: This is not actually the primary issue, though annoying. In memory size was problematic occasionally, but primary issues were render speed / sie on VRAM (i think?). Especially in the diff approach. More to come about this.
+Update: I've now setup a parallel deployment to cloudflare pages (mcmc-webgpu-demo.pages.dev).
+
+Note: This is not actually the primary issue, though annoying. In memory size was problematic occasionally, but primary issues were render speed / size on VRAM / GPU Caches (i think?). Especially in the diff approach. More to come about this.
 
 To be able to efficiently execute batches in the background on the web we would need a bunch of things to fall into place.
 We want to be able to execute that task in a background thread.
@@ -73,7 +75,7 @@ One of the answers suggests setting the headers with `<meta http-equiv="HEADER">
 
 There are suggestes solutions, but AFAICT these require you to serve (or proxy) the artifacts on another domain (pages.dev if using cloudflare). Note, this may also allow me to use brotli instead of gzip compression.
 
-Even with these headers, compatibility is questionable, as at least in the beginning mobile browsers did not enable this feature, because it eats resources (as it leads to another process for that page specifically): 
+Even with these headers, compatibility is questionable, as at least in the beginning mobile browsers did not enable this feature, because it eats resources (as it leads to another process for that page specifically):
 
 > [https://web.dev/articles/webassembly-threads] However, this mitigation was still limited only to Chrome desktop, as Site Isolation is a fairly expensive feature, and couldn't be enabled by default for all sites on low-memory mobile devices nor was it yet implemented by other vendors.
 
