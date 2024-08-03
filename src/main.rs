@@ -104,9 +104,10 @@ fn main() {
 
         loading_el_ref.set_inner_html(&format!(
             r#"
-    <p> This app currently requires WebGPU. </p>
-    <p> Concretly this means, as of writing, Chrome (or Chromium) on Windows, or elsewhere with --enable-unsafe-webgpu. </p>
-    <p> Alternatively you can download an executable from the <a style="color: #ffffff" href="https://github.com/9SMTM6/mcmc-demo/releases"> Github release</a> page. </p>
+    <p> This application currently requires WebGPU. </p>
+    <p> At the time of writing, this means Chrome (or Chromium). </p>
+    <p> On Linux, you also need to start Chrome with --enable-unsafe-webgpu or set the appropriate command flag in its <a style="color: #ffffff" href="chrome://flags/#enable-unsafe-webgpu">settings</a>. </p>
+    <p> Alternatively, you can download an executable from the <a style="color: #ffffff" href="https://github.com/9SMTM6/mcmc-demo/releases">Github release</a> page. </p>
 "#
         ));
     }

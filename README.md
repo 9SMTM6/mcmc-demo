@@ -12,14 +12,14 @@ I currently envison this approach (lets see how much of this I'll get):
 0. still use max-scaling. With near-uniform distributions we otherwise get a far to depressed dynamic range where things actually happen.
 1. determine device limits to divide work accordingly
 2. since we don't render directly anymore, I've got much more freedom in splitting up the workload, concretely optimizing for typical buffers. So I intend to break up the determination of the approx distribution into multiple sets of reference points.
-3. do it in a cumpute shader
+3. do it in a compute shader
 4. The result can be stored either:
     * in a texture.
-    * a storage buffer
-5. the storage will never have to leave the GPU. Compute it once, read the result it in a fragment shader where the actual colors are determined
-6. with that I could also consider decoupling calculation resolution and render resolution, but I think for now I'll keep them coupled
-7. In order to avoid numerical stability issues I'll probably add some normalization after N steps. I have to decide on a proper strategy for that. Perhaps I can actually do it based on current maximum instead. Most of these strategies will lead to systemctic errors in the precision, since rounding might happen in different situations, but I'm fine with that.
-8. I should probably introduce some kind of loading (compute) visualization...
+    * a storage buffer (as long as that is efficient, textures are optimized to only load parts)
+5. execute that compute shader (and the original computation) in a separate thread (see [wasm-threads](README#wasm-threads)) with a nice loading animation - `egui::widgets::ProgressBar` - while waiting. This works around inefficient diff approach, though perhaps it can still be improved with some space partition like Quadtree.
+6. the storage will never have to leave the GPU. Compute it once, read the result it in a fragment shader where the actual colors are determined
+7. with that I could also consider decoupling calculation resolution and render resolution, but I think for now I'll keep them coupled
+8. In order to avoid numerical stability issues I'll probably add some normalization after N steps. I have to decide on a proper strategy for that. Perhaps I can actually do it based on current maximum instead. Most of these strategies will lead to systemctic errors in the precision, since rounding might happen in different situations, but I'm fine with that.
 
 ## Scaling of distributions and approximations
 
@@ -52,28 +52,21 @@ Future ideas:
 Currently I only support batched execution, to quickly see results of different configurations.
 In the future I also want to support a substep execution such as in the [original inspiration](https://chi-feng.github.io/mcmc-demo/app.html?algorithm=RandomWalkMH&target=banana).
 
-## Execution of batches on web
-
-Update: I've now setup a parallel deployment to cloudflare pages (mcmc-webgpu-demo.pages.dev).
-
-Note: This is not actually the primary issue, though annoying. In memory size was problematic occasionally, but primary issues were render speed / size on VRAM / GPU Caches (i think?). Especially in the diff approach. More to come about this.
+## wasm-threads
 
 To be able to efficiently execute batches in the background on the web we would need a bunch of things to fall into place.
 We want to be able to execute that task in a background thread.
 However for that to work we need wasm-threads, and theres a few issues with using this.
 
 WASM threads rely on sharedarraybuffers, and these need some headers to be active on the webpage, as described here:
+* https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer#security_requirements
 * https://web.dev/articles/webassembly-threads
 * https://web.dev/articles/coop-coep
 
-Checking the deployed github page, these headers are not set by default, and setting headers for github pages isnt allowed by default:
-https://stackoverflow.com/questions/14798589/github-pages-http-headers
+Github pages cant do that.
+I've now setup a parallel deployment to cloudflare pages (mcmc-webgpu-demo.pages.dev), that is able to set these headers (and as added bonus also deploys brotli compressed artifacts, not just gzip).
 
-One of the answers suggests setting the headers with `<meta http-equiv="HEADER">`, however that doesnt work for these headers:
-* not listed here: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/meta#http-equiv
-* someone tried it and it did not work: https://www.reddit.com/r/WebAssembly/comments/tuinyg/run_wasm_from_github_pages_possible/
-
-There are suggestes solutions, but AFAICT these require you to serve (or proxy) the artifacts on another domain (pages.dev if using cloudflare). Note, this may also allow me to use brotli instead of gzip compression.
+I can test for the availability with `self.crossOriginIsolated`.
 
 Even with these headers, compatibility is questionable, as at least in the beginning mobile browsers did not enable this feature, because it eats resources (as it leads to another process for that page specifically):
 
@@ -83,10 +76,9 @@ Also note the difficulties in using threads in Rust because of the generic `wasm
 
 > [https://web.dev/articles/webassembly-threads] If Wasm is intended to be used in a web environment, any interaction with JavaScript APIs is left to external libraries and tooling like wasm-bindgen and wasm-pack. Unfortunately, this means that the standard library is not aware of Web Workers and standard APIs such as std::thread won't work when compiled to WebAssembly.
 
-
-Altogether I'm not sure of the right route. Supporting threads seems like a lot of work with unknown end result.
-
-An alternative might be simply using a promise with wasm_bindgen_futures and hoping that the browsers manage to make it not suck. Its unlikely this will use proper threads, but ...
+I've found 2 libraries that solve this for my purposes:
+* wasm-mt (supports generic futures?)
+* wasm_thread (more recently updated, copies std::thread, requires wasm_pack(?))
 
 ## Support more PRNG and low-discrepancy randomness
 
