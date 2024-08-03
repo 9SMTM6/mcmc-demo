@@ -76,9 +76,25 @@ Also note the difficulties in using threads in Rust because of the generic `wasm
 
 > [https://web.dev/articles/webassembly-threads] If Wasm is intended to be used in a web environment, any interaction with JavaScript APIs is left to external libraries and tooling like wasm-bindgen and wasm-pack. Unfortunately, this means that the standard library is not aware of Web Workers and standard APIs such as std::thread won't work when compiled to WebAssembly.
 
-I've found 2 libraries that solve this for my purposes:
-* wasm-mt (supports generic futures?)
-* wasm_thread (more recently updated, copies std::thread, requires wasm_pack(?))
+I've found 2 libraries that solve this well enough for my purposes:
+* wasm-mt (supports generic futures? hard requirement on wasm-pack)
+* wasm_thread (more recently updated, copies std::thread, weak requirement on wasm_pack, alternatively modified build process)
+
+Both will use nightly to rebuild the standard library, and a bunch of other flags (the same seems to be true for the fairly polular `wasm-bindge-rayon`). Which makes things annoying and at least difficult with trunk.
+
+Thunk has a few examples about web-workers (undocumented at root):
+* https://github.com/trunk-rs/trunk/tree/main/examples/webworker
+  * seems to be basic example. Manually creates a js script in rust and loads it
+* https://github.com/trunk-rs/trunk/tree/main/examples/webworker-module
+  * seems to be using trunk to bundle an antumatically created js loader to avoid the managing in the previous example.
+  * has an identical worker script
+* https://github.com/trunk-rs/trunk/tree/main/examples/webworker-gloo
+  * uses gloo-worker, an abstraction on the web api that makes some annoying parts in app.rs go away. Though that requires a 3-way split, into lib with common impl, app.rs and worker.rs
+  * this 3 way split avoids the need for the loading of another module. However it likely also means that A LOT more data has to be loaded, since lib will be used in both, and my lib code is likely to require depending on the major size contributors (eg. wgpu). wasm component model may solve that in the future, but now is the present.
+None of these seem to work with shared memory.
+Considering that I generate a bunch of data in a serial fashion (not sped up by parallelism, this is unavoidable for markov chains AFAIK) and want to then transport data with a shared bufferbinding, this might be problematic. Unless the bufferbinding can survive the serialization over the border between.
+
+See also https://github.com/trunk-rs/trunk/issues/680
 
 ## Support more PRNG and low-discrepancy randomness
 
