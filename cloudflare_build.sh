@@ -3,9 +3,9 @@
 set -x
 set -eo
 
-apt update
+sudo apt update
 
-apt install -y curl wget brotli gzip gcc
+sudo apt install -y curl wget brotli gzip gcc
 
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > rustup_install.sh
 
