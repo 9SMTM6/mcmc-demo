@@ -3,7 +3,7 @@ minify = "on_release"
 # this happens often on firefox, but a forced reload always gets rid of this.
 # since firefox isnt supported currently anyways, I'll leave it disabled.
 # test-disabled as compression might cause this to fail
-no_sri = true
+# no_sri = true
 
 [[hooks]]
 stage = "post_build"
@@ -15,12 +15,12 @@ command_arguments = [
     "[ \"$TRUNK_PROFILE\" = \"release\" ] && brotli ${TRUNK_STAGING_DIR}/mcmc-demo*bg.wasm || true",
 ]
 
-# [[hooks]]
-# stage = "post_build"
-# # falling back to sh to get wildcard expansion
-# command = "sh"
-# # compress, but only on release
-# command_arguments = [
-#     "-c",
-#     "[ \"$TRUNK_PROFILE\" = \"release\" ] && gzip --keep ${TRUNK_STAGING_DIR}/mcmc-demo*bg.wasm || true",
-# ]
+[[hooks]]
+stage = "post_build"
+# falling back to sh to get wildcard expansion
+command = "sh"
+# compress, but only on release
+command_arguments = [
+    "-c",
+    "[ \"$TRUNK_PROFILE\" = \"release\" ] && gzip --keep ${TRUNK_STAGING_DIR}/mcmc-demo*bg.wasm || true",
+]
