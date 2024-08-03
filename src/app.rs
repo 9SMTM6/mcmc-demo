@@ -236,21 +236,28 @@ impl eframe::App for McmcDemo {
                                 ui.allocate_exact_size(px_size, egui::Sense::hover());
                             // last painted element wins.
                             let painter = ui.painter();
-                            // self.target_distr_render.paint(
-                            //     &self.target_distr,
-                            //     painter,
-                            //     rect * ctx.pixels_per_point(),
-                            // );
-                            self.diff_render.paint(
+                            self.target_distr_render.paint(
+                                &self.target_distr,
                                 painter,
                                 rect * ctx.pixels_per_point(),
-                                &self.algo,
-                                &self.target_distr,
                             );
+                            // self.diff_render.paint(
+                            //     painter,
+                            //     rect * ctx.pixels_per_point(),
+                            //     &self.algo,
+                            //     &self.target_distr,
+                            // );
+
+                            #[derive(Clone, Copy)]
+                            enum ElementSettings {
+                                Opened(usize),
+                                // Closed,
+                            }
 
                             self.drawer.paint(painter, rect, &self.algo);
                             if let Settings::EditDistribution(_) = self.settings {
-                                // // draw centers of gaussians
+                                let res_id = response.id;
+                                // draw centers of gaussians, move them if dragged, open more settings if clicked
                                 for (idx, ele) in self.target_distr.gaussians.iter_mut().enumerate()
                                 {
                                     let pos = ndc_to_canvas_coord(ele.position.into(), rect.size());
@@ -260,13 +267,19 @@ impl eframe::App for McmcDemo {
                                     let mut pos_resp = ui
                                         .interact(
                                             pos_sense_rect,
-                                            response.id.with(idx),
-                                            egui::Sense::drag(),
+                                            res_id.with(idx),
+                                            egui::Sense::click_and_drag(),
                                         )
-                                        .on_hover_cursor(egui::CursorIcon::Grab);
+                                        .on_hover_cursor(egui::CursorIcon::PointingHand);
                                     if pos_resp.dragged() {
                                         pos_resp = pos_resp
                                             .on_hover_and_drag_cursor(egui::CursorIcon::Grabbing);
+                                    }
+                                    if pos_resp.clicked() {
+                                        ui.data_mut(|type_map| {
+                                            type_map
+                                                .insert_temp(res_id, ElementSettings::Opened(idx));
+                                        });
                                     }
                                     // .on_hover_and_drag_cursor(egui::CursorIcon::Grabbing);
                                     let pos = rect.clamp(pos + pos_resp.drag_delta());
@@ -289,6 +302,55 @@ impl eframe::App for McmcDemo {
                                             width: if pos_active { 2.0 } else { 1.0 },
                                         },
                                     );
+                                }
+                                if let Some(ElementSettings::Opened(idx)) =
+                                    ui.data(|type_map| type_map.get_temp::<ElementSettings>(res_id))
+                                {
+                                    let close_planel = |ui: &mut egui::Ui| {
+                                        ui.data_mut(|type_map| {
+                                            type_map.remove::<ElementSettings>(res_id);
+                                        });
+                                    };
+                                    // a proxy for (the presence of) ElementSettings (required because of the api of window).
+                                    // has a defered close at the end of the scope.
+                                    let mut opened = true;
+                                    let gaussians = &mut self.target_distr.gaussians;
+                                    egui::Window::new(format!("Settings for Gauss-Element {idx}"))
+                                        .open(&mut opened)
+                                        .fixed_pos(ndc_to_canvas_coord(
+                                            gaussians
+                                                .get(idx)
+                                                .expect("Guaranteed to be present")
+                                                .position
+                                                .into(),
+                                            rect.size(),
+                                        ))
+                                        .collapsible(false)
+                                        .show(ctx, |ui| {
+                                            let el = gaussians.get_mut(idx).unwrap();
+                                            ui.add(
+                                                egui::Slider::new(
+                                                    &mut el.scale,
+                                                    f32::EPSILON..=1.0,
+                                                )
+                                                .text("Scale"),
+                                            );
+                                            ui.add(
+                                                egui::Slider::new(
+                                                    &mut el.variance,
+                                                    f32::EPSILON..=4.0,
+                                                )
+                                                .logarithmic(true)
+                                                .text("Variance"),
+                                            );
+                                            if ui.button("delete").clicked() {
+                                                gaussians.remove(idx);
+                                                close_planel(ui);
+                                            }
+                                        });
+                                    if !opened {
+                                        close_planel(ui);
+                                    }
                                 }
                             }
                         },
