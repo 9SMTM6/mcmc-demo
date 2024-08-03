@@ -90,7 +90,7 @@ impl MultiModalGaussianDisplay {
         // chrome: Bgra8Unorm
         // native linux vulkan: Rgba8Unorm
         // yup, its different.
-        log::warn!("{0:?}", render_state.target_format);
+        // log::warn!("{0:?}", render_state.target_format);
 
         let pipeline = device.create_render_pipeline(&RenderPipelineDescriptor {
             vertex: fullscreen_quad::vertex_state(
