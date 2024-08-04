@@ -5,7 +5,8 @@
 # to the user in the error, instead of "error: invalid channel name '[toolchain]'".
 
 [toolchain]
-channel = "stable"
-# channel = "nightly-2024-08-02"
+# channel = "stable"
+# seems to cause issues with rust-analyzer. Probably in combination with the build-std, which requires an explicit target
+channel = "nightly-2024-08-02"
 components = ["rust-src", "rustfmt", "clippy"]
 targets = ["wasm32-unknown-unknown"]

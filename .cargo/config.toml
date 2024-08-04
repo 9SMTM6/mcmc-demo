@@ -12,8 +12,8 @@ rustflags = [
     # It seems to cause some issues in the interactions between type_map and wgpu with Sync, forced by egui-wgpu.
     # I'll wait until after the upgrade to wgpu 22.x, as that has a good chance of fixing this issue, as it addressed at least lifetime bounds.
     # That update meanwhile is blocked on wgsl_analyzer: https://github.com/Swoorup/wgsl-bindgen/issues/37 
-    # "-C",
-    # "target-feature=+atomics,+bulk-memory,+mutable-globals",
+    "-C",
+    "target-feature=+atomics,+bulk-memory,+mutable-globals",
 ]
 
 # Only kicks in if compiled with unstable compiler.

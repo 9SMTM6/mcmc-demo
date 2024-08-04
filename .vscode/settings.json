@@ -1,0 +1,5 @@
+{
+    // for for build-std flag on nightly requireing an explicit target.
+    // otherwise this breaks rust-analyzer
+    "rust-analyzer.cargo.target": "x86_64-unknown-linux-gnu",
+}
