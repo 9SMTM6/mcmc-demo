@@ -100,7 +100,9 @@ fn main() {
                 .expect("failed to start eframe");
 
             // loaded successfully, remove the loading indicator
-            if let Some(e) = get_issue_text() { e.remove() };
+            if let Some(e) = get_issue_text() {
+                e.remove()
+            };
         });
     } else {
         let Some(loading_el_ref) = get_issue_text() else {

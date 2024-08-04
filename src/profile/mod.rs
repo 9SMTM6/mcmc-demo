@@ -17,7 +17,10 @@ macro_rules! profile_scope {
 
 #[cfg(feature = "profile")]
 mod if_featured {
-    #[allow(clippy::missing_const_for_fn, reason = "false positive if compiling for wasm")]
+    #[allow(
+        clippy::missing_const_for_fn,
+        reason = "false positive if compiling for wasm"
+    )]
     pub fn start_puffin_server() {
         // puffin server doesnt exist on web, so make that a noop there
         #[cfg(not(target_arch = "wasm32"))]
