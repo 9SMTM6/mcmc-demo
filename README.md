@@ -59,6 +59,7 @@ Currently working:
 Future ideas:
 * implement tracing from rust side for wgpu actions, blocked by: https://github.com/gfx-rs/wgpu/issues/5974
 * implement the stuff from https://webgpufundamentals.org/webgpu/lessons/webgpu-timing.html
+  * actually, perhaps instead use https://github.com/Wumpf/wgpu-profiler
 
 ## Non-Batched execution
 
