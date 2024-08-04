@@ -14,5 +14,6 @@ rustflags = [
     # "target-feature=+atomics,+bulk-memory,+mutable-globals",
 ]
 
+# Only kicks in if compiled with unstable compiler.
 [unstable]
 build-std = ["std,panic_abort"]
