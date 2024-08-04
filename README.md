@@ -6,6 +6,10 @@
   * but that is required via https://github.com/gfx-rs/wgpu/blob/7b4cbc26192d6d56a31f8e67769e656a6627b222/wgpu/Cargo.toml#L148C1-L151C20 (maybe removable via patch?)
   * issue: https://github.com/gfx-rs/wgpu/issues/3514
   * this is what I considered for the compute shader to set the compute_group dimensions.
+  * AAActually its a naga issue. The source is in that file: https://github.com/gfx-rs/wgpu/blob/7b4cbc26192d6d56a31f8e67769e656a6627b222/naga/src/back/wgsl/writer.rs#L111 ([commit](https://github.com/gfx-rs/wgpu/commit/2929ec333cee981ef4cbf783c0e33d208c651c4d))
+    * its surfaced via naga_oil
+    * it might be an oversight. In that commit wgsl did not support `pipeline-overridable constants`, but later there was another PR that merged support, but it might've forgotten about these `writer`s. Or it was an accepted shortcoming, since it doesnt seem to be possible to do that stuff entirely without work (all the valid backends added a `pipeline_constant.rs` file).
+    * actually, from my understanding, fixing this for naga wont fix the issue for naga_oil, since naga_oil wants to use naga as a preprocessor.
 * wgpu 22.1 update brings some perhaps helpful updates, is blocked on wgsl_bindgen
 * using shared memory multithreading on the web is blocked by https://github.com/emilk/egui/issues/4914
   * may also be patchable

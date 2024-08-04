@@ -43,7 +43,7 @@ log = "0.4"
 
 # You only need serde if you want app persistence:
 serde = { version = "1", features = ["derive"], optional = true }
-wgpu = { version = "0.20.2", features = ["webgpu"] }
+wgpu = { version = "0.20.1", features = ["webgpu"] }
 bytemuck = { version = "1.16.0" }
 nalgebra = { version = "0.33.0" }
 getrandom = { version = "0.2.15", features = ["js"] }
@@ -97,7 +97,7 @@ opt-level = 2
 
 egui = { git = "https://github.com/9smtm6/egui", branch = "patched" }
 eframe = { git = "https://github.com/9smtm6/egui", branch = "patched" }
-wgpu = { git = "https://github.com/9smtm6/wgpu", branch = "patched" }
+# wgpu = { git = "https://github.com/9smtm6/wgpu", branch = "patched" }
 
 # If you fork https://github.com/emilk/egui you can test with:
 # egui = { path = "../egui/crates/egui" }

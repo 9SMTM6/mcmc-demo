@@ -639,10 +639,11 @@ checksum = "96a6ac251f4a2aca6b3f91340350eab87ae57c3f127ffeb585e92bd336717991"
 [[package]]
 name = "d3d12"
 version = "0.20.0"
-source = "git+https://github.com/9smtm6/wgpu?branch=patched#f3a4ee43b032986194cbfe840dced6427f264209"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b28bfe653d79bd16c77f659305b195b82bb5ce0c0eb2a4846b82ddbd77586813"
 dependencies = [
  "bitflags 2.6.0",
- "libloading 0.8.4",
+ "libloading 0.7.4",
  "winapi",
 ]
 
@@ -1213,6 +1214,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "40ecd4077b5ae9fd2e9e169b102c6c330d0605168eb0e8bf79952b256dbefffd"
 
 [[package]]
+name = "gl_generator"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1a95dfc23a2b4a9a2f5ab41d194f8bfda3cabec42af4e39f08c339eb2a0c124d"
+dependencies = [
+ "khronos_api",
+ "log",
+ "xml-rs",
+]
+
+[[package]]
 name = "glow"
 version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1222,6 +1234,15 @@ dependencies = [
  "slotmap",
  "wasm-bindgen",
  "web-sys",
+]
+
+[[package]]
+name = "glutin_wgl_sys"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6c8098adac955faa2d31079b65dc48841251f69efd3ac25477903fc424362ead"
+dependencies = [
+ "gl_generator",
 ]
 
 [[package]]
@@ -1443,8 +1464,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6aae1df220ece3c0ada96b8153459b67eebe9ae9212258bb0134ae60416fdf76"
 dependencies = [
  "libc",
+ "libloading 0.8.4",
  "pkg-config",
 ]
+
+[[package]]
+name = "khronos_api"
+version = "3.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e2db585e1d738fc771bf08a151420d3ed193d9d895a36df7f6f8a9456b911ddc"
 
 [[package]]
 name = "lazy_static"
@@ -1693,25 +1721,6 @@ dependencies = [
  "num-traits",
  "pp-rs",
  "rustc-hash",
- "termcolor",
- "thiserror",
- "unicode-xid",
-]
-
-[[package]]
-name = "naga"
-version = "0.20.0"
-source = "git+https://github.com/9smtm6/wgpu?branch=patched#f3a4ee43b032986194cbfe840dced6427f264209"
-dependencies = [
- "arrayvec",
- "bit-set",
- "bitflags 2.6.0",
- "codespan-reporting",
- "hexf-parse",
- "indexmap",
- "log",
- "num-traits",
- "rustc-hash",
  "serde",
  "spirv",
  "termcolor",
@@ -1729,7 +1738,7 @@ dependencies = [
  "codespan-reporting",
  "data-encoding",
  "indexmap",
- "naga 0.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "naga",
  "once_cell",
  "regex",
  "regex-syntax 0.8.4",
@@ -3249,8 +3258,9 @@ dependencies = [
 
 [[package]]
 name = "wgpu"
-version = "0.20.2"
-source = "git+https://github.com/9smtm6/wgpu?branch=patched#f3a4ee43b032986194cbfe840dced6427f264209"
+version = "0.20.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "90e37c7b9921b75dfd26dd973fdcbce36f13dfa6e2dc82aece584e0ed48c355c"
 dependencies = [
  "arrayvec",
  "cfg-if",
@@ -3258,7 +3268,7 @@ dependencies = [
  "document-features",
  "js-sys",
  "log",
- "naga 0.20.0 (git+https://github.com/9smtm6/wgpu?branch=patched)",
+ "naga",
  "parking_lot",
  "profiling",
  "raw-window-handle",
@@ -3270,13 +3280,14 @@ dependencies = [
  "web-sys",
  "wgpu-core",
  "wgpu-hal",
- "wgpu-types 0.20.0 (git+https://github.com/9smtm6/wgpu?branch=patched)",
+ "wgpu-types",
 ]
 
 [[package]]
 name = "wgpu-core"
 version = "0.21.1"
-source = "git+https://github.com/9smtm6/wgpu?branch=patched#f3a4ee43b032986194cbfe840dced6427f264209"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d50819ab545b867d8a454d1d756b90cd5f15da1f2943334ca314af10583c9d39"
 dependencies = [
  "arrayvec",
  "bit-vec",
@@ -3286,7 +3297,7 @@ dependencies = [
  "document-features",
  "indexmap",
  "log",
- "naga 0.20.0 (git+https://github.com/9smtm6/wgpu?branch=patched)",
+ "naga",
  "once_cell",
  "parking_lot",
  "profiling",
@@ -3298,13 +3309,14 @@ dependencies = [
  "thiserror",
  "web-sys",
  "wgpu-hal",
- "wgpu-types 0.20.0 (git+https://github.com/9smtm6/wgpu?branch=patched)",
+ "wgpu-types",
 ]
 
 [[package]]
 name = "wgpu-hal"
 version = "0.21.1"
-source = "git+https://github.com/9smtm6/wgpu?branch=patched#f3a4ee43b032986194cbfe840dced6427f264209"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "172e490a87295564f3fcc0f165798d87386f6231b04d4548bca458cbbfd63222"
 dependencies = [
  "android_system_properties",
  "arrayvec",
@@ -3315,6 +3327,8 @@ dependencies = [
  "cfg_aliases",
  "core-graphics-types",
  "d3d12",
+ "glow",
+ "glutin_wgl_sys",
  "gpu-alloc",
  "gpu-allocator",
  "gpu-descriptor",
@@ -3322,10 +3336,11 @@ dependencies = [
  "js-sys",
  "khronos-egl",
  "libc",
- "libloading 0.8.4",
+ "libloading 0.7.4",
  "log",
  "metal",
- "naga 0.20.0 (git+https://github.com/9smtm6/wgpu?branch=patched)",
+ "naga",
+ "ndk-sys",
  "objc",
  "once_cell",
  "parking_lot",
@@ -3338,7 +3353,7 @@ dependencies = [
  "thiserror",
  "wasm-bindgen",
  "web-sys",
- "wgpu-types 0.20.0 (git+https://github.com/9smtm6/wgpu?branch=patched)",
+ "wgpu-types",
  "winapi",
 ]
 
@@ -3347,16 +3362,6 @@ name = "wgpu-types"
 version = "0.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1353d9a46bff7f955a680577f34c69122628cc2076e1d6f3a9be6ef00ae793ef"
-dependencies = [
- "bitflags 2.6.0",
- "js-sys",
- "web-sys",
-]
-
-[[package]]
-name = "wgpu-types"
-version = "0.20.0"
-source = "git+https://github.com/9smtm6/wgpu?branch=patched#f3a4ee43b032986194cbfe840dced6427f264209"
 dependencies = [
  "bitflags 2.6.0",
  "js-sys",
@@ -3382,7 +3387,7 @@ dependencies = [
  "heck",
  "indexmap",
  "miette",
- "naga 0.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "naga",
  "naga_oil",
  "pathdiff",
  "prettyplease",
@@ -3396,7 +3401,7 @@ dependencies = [
  "strum_macros",
  "syn 2.0.71",
  "thiserror",
- "wgpu-types 0.20.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "wgpu-types",
 ]
 
 [[package]]
@@ -3782,6 +3787,12 @@ name = "xkeysym"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b9cc00251562a284751c9973bace760d86c0276c471b4be569fe6b068ee97a56"
+
+[[package]]
+name = "xml-rs"
+version = "0.8.20"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "791978798f0597cfc70478424c2b4fdc2b7a8024aaff78497ef00f24ef674193"
 
 [[package]]
 name = "zerocopy"
