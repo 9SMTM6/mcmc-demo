@@ -1,5 +1,18 @@
 # TODO:
 
+## Current prograss blockers:
+
+* wgpu pipeline-overridable constants are not supported on glsl-out
+  * but that is required via https://github.com/gfx-rs/wgpu/blob/7b4cbc26192d6d56a31f8e67769e656a6627b222/wgpu/Cargo.toml#L148C1-L151C20 (maybe removable via patch?)
+  * issue: https://github.com/gfx-rs/wgpu/issues/3514
+  * this is what I considered for the compute shader to set the compute_group dimensions.
+* wgpu 22.1 update brings some perhaps helpful updates, is blocked on wgsl_bindgen
+* using shared memory multithreading on the web is blocked by https://github.com/emilk/egui/issues/4914
+  * may also be patchable
+  * introducing merge commit: https://github.com/emilk/egui/commit/bfadb90d429c9e6aa1beba37c6c38335e7462eb0
+  * original commit: https://github.com/emilk/egui/pull/3595/commits/c5746dbd37a31d9a90c8987449b4089eb910ad8c
+  * note that nothing was changed but the unification of imports. If concurrency wasn used in another commit building on this, it should be easy to patch
+
 ## Compute shader
 
 I dont know if any of the below ideas for speeding up the diff rendering would work out. And in the end, dont think I'll get much use out of knowing how to do that (meanign I'll forget it anyways).
@@ -12,7 +25,7 @@ I currently envison this approach (lets see how much of this I'll get):
 0. still use max-scaling. With near-uniform distributions we otherwise get a far to depressed dynamic range where things actually happen.
 1. determine device limits to divide work accordingly
 2. since we don't render directly anymore, I've got much more freedom in splitting up the workload, concretely optimizing for typical buffers. So I intend to break up the determination of the approx distribution into multiple sets of reference points.
-3. do it in a compute shader - todo: with pipeline.overridable constants for render size (https://github.com/gfx-rs/wgpu/releases/tag/v0.20.0)
+3. do it in a compute shader - todo: with pipeline-overridable constants for render size (https://github.com/gfx-rs/wgpu/releases/tag/v0.20.0)
 4. The result can be stored either:
     * in a texture.
     * a storage buffer (as long as that is efficient, textures are optimized to only load parts)

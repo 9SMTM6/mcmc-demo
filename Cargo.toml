@@ -19,7 +19,9 @@ persistence = [
     "rand_pcg/serde1",
     "nalgebra/serde-serialize",
 ]
-webgl_compat = ["wgpu/webgl"]
+# doesnt work, since it can't translate storagebuffers.
+# And my experiments with passing stuff via textures was not successful.
+# webgl_compat = ["wgpu/webgl"]
 x11 = ["eframe/x11"]
 shipped_fonts = ["eframe/default_fonts"]
 profile = ["dep:puffin", "dep:puffin_http", "eframe/puffin"]
