@@ -2,6 +2,8 @@
 pub mod backend_panel;
 #[cfg(feature = "profile")]
 pub mod frame_history;
+#[cfg(feature = "tracing")]
+pub mod tracing;
 
 #[macro_export]
 #[allow(clippy::module_name_repetitions)]

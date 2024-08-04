@@ -5,7 +5,12 @@
 fn main() -> eframe::Result<()> {
     use mcmc_demo::INITIAL_RENDER_SIZE;
 
-    env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
+    // Log or trace to stderr (if you run with `RUST_LOG=debug`).
+    // tracing has more and precise scope information, and works well with multithreading, where regular logging as a single threaded approach breaks.
+    #[cfg(feature="tracing")]
+    mcmc_demo::set_default_and_redirect_log(mcmc_demo::define_subscriber(Some("info")));
+    #[cfg(not(feature="tracing"))]
+    env_logger::init();
     #[cfg(feature = "profile")]
     mcmc_demo::profile::start_puffin_server();
 
