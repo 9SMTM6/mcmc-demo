@@ -4,9 +4,7 @@ use std::{marker::PhantomData, mem::size_of, num::NonZero};
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
 use egui::{Color32, Pos2};
 use wgpu::{
-    util::{BufferInitDescriptor, DeviceExt},
-    BindGroup, Buffer, BufferBinding, BufferDescriptor, BufferUsages, RenderPipeline,
-    RenderPipelineDescriptor,
+    util::{BufferInitDescriptor, DeviceExt}, BindGroup, BindGroupEntry, Buffer, BufferBinding, BufferDescriptor, BufferUsages, RenderPipeline, RenderPipelineDescriptor
 };
 
 use crate::{
@@ -67,8 +65,8 @@ fn get_approx_triple(
 
     let approx_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
         label: webgpu_debug_name,
-        layout: &diff_display::bind_groups::WgpuBindGroup2::get_bind_group_layout(device),
-        entries: &diff_display::bind_groups::WgpuBindGroupLayout2 {
+        layout: &diff_display::WgpuBindGroup2::get_bind_group_layout(device),
+        entries: &diff_display::WgpuBindGroup2Entries::new(diff_display::WgpuBindGroup2EntriesParams {
             accepted: BufferBinding {
                 buffer: &accept_buffer,
                 offset: 0,
@@ -79,8 +77,7 @@ fn get_approx_triple(
                 offset: 0,
                 size: NonZero::new(info_buffer.size()),
             },
-        }
-        .entries(),
+        }).as_array(),
     });
 
     (approx_bind_group, accept_buffer, info_buffer)

@@ -65,15 +65,14 @@ pub(super) fn get_gaussian_target_pair(
 
     let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
         label: webgpu_debug_name,
-        layout: &multimodal_gaussian::bind_groups::WgpuBindGroup1::get_bind_group_layout(device),
-        entries: &multimodal_gaussian::bind_groups::WgpuBindGroupLayout1 {
+        layout: &multimodal_gaussian::WgpuBindGroup1::get_bind_group_layout(device),
+        entries: &multimodal_gaussian::WgpuBindGroup1Entries::new(multimodal_gaussian::WgpuBindGroup1EntriesParams{
             gauss_bases: BufferBinding {
                 buffer: &buffer,
                 offset: 0,
                 size: NonZero::new(buffer.size()),
             },
-        }
-        .entries(),
+        }).as_array(),
     });
 
     WgpuBufferBindGroupPair { bind_group, buffer }
