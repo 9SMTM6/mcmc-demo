@@ -2,7 +2,8 @@
     clippy::shadow_unrelated,
     clippy::pattern_type_mismatch,
     clippy::struct_excessive_bools,
-    clippy::missing_panics_doc
+    clippy::missing_panics_doc,
+    reason = "Copied code, I'm lazy"
 )]
 use egui::util::History;
 

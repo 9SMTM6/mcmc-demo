@@ -6,7 +6,8 @@ pub mod frame_history;
 pub mod tracing;
 
 #[macro_export]
-#[allow(clippy::module_name_repetitions)]
+#[allow(clippy::module_name_repetitions, reason = "makes autoimport nicer")]
+#[allow(edition_2024_expr_fragment_specifier)]
 macro_rules! profile_scope {
     ($scope_name:expr) => {
         #[cfg(feature = "profile")]
@@ -33,7 +34,7 @@ mod if_featured {
 
                 // We can store the server if we want, but in this case we just want
                 // it to keep running. Dropping it closes the server, so let's not drop it!
-                #[allow(clippy::mem_forget)]
+                #[allow(clippy::mem_forget, reason= "we want to keep it running")]
                 std::mem::forget(puffin_server);
             }
             Err(err) => {

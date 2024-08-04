@@ -1,34 +1,25 @@
-#![allow(unused)]
-use std::{marker::PhantomData, mem::size_of, num::NonZero};
+use std::{mem::size_of, num::NonZero};
 
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
-use egui::{Color32, Pos2};
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
-    BindGroup, BindGroupEntry, Buffer, BufferBinding, BufferDescriptor, BufferUsages,
-    RenderPipeline, RenderPipelineDescriptor,
+    BindGroup, Buffer, BufferBinding, BufferDescriptor, BufferUsages, RenderPipeline,
+    RenderPipelineDescriptor,
 };
 
 use crate::{
-    app::ndc_to_canvas_coord,
-    profile, profile_scope,
+    profile_scope,
     shaders::{
         self, diff_display, fullscreen_quad,
-        types::{NormalDistribution, RWMHAcceptRecord, RWMHCountInfo, ResolutionInfo},
+        types::{NormalDistribution, RWMHCountInfo, ResolutionInfo},
     },
-    simulation::random_walk_metropolis_hastings::{AcceptRecord, Rwmh},
+    simulation::random_walk_metropolis_hastings::Rwmh,
     target_distributions::multimodal_gaussian::MultiModalGaussian,
-    visualizations::{
-        self,
-        shader_based::{
-            multimodal_gaussian::get_gaussian_target_pair, resolution_uniform::get_resolution_pair,
-            WgpuBufferBindGroupPair,
-        },
-        CanvasPainter,
+    visualizations::shader_based::{
+        multimodal_gaussian::get_gaussian_target_pair, resolution_uniform::get_resolution_pair,
+        WgpuBufferBindGroupPair,
     },
 };
-
-use super::resolution_uniform;
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 pub struct DiffDisplay {
