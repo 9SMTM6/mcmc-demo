@@ -225,12 +225,6 @@ impl eframe::App for McmcDemo {
                         ui,
                         #[allow(clippy::shadow_unrelated)]
                         |ui| {
-                            // TODO: consider moving Settings::Edit* state into `ui.data_mut()` or similar.
-                            // ui.data(|map| {
-                            //     map.get_temp(id)
-                            //     map.insert_temp(id, value)
-                            // });
-                            // see: https://github.com/emilk/egui/blob/37b1e1504db14697c39ce1c3bb5e58f4f2b819bf/crates/egui_demo_lib/src/demo/password.rs#L46
                             let px_size = ui.available_size();
                             let (rect, response) =
                                 ui.allocate_exact_size(px_size, egui::Sense::hover());

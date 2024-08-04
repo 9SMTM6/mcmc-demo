@@ -12,7 +12,7 @@ I currently envison this approach (lets see how much of this I'll get):
 0. still use max-scaling. With near-uniform distributions we otherwise get a far to depressed dynamic range where things actually happen.
 1. determine device limits to divide work accordingly
 2. since we don't render directly anymore, I've got much more freedom in splitting up the workload, concretely optimizing for typical buffers. So I intend to break up the determination of the approx distribution into multiple sets of reference points.
-3. do it in a compute shader
+3. do it in a compute shader - todo: with pipeline.overridable constants for render size (https://github.com/gfx-rs/wgpu/releases/tag/v0.20.0)
 4. The result can be stored either:
     * in a texture.
     * a storage buffer (as long as that is efficient, textures are optimized to only load parts)
