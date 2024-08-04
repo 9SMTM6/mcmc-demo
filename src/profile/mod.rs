@@ -34,7 +34,7 @@ mod if_featured {
 
                 // We can store the server if we want, but in this case we just want
                 // it to keep running. Dropping it closes the server, so let's not drop it!
-                #[allow(clippy::mem_forget, reason= "we want to keep it running")]
+                #[allow(clippy::mem_forget, reason = "we want to keep it running")]
                 std::mem::forget(puffin_server);
             }
             Err(err) => {
