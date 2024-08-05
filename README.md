@@ -97,8 +97,22 @@ Also note the difficulties in using threads in Rust because of the generic `wasm
 I've found 2 libraries that solve this well enough for my purposes:
 * wasm-mt (supports generic futures? hard requirement on wasm-pack)
   * actually no: 
-    > wasm-mt is not efficient in that it does not include support of the standard thread primitive operations: 1.shared memory based message passing and mutexes,
-* wasm_thread (more recently updated, copies std::thread, weak requirement on wasm_pack, alternatively modified build process)
+    > wasm-mt is not efficient in that it does not include support of the standard thread primitive operations: 
+    > 1. shared memory based message passing and mutexes,
+* [wasm_thread](https://github.com/chemicstry/wasm_thread)
+  * updated 5 months ago
+  * API Clone of std::thread
+  * works both native and on web
+  * build process already integrated on here
+  * loads a bunch of js scripts, would be nice to avoid, but ATM it seems like the best deal 
+* [wasm-futures-executor](https://github.com/wngr/wasm-futures-executor)
+  * 2 years ago last update
+  * API Clone of futures_executor::ThreadPool 
+  * identical build process to wasm_thread
+  * though I think it embeds the snippets differently.
+  * i dont think it has a native compat layer, but easy to address with a reexport
+  * I think it works differently when spawning tasks:
+    > There is a significant overhead of sending and spawning futures across the thread boundary. It makes most sense for long-lived tasks (check out the factorial demo, which is a rough 3x performance increase). As always, make sure to profile your use case.
 
 Both will use nightly to rebuild the standard library, and a bunch of other flags (the same seems to be true for the fairly polular `wasm-bindge-rayon`). Which makes things annoying and at least difficult with trunk.
 
