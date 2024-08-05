@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use egui::{self, Shadow, Vec2};
 use wasm_thread as thread;
 
@@ -34,6 +36,15 @@ pub struct McmcDemo {
     uniform_distr_iter: SRngPercIter<rand_pcg::Pcg32>,
     #[cfg(feature = "profile")]
     backend_panel: super::profile::backend_panel::BackendPanel,
+    #[cfg_attr(feature = "persistence", serde(skip))]
+    /// Needs to be saved to keep the thread alive on web (?),
+    /// Cant be saved in temporary storage because of the Copy requirements on IdTypeMap::insert_temp.
+    /// Works like this for the moment, since theres only one of these.
+    background_thread: Option<thread::JoinHandle<()>>,
+    #[cfg_attr(feature = "persistence", serde(skip))]
+    to_bg: Option<std::sync::mpsc::SyncSender<String>>,
+    #[cfg_attr(feature = "persistence", serde(skip))]
+    from_bg: Option<std::sync::mpsc::Receiver<String>>,
 }
 
 impl Default for McmcDemo {
@@ -49,6 +60,9 @@ impl Default for McmcDemo {
             uniform_distr_iter: SRngPercIter::<rand_pcg::Pcg32>::new([42; 16]),
             #[cfg(feature = "profile")]
             backend_panel: Default::default(),
+            background_thread: None,
+            to_bg: None,
+            from_bg: None,
         }
     }
 }
@@ -72,58 +86,6 @@ impl McmcDemo {
             visuals.interact_cursor = Some(egui::CursorIcon::PointingHand);
             visuals.window_shadow = Shadow::NONE;
         });
-
-        // It's not possible to do a scope on the main thread, because blocking waits are not supported, but we can use
-        // scope inside web workers.
-        #[allow(unused_variables, reason = "conditional compilation")]
-        let handle = thread::spawn(|| {
-            log::info!("Start scope test on thread {:?}", thread::current().id());
-
-            let mut a = vec![1, 2, 3];
-            let mut x = 0;
-
-            thread::scope(|s| {
-                let handle = s.spawn(|| {
-                    log::info!(
-                        "hello from the first scoped thread {:?}",
-                        thread::current().id()
-                    );
-                    // We can borrow `a` here.
-                    log::info!("a = {:?}", &a);
-                    // Return a subslice of borrowed `a`
-                    &a[0..2]
-                });
-
-                // Wait for the returned value from first thread
-                log::info!("a[0..2] = {:?}", handle.join().unwrap());
-
-                s.spawn(|| {
-                    log::info!(
-                        "hello from the second scoped thread {:?}",
-                        thread::current().id()
-                    );
-                    // We can even mutably borrow `x` here,
-                    // because no other threads are using it.
-                    x += a[0] + a[2];
-                });
-
-                log::info!(
-                    "Hello from scope \"main\" thread {:?} inside scope.",
-                    thread::current().id()
-                );
-            });
-
-            // After the scope, we can modify and access our variables again:
-            a.push(4);
-            assert_eq!(x, a.len());
-            log::info!("Scope done x = {}, a.len() = {}", x, a.len());
-        });
-
-        // Wait for all threads, otherwise program exits before threads finish execution.
-        // We can't do blocking join on wasm main thread though, but the browser window will continue running.
-
-        #[cfg(not(target_arch = "wasm32"))]
-        handle.join().unwrap();
 
         let state = Self::get_state(cc);
         let render_state = cc
@@ -196,6 +158,11 @@ impl eframe::App for McmcDemo {
     /// Called by the frame work to save state before shutdown.
     #[cfg(feature = "persistence")]
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
+        // not sure if that'd be a good idea
+        // Wait for all threads, otherwise program exits before threads finish execution.
+        // We can't do blocking join on wasm main thread though, but the browser window will continue running.
+        // #[cfg(not(target_arch = "wasm32"))]
+        // self.background_thread.take().map(thread::JoinHandle::join);
         eframe::set_value(storage, eframe::APP_KEY, self);
     }
 
@@ -221,7 +188,24 @@ impl eframe::App for McmcDemo {
                 #[cfg(feature = "profile")]
                 ui.toggle_value(&mut self.backend_panel.open, "Backend");
                 egui::warn_if_debug_build(ui);
-            })
+            });
+            self.to_bg.get_or_insert_with(|| {
+                let (to_tx, to_rx) = std::sync::mpsc::sync_channel::<String>(200);
+                let (from_tx, from_rx) = std::sync::mpsc::sync_channel::<String>(200);
+                self.from_bg = Some(from_rx);
+                let _ = self.background_thread.insert(thread::spawn(move || {
+                    let mut count = 0;
+                    loop {
+                        count+=1;
+                        let message = to_rx.recv().unwrap();
+                        log::info!("Message from main {message}");
+                        if count % 2 == 0 {
+                            from_tx.send("Ping".into()).unwrap();
+                        }
+                    }
+                }));
+                to_tx
+            });
         });
 
         #[cfg(feature = "profile")]
@@ -233,8 +217,22 @@ impl eframe::App for McmcDemo {
             self.backend_panel.end_of_frame(ctx);
         }
 
+        if let Ok(msg) = self.from_bg.as_mut().unwrap().try_recv() {
+            log::info!("from bg: {msg}");
+        }
+
         #[allow(clippy::collapsible_else_if)]
         egui::Window::new("Simulation").show(ctx, |ui| {
+            let mut text = ui.data_mut(|type_map| {
+                type_map.get_temp_mut_or_default::<String>(ui.id()).clone()
+            });
+            ui.text_edit_singleline(&mut text);
+            ui.data_mut(|type_map| {
+                type_map.insert_temp(ui.id(), text.clone())
+            });
+            if ui.button("send").clicked() {
+                self.to_bg.as_mut().unwrap().try_send(text).unwrap();
+            }
             if matches!(self.settings, Settings::EditDistribution(_)) {
                 if ui.button("Stop Editing Distribution").clicked() {
                     self.settings = Settings::Default;
@@ -413,6 +411,7 @@ impl eframe::App for McmcDemo {
                         },
                     );
             });
+            ctx.request_repaint_after(Duration::from_millis(5));
     }
 }
 
