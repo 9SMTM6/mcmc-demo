@@ -24,3 +24,9 @@ command_arguments = [
     "-c",
     "[ \"$TRUNK_PROFILE\" = \"release\" ] && gzip --keep ${TRUNK_STAGING_DIR}/mcmc-demo*bg.wasm || true",
 ]
+
+[serve.headers]
+# see ./assets/_headers for more documentation
+"cross-origin-embedder-policy"= "require-corp"
+"cross-origin-opener-policy"= "same-origin"
+"cross-origin-resource-policy"= "same-site"
