@@ -56,12 +56,14 @@ mod wasm_helpers {
 #[cfg(target_arch = "wasm32")]
 fn main() {
     use wasm_helpers::*;
+
+    // Log or trace to stderr (if you run with `RUST_LOG=debug`).
+    // tracing has more and precise scope information, and works well with multithreading, where regular logging as a single threaded approach breaks.
+    #[cfg(feature = "tracing")]
+    mcmc_demo::set_default_and_redirect_log(mcmc_demo::define_subscriber(Some("info")));
+    #[cfg(not(feature = "tracing"))]
     // Redirect `log` message to `console.log` and friends:
-    eframe::WebLogger::init(log::LevelFilter::Debug).ok();
-
-    let webgpu_supported = web_sys::window().unwrap().navigator().gpu().is_truthy();
-
-    let web_options = eframe::WebOptions::default();
+    eframe::WebLogger::init(log::LevelFilter::Info).ok();
 
     let previous_hook = std::panic::take_hook();
     std::panic::set_hook(Box::new(move |panic_info| {
@@ -87,6 +89,12 @@ fn main() {
         // Propagate panic info to the previously registered panic hook
         previous_hook(panic_info);
     }));
+
+    // TODO: note that this doesnt seem to work reliable at all.
+    // On Google Chrome Linux without the flag for webgpu, this seems to read fine, but it crashes when reading the requested adapters, which are null.
+    let webgpu_supported = web_sys::window().unwrap().navigator().gpu().is_truthy();
+
+    let web_options = eframe::WebOptions::default();
 
     if webgpu_supported {
         wasm_bindgen_futures::spawn_local(async {

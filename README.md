@@ -96,6 +96,8 @@ Also note the difficulties in using threads in Rust because of the generic `wasm
 
 I've found 2 libraries that solve this well enough for my purposes:
 * wasm-mt (supports generic futures? hard requirement on wasm-pack)
+  * actually no: 
+    > wasm-mt is not efficient in that it does not include support of the standard thread primitive operations: 1.shared memory based message passing and mutexes,
 * wasm_thread (more recently updated, copies std::thread, weak requirement on wasm_pack, alternatively modified build process)
 
 Both will use nightly to rebuild the standard library, and a bunch of other flags (the same seems to be true for the fairly polular `wasm-bindge-rayon`). Which makes things annoying and at least difficult with trunk.
