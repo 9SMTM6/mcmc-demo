@@ -196,7 +196,7 @@ impl eframe::App for McmcDemo {
                 let _ = self.background_thread.insert(thread::spawn(move || {
                     let mut count = 0;
                     loop {
-                        count+=1;
+                        count += 1;
                         let message = to_rx.recv().unwrap();
                         log::info!("Message from main {message}");
                         if count % 2 == 0 {
@@ -223,13 +223,10 @@ impl eframe::App for McmcDemo {
 
         #[allow(clippy::collapsible_else_if)]
         egui::Window::new("Simulation").show(ctx, |ui| {
-            let mut text = ui.data_mut(|type_map| {
-                type_map.get_temp_mut_or_default::<String>(ui.id()).clone()
-            });
+            let mut text =
+                ui.data_mut(|type_map| type_map.get_temp_mut_or_default::<String>(ui.id()).clone());
             ui.text_edit_singleline(&mut text);
-            ui.data_mut(|type_map| {
-                type_map.insert_temp(ui.id(), text.clone())
-            });
+            ui.data_mut(|type_map| type_map.insert_temp(ui.id(), text.clone()));
             if ui.button("send").clicked() {
                 self.to_bg.as_mut().unwrap().try_send(text).unwrap();
             }
@@ -411,7 +408,7 @@ impl eframe::App for McmcDemo {
                         },
                     );
             });
-            ctx.request_repaint_after(Duration::from_millis(5));
+        ctx.request_repaint_after(Duration::from_millis(5));
     }
 }
 

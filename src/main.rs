@@ -109,7 +109,7 @@ fn main() {
 
             // loaded successfully, remove the loading indicator
             if let Some(e) = get_issue_text() {
-                e.remove()
+                e.remove();
             };
         });
     } else {
