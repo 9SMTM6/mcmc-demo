@@ -1,5 +1,5 @@
-use std::sync::{self, atomic};
 use std::sync::atomic::{AtomicBool, AtomicUsize};
+use std::sync::{self, atomic};
 
 #[derive(Clone)]
 pub struct BgCommunicate {
@@ -17,11 +17,11 @@ impl BgCommunicate {
     pub(super) fn new(total_steps: usize) -> Self {
         Self {
             abort: AbortSignal::new(),
-            progress: StepProgress::new(total_steps)
+            progress: StepProgress::new(total_steps),
         }
     }
 
-    /// Used to inform main thread of current progress, and to be informed whether this task should be aborted. 
+    /// Used to inform main thread of current progress, and to be informed whether this task should be aborted.
     #[must_use]
     pub fn checkup_bg(&mut self, current_steps: usize) -> bool {
         self.progress.set_progress(current_steps);
@@ -59,7 +59,6 @@ impl AbortSignal {
     }
 }
 
-
 #[derive(Clone)]
 struct StepProgress {
     total_steps: usize,
@@ -81,7 +80,9 @@ impl StepProgress {
 
     fn set_progress(&mut self, value: usize) {
         assert!(value <= self.total_steps);
-        self.current_steps_or_done.0.store(value, atomic::Ordering::Release);
+        self.current_steps_or_done
+            .0
+            .store(value, atomic::Ordering::Release);
     }
 
     fn get_progress(&self) -> Progress {
@@ -90,12 +91,14 @@ impl StepProgress {
         } else {
             let current = self.current_steps_or_done.0.load(atomic::Ordering::Acquire);
             let progress = current as f32 / self.total_steps as f32;
-            assert!(progress<=1.0);
+            assert!(progress <= 1.0);
             Progress::Pending(progress)
         }
     }
 
     fn finished(&self) {
-        self.current_steps_or_done.1.store(true, atomic::Ordering::Release);
+        self.current_steps_or_done
+            .1
+            .store(true, atomic::Ordering::Release);
     }
 }

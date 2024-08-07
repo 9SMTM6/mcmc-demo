@@ -52,14 +52,16 @@ impl<Final: Send + 'static> BgTaskHandle<Final> {
     #[must_use]
     pub fn get_value(self) -> Final {
         assert!(matches!(self.get_progress(), Progress::Finished));
-        self.background_thread.join().expect("
+        self.background_thread.join().expect(
+            "
 While a join on an unfinished task is problematic on the web,
 it should be fine if the thread is already gone.
 Which is supposed to be the case here.
 This is the reason I do this at all, if these assumptions turn out to be faulty I want to know.
 
 Also, obvously if the thread paniced, I want to propagate it too.
-        ")
+        ",
+        )
     }
 }
 
