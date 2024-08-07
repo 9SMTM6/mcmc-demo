@@ -195,11 +195,13 @@ impl eframe::App for McmcDemo {
 
         if let Some(bg_task) = self.bg_task.as_mut() {
             match bg_task.get_progress() {
-                Progress::Pending(progress) => log::info!(
-                    "current state: {progress}",
-                ),
-                Progress::Finished(Some(ret)) => log::info!("Finished: {ret}"),
-                Progress::Finished(_) => log::info!("Finished (value recieved)"),
+                Progress::Pending(progress) => log::info!("current state: {progress}",),
+                Progress::Finished => {
+                    let res = self.bg_task.take().unwrap().get_value();
+                    log::info!(
+                        "Finished: {res:#}",
+                    )
+                }
             }
         }
 
@@ -220,7 +222,7 @@ impl eframe::App for McmcDemo {
                                     break;
                                 }
                                 wasm_thread::sleep(Duration::from_millis(100));
-                            };
+                            }
                             String::from("Hello from thread")
                         },
                         total,

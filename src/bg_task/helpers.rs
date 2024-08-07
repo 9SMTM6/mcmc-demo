@@ -7,6 +7,12 @@ pub struct BgCommunicate {
     progress: StepProgress,
 }
 
+#[derive(Debug)]
+pub enum Progress {
+    Pending(f32),
+    Finished,
+}
+
 impl BgCommunicate {
     pub(super) fn new(total_steps: usize) -> Self {
         Self {
@@ -23,12 +29,16 @@ impl BgCommunicate {
     }
 
     #[must_use]
-    pub(super) fn get_progress(&self) -> f32 {
+    pub(super) fn get_progress(&self) -> Progress {
         self.progress.get_progress()
     }
 
     pub(super) fn abort(&mut self) {
         self.abort.abort()
+    }
+
+    pub(super) fn finished(&self) {
+        self.progress.finished();
     }
 }
 
@@ -41,11 +51,11 @@ impl AbortSignal {
     }
 
     fn abort(&self) {
-        self.0.store(true, atomic::Ordering::SeqCst);
+        self.0.store(true, atomic::Ordering::Release);
     }
 
     fn should_abort(&self) -> bool {
-        self.0.load(atomic::Ordering::SeqCst)
+        self.0.load(atomic::Ordering::Acquire)
     }
 }
 
@@ -53,14 +63,14 @@ impl AbortSignal {
 #[derive(Clone)]
 struct StepProgress {
     total_steps: usize,
-    current_steps: sync::Arc<AtomicUsize>,
+    current_steps_or_done: sync::Arc<(AtomicUsize, AtomicBool)>,
 }
 
 impl StepProgress {
     fn new(total_steps: usize) -> Self {
         Self {
             total_steps,
-            current_steps: sync::Arc::new(0.into()),
+            current_steps_or_done: sync::Arc::new((0.into(), false.into())),
         }
     }
 
@@ -71,11 +81,21 @@ impl StepProgress {
 
     fn set_progress(&mut self, value: usize) {
         assert!(value <= self.total_steps);
-        self.current_steps.store(value, atomic::Ordering::SeqCst);
+        self.current_steps_or_done.0.store(value, atomic::Ordering::Release);
     }
 
-    fn get_progress(&self) -> f32 {
-        let current = self.current_steps.load(atomic::Ordering::SeqCst);
-        current as f32 / self.total_steps as f32
+    fn get_progress(&self) -> Progress {
+        if self.current_steps_or_done.1.load(atomic::Ordering::Acquire) {
+            Progress::Finished
+        } else {
+            let current = self.current_steps_or_done.0.load(atomic::Ordering::Acquire);
+            let progress = current as f32 / self.total_steps as f32;
+            assert!(progress<=1.0);
+            Progress::Pending(progress)
+        }
+    }
+
+    fn finished(&self) {
+        self.current_steps_or_done.1.store(true, atomic::Ordering::Release);
     }
 }
