@@ -1,15 +1,20 @@
-use std::{sync::mpsc, time::Duration};
+use std::time::Duration;
 
 use egui::{self, Shadow, Vec2};
 
 use crate::{
-    bg_task::BgTaskHandle, settings::{self, Settings}, shaders::types::NormalDistribution, simulation::{
+    bg_task::{BgCommunicate, BgTaskHandle, Progress},
+    settings::{self, Settings},
+    shaders::types::NormalDistribution,
+    simulation::{
         random_walk_metropolis_hastings::{ProgressMode, Rwmh},
         SRngGaussianIter, SRngPercIter,
-    }, target_distributions::multimodal_gaussian::MultiModalGaussian, visualizations::{
+    },
+    target_distributions::multimodal_gaussian::MultiModalGaussian,
+    visualizations::{
         egui_based::point_display::PointDisplay,
         shader_based::{diff_display::DiffDisplay, multimodal_gaussian::MultiModalGaussianDisplay},
-    }
+    },
 };
 
 #[cfg_attr(feature="persistence",
@@ -32,7 +37,7 @@ pub struct McmcDemo {
     #[cfg(feature = "profile")]
     backend_panel: super::profile::backend_panel::BackendPanel,
     #[cfg_attr(feature = "persistence", serde(skip))]
-    bg_task: Option<BgTaskHandle<(), String, String>>,
+    bg_task: Option<BgTaskHandle<String>>,
     // bg_tasks: Vec<BgTask<String, String>>,
 }
 
@@ -177,19 +182,6 @@ impl eframe::App for McmcDemo {
                 ui.toggle_value(&mut self.backend_panel.open, "Backend");
                 egui::warn_if_debug_build(ui);
             });
-            self.bg_task.get_or_insert_with(|| {
-                BgTaskHandle::new::<100, 100>(move |rx: mpsc::Receiver<String>, tx: mpsc::SyncSender<String>| {
-                    let mut count = 0;
-                    loop {
-                        count += 1;
-                        let message = rx.recv().unwrap();
-                        log::info!("Message from main {message}");
-                        if count % 2 == 0 {
-                            tx.send("Ping".into()).unwrap();
-                        }
-                    };
-                })
-            })
         });
 
         #[cfg(feature = "profile")]
@@ -201,18 +193,39 @@ impl eframe::App for McmcDemo {
             self.backend_panel.end_of_frame(ctx);
         }
 
-        if let Ok(msg) = self.bg_task.as_mut().unwrap().try_recv() {
-            log::info!("from bg: {msg}");
+        if let Some(bg_task) = self.bg_task.as_mut() {
+            match bg_task.get_progress() {
+                Progress::Pending(progress) => log::info!(
+                    "current state: {progress}",
+                ),
+                Progress::Finished(Some(ret)) => log::info!("Finished: {ret}"),
+                Progress::Finished(_) => log::info!("Finished (value recieved)"),
+            }
         }
 
         #[allow(clippy::collapsible_else_if)]
         egui::Window::new("Simulation").show(ctx, |ui| {
-            let mut text =
-                ui.data_mut(|type_map| type_map.get_temp_mut_or_default::<String>(ui.id()).clone());
-            ui.text_edit_singleline(&mut text);
-            ui.data_mut(|type_map| type_map.insert_temp(ui.id(), text.clone()));
-            if ui.button("send").clicked() {
-                self.bg_task.as_mut().unwrap().try_send(text).unwrap();
+            if ui.button("start").clicked() {
+                let _ = self.bg_task.insert({
+                    let total = 20;
+                    BgTaskHandle::new(
+                        move |mut communicate: BgCommunicate| {
+                            let mut count = 0usize;
+                            loop {
+                                count += 1;
+                                if communicate.checkup_bg(count) {
+                                    break;
+                                };
+                                if count >= total {
+                                    break;
+                                }
+                                wasm_thread::sleep(Duration::from_millis(100));
+                            };
+                            String::from("Hello from thread")
+                        },
+                        total,
+                    )
+                });
             }
             if matches!(self.settings, Settings::EditDistribution(_)) {
                 if ui.button("Stop Editing Distribution").clicked() {
@@ -392,7 +405,7 @@ impl eframe::App for McmcDemo {
                         },
                     );
             });
-        ctx.request_repaint_after(Duration::from_millis(5));
+        ctx.request_repaint_after(Duration::from_millis(500));
     }
 }
 

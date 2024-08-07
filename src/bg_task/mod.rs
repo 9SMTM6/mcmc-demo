@@ -1,63 +1,67 @@
-use std::sync::mpsc;
+mod helpers;
 
-pub struct BgTaskHandle<Final = (), FromTaskMsg = f32, ToTaskMsg = (), const FROM_CHANNEL_SIZE: usize = 0, const TO_CHANNEL_SIZE: usize = 0> {
+pub use helpers::BgCommunicate;
+
+pub struct BgTaskHandle<Final = ()> {
     /// Needs to be saved to keep the thread alive on web (?),
     /// Cant be saved in temporary storage because of the Copy requirements on IdTypeMap::insert_temp.
     /// Works like this for the moment, since theres only one of these.
-    _background_thread: wasm_thread::JoinHandle<Final>,
-    to_bg: mpsc::SyncSender<ToTaskMsg>,
-    from_bg: std::sync::mpsc::Receiver<FromTaskMsg>,
+    background_thread: Option<wasm_thread::JoinHandle<Final>>,
+    pub communicate: BgCommunicate,
 }
 
-pub trait BgTask<ToTaskMsg, FromTaskMsg> {
+pub trait BgTask {
     type Final;
 
-    fn execute(
-        self,
-        to_task: mpsc::Receiver<ToTaskMsg>,
-        from_task: mpsc::SyncSender<FromTaskMsg>,
-    ) -> Self::Final
+    fn execute(self, communicate: BgCommunicate) -> Self::Final
     where
         Self: Sized;
 }
 
-impl<
-        Final,
-        ToTaskMsg,
-        FromTaskMsg,
-        F: FnOnce(mpsc::Receiver<ToTaskMsg>, mpsc::SyncSender<FromTaskMsg>) -> Final + Sized,
-    > BgTask<ToTaskMsg, FromTaskMsg> for F
-{
+impl<Final, F: FnOnce(BgCommunicate) -> Final + Sized> BgTask for F {
     type Final = Final;
 
-    fn execute(
-        self,
-        to_task: mpsc::Receiver<ToTaskMsg>,
-        from_task: mpsc::SyncSender<FromTaskMsg>,
-    ) -> Self::Final {
-        self(to_task, from_task)
+    fn execute(self, communicate: BgCommunicate) -> Self::Final {
+        self(communicate)
     }
 }
 
-impl<Final: Send + 'static, ToTaskMsg: Send + 'static, FromTaskMsg: Send + 'static>
-    BgTaskHandle<Final, FromTaskMsg, ToTaskMsg>
-{
-    pub fn new<const FROM_CHANNEL_SIZE: usize, const TO_CHANNEL_SIZE: usize>(task: impl BgTask<ToTaskMsg, FromTaskMsg, Final = Final> + Send + 'static) -> Self {
-        let (to_tx, to_rx) = mpsc::sync_channel::<ToTaskMsg>(TO_CHANNEL_SIZE);
-        let (from_tx, from_rx) = mpsc::sync_channel::<FromTaskMsg>(FROM_CHANNEL_SIZE);
-        let _background_thread = wasm_thread::spawn(move || task.execute(to_rx, from_tx));
+pub enum Progress<Final> {
+    Pending(f32),
+    Finished(Final),
+}
+
+impl<Final: Send + 'static> BgTaskHandle<Final> {
+    pub fn new(task: impl BgTask<Final = Final> + Send + 'static, total_steps: usize) -> Self {
+        let communicate = BgCommunicate::new(total_steps);
+        let background_thread = Some(wasm_thread::spawn({
+            let communicate = communicate.clone();
+            move || task.execute(communicate)
+        }));
         Self {
-            _background_thread,
-            to_bg: to_tx,
-            from_bg: from_rx,
+            background_thread,
+            communicate,
         }
     }
 
-    pub fn try_recv(&mut self) -> Result<FromTaskMsg, mpsc::TryRecvError> {
-        self.from_bg.try_recv()
+    #[must_use]
+    pub fn get_progress(&mut self) -> Progress<Option<Final>> {
+        let progress = self.communicate.get_progress();
+        if progress < 1.0 {
+            Progress::Pending(progress)
+        } else {
+            // the way I understand it, this join should be fine even on the web, as long as the task is actually finished.
+            if self.background_thread.is_some() {
+                Progress::Finished(self.background_thread.take().unwrap().join().ok())
+            } else {
+                Progress::Finished(None)
+            }
+        }
     }
+}
 
-    pub fn try_send(&mut self, msg: ToTaskMsg) -> Result<(), mpsc::TrySendError<ToTaskMsg>> {
-        self.to_bg.try_send(msg)
+impl<T> Drop for BgTaskHandle<T> {
+    fn drop(&mut self) {
+        self.communicate.abort();
     }
 }
