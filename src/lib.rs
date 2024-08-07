@@ -4,6 +4,7 @@ mod settings;
 mod simulation;
 mod target_distributions;
 mod visualizations;
+mod bg_task;
 // fix compilation warnings from generated code
 #[allow(
     elided_lifetimes_in_paths,

@@ -1,20 +1,15 @@
-use std::time::Duration;
+use std::{sync::mpsc, time::Duration};
 
 use egui::{self, Shadow, Vec2};
-use wasm_thread as thread;
 
 use crate::{
-    settings::{self, Settings},
-    shaders::types::NormalDistribution,
-    simulation::{
+    bg_task::BgTaskHandle, settings::{self, Settings}, shaders::types::NormalDistribution, simulation::{
         random_walk_metropolis_hastings::{ProgressMode, Rwmh},
         SRngGaussianIter, SRngPercIter,
-    },
-    target_distributions::multimodal_gaussian::MultiModalGaussian,
-    visualizations::{
+    }, target_distributions::multimodal_gaussian::MultiModalGaussian, visualizations::{
         egui_based::point_display::PointDisplay,
         shader_based::{diff_display::DiffDisplay, multimodal_gaussian::MultiModalGaussianDisplay},
-    },
+    }
 };
 
 #[cfg_attr(feature="persistence",
@@ -37,14 +32,8 @@ pub struct McmcDemo {
     #[cfg(feature = "profile")]
     backend_panel: super::profile::backend_panel::BackendPanel,
     #[cfg_attr(feature = "persistence", serde(skip))]
-    /// Needs to be saved to keep the thread alive on web (?),
-    /// Cant be saved in temporary storage because of the Copy requirements on IdTypeMap::insert_temp.
-    /// Works like this for the moment, since theres only one of these.
-    background_thread: Option<thread::JoinHandle<()>>,
-    #[cfg_attr(feature = "persistence", serde(skip))]
-    to_bg: Option<std::sync::mpsc::SyncSender<String>>,
-    #[cfg_attr(feature = "persistence", serde(skip))]
-    from_bg: Option<std::sync::mpsc::Receiver<String>>,
+    bg_task: Option<BgTaskHandle<(), String, String>>,
+    // bg_tasks: Vec<BgTask<String, String>>,
 }
 
 impl Default for McmcDemo {
@@ -60,9 +49,8 @@ impl Default for McmcDemo {
             uniform_distr_iter: SRngPercIter::<rand_pcg::Pcg32>::new([42; 16]),
             #[cfg(feature = "profile")]
             backend_panel: Default::default(),
-            background_thread: None,
-            to_bg: None,
-            from_bg: None,
+            bg_task: None,
+            // bg_tasks: vec![]
         }
     }
 }
@@ -189,23 +177,19 @@ impl eframe::App for McmcDemo {
                 ui.toggle_value(&mut self.backend_panel.open, "Backend");
                 egui::warn_if_debug_build(ui);
             });
-            self.to_bg.get_or_insert_with(|| {
-                let (to_tx, to_rx) = std::sync::mpsc::sync_channel::<String>(200);
-                let (from_tx, from_rx) = std::sync::mpsc::sync_channel::<String>(200);
-                self.from_bg = Some(from_rx);
-                let _ = self.background_thread.insert(thread::spawn(move || {
+            self.bg_task.get_or_insert_with(|| {
+                BgTaskHandle::new(move |to: mpsc::Receiver<String>, from: mpsc::SyncSender<String>| {
                     let mut count = 0;
                     loop {
                         count += 1;
-                        let message = to_rx.recv().unwrap();
+                        let message = to.recv().unwrap();
                         log::info!("Message from main {message}");
                         if count % 2 == 0 {
-                            from_tx.send("Ping".into()).unwrap();
+                            from.send("Ping".into()).unwrap();
                         }
-                    }
-                }));
-                to_tx
-            });
+                    };
+                })
+            })
         });
 
         #[cfg(feature = "profile")]
@@ -217,7 +201,7 @@ impl eframe::App for McmcDemo {
             self.backend_panel.end_of_frame(ctx);
         }
 
-        if let Ok(msg) = self.from_bg.as_mut().unwrap().try_recv() {
+        if let Ok(msg) = self.bg_task.as_mut().unwrap().try_recv() {
             log::info!("from bg: {msg}");
         }
 
@@ -228,7 +212,7 @@ impl eframe::App for McmcDemo {
             ui.text_edit_singleline(&mut text);
             ui.data_mut(|type_map| type_map.insert_temp(ui.id(), text.clone()));
             if ui.button("send").clicked() {
-                self.to_bg.as_mut().unwrap().try_send(text).unwrap();
+                self.bg_task.as_mut().unwrap().try_send(text).unwrap();
             }
             if matches!(self.settings, Settings::EditDistribution(_)) {
                 if ui.button("Stop Editing Distribution").clicked() {
