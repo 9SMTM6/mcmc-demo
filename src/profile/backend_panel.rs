@@ -3,6 +3,7 @@
     clippy::pattern_type_mismatch,
     clippy::struct_excessive_bools,
     clippy::missing_panics_doc,
+    clippy::used_underscore_binding,
     reason = "Copied code, I'm lazy"
 )]
 /// How often we repaint the demo app by default

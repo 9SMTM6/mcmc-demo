@@ -34,7 +34,7 @@ impl BgCommunicate {
     }
 
     pub(super) fn abort(&mut self) {
-        self.abort.abort()
+        self.abort.abort();
     }
 
     pub(super) fn finished(&self) {
