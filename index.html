@@ -17,6 +17,8 @@
         <!-- disabling webgl_compat makes a huge difference in size -->
         <!-- data-cargo-features="webgl_compat" -->
         <!-- I use reference type ec, sicne the currently hard dependency on WebGPU already foregoes any potential for backwards compat -->
+        <!-- data-wasm-opt="0"
+            data-keep-debug -->
         <link
             data-trunk
             rel="rust"
@@ -146,12 +148,12 @@
 
     <body>
         <!-- the id is hardcoded in main.rs . so, make sure both match. -->
-        <canvas id="the_canvas_id"></canvas>
+        <canvas id="egui_canvas"></canvas>
 
         <!-- the loading spinner will be removed in main.rs (or not) -->
-        <div class="centered" id="issue_text">
-            <p style="font-size: 16px">Loading…</p>
-            <div class="lds-dual-ring"></div>
+        <div class="centered" id="oob_communication">
+            <div class="centered", id="oob_text"></div>
+            <div class="lds-dual-ring", id="loading_animation"></div>
         </div>
     </body>
 </html>

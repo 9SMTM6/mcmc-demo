@@ -32,30 +32,78 @@ fn main() -> eframe::Result<()> {
 }
 
 #[cfg(target_arch = "wasm32")]
-mod wasm_helpers {
-    use web_sys::wasm_bindgen::JsCast;
-    pub(super) fn get_canvas_element_by_id(canvas_id: &str) -> Option<web_sys::HtmlCanvasElement> {
-        let document = web_sys::window()?.document()?;
-        let canvas = document.get_element_by_id(canvas_id)?;
-        canvas.dyn_into::<web_sys::HtmlCanvasElement>().ok()
+mod html_bindings {
+    use web_sys::{wasm_bindgen::JsCast, Element};
+
+    const CANVAS_ID: &'static str = "egui_canvas";
+
+    pub(super) fn get_element_by_id(id: &str) -> Option<web_sys::Element> {
+        web_sys::window()?.document()?.get_element_by_id(id)
     }
 
-    pub(super) fn get_canvas_element_by_id_or_die(canvas_id: &str) -> web_sys::HtmlCanvasElement {
-        get_canvas_element_by_id(canvas_id)
-            .unwrap_or_else(|| panic!("Failed to find canvas with id {canvas_id:?}"))
+    pub(super) fn get_egui_canvas() -> web_sys::HtmlCanvasElement {
+        get_element_by_id(&CANVAS_ID).expect("Unable to find root canvas").dyn_into::<web_sys::HtmlCanvasElement>().ok().expect("Root element is no canvas")
     }
 
-    pub(super) fn get_issue_text() -> Option<web_sys::Element> {
+    pub(super) fn get_oob_text_el() -> Option<web_sys::Element> {
         web_sys::window()
             .and_then(|w| w.document())
-            .and_then(|d| d.get_element_by_id("issue_text"))
+            .and_then(|d| d.get_element_by_id("oob_communication"))
+    }
+
+    pub(super) fn remove_el_if_present(id: &str) {
+        get_element_by_id(id).as_ref().map(Element::remove);
+    }
+
+    pub(super) fn remove_loading_el() {
+        remove_el_if_present("loading_animation");
+    }
+
+    pub(super) fn remove_canvas() {
+        remove_el_if_present(CANVAS_ID);
+    }
+
+    pub(super) fn display_failing_wgpu_info() {
+        let Some(oob_el_ref) = get_oob_text_el() else {
+            unreachable!("Could not find warning element");
+        };
+
+        oob_el_ref.set_inner_html(
+            r#"
+    <p> This application currently requires WebGPU. </p>
+    <p> At the time of writing, this means Chrome (or Chromium based browsers). </p>
+    <p> On Linux, you also need to start Chrome with --enable-unsafe-webgpu or set the appropriate command flag in its <a style="color: #ffffff" href="chrome://flags/#enable-unsafe-webgpu">settings</a>. </p>
+    <p> Alternatively, you can download an executable from the <a style="color: #ffffff" href="https://github.com/9SMTM6/mcmc-demo/releases">Github release</a> page. </p>
+"#
+        );
+    }
+
+    pub(super) fn try_display_panic(panic_info: &std::panic::PanicHookInfo<'_>) {
+        if let Some(oob_el_ref) = get_oob_text_el() {
+            oob_el_ref.set_inner_html(&format!(
+                r#"
+        <p> The app has crashed.</p>
+        <p style="font-size:12px">
+            <div style="background: black; color=white; font-family: monospace; text-align: left">{panic_info}</div>
+        </p>
+        <p style="font-size:14px">
+            See the developer console for more details.
+        </p>
+        <p style="font-size:14px">
+            Reload the page to try again.
+        </p>
+    "#
+            ));
+            remove_loading_el();
+            remove_canvas();
+        };
     }
 }
 
 // When compiling to web using trunk:
 #[cfg(target_arch = "wasm32")]
 fn main() {
-    use wasm_helpers::*;
+    use html_bindings::*;
 
     // Log or trace to stderr (if you run with `RUST_LOG=debug`).
     // tracing has more and precise scope information, and works well with multithreading, where regular logging as a single threaded approach breaks.
@@ -65,65 +113,38 @@ fn main() {
     // Redirect `log` message to `console.log` and friends:
     eframe::WebLogger::init(log::LevelFilter::Info).ok();
 
-    let previous_hook = std::panic::take_hook();
     std::panic::set_hook(Box::new(move |panic_info| {
-        // Show in the HTML that start has failed
-        let Some(issue_el_ref) = get_issue_text() else {
-            unreachable!()
-        };
+        try_display_panic(panic_info);
 
-        issue_el_ref.set_inner_html(&format!(
-            r#"
-    <p> The app has crashed. See the developer console for details. </p>
-    <p style="font-size:10px" align="left">
-        {panic_info}
-    </p>
-    <p style="font-size:14px">
-        See the console for details.
-    </p>
-    <p style="font-size:14px">
-        Reload the page to try again.
-    </p>
-"#
-        ));
-        // Propagate panic info to the previously registered panic hook
-        previous_hook(panic_info);
+        console_error_panic_hook::hook(panic_info);
     }));
 
-    // TODO: note that this doesnt seem to work reliable at all.
-    // On Google Chrome Linux without the flag for webgpu, this seems to read fine, but it crashes when reading the requested adapters, which are null.
     let webgpu_supported = web_sys::window().unwrap().navigator().gpu().is_truthy();
 
     let web_options = eframe::WebOptions::default();
 
     if webgpu_supported {
         wasm_bindgen_futures::spawn_local(async {
-            eframe::WebRunner::new()
-                .start(
-                    get_canvas_element_by_id_or_die("the_canvas_id"),
-                    web_options,
-                    Box::new(|cc| Ok(Box::new(mcmc_demo::McmcDemo::new(cc)))),
-                )
-                .await
-                .expect("failed to start eframe");
-
-            // loaded successfully, remove the loading indicator
-            if let Some(e) = get_issue_text() {
-                e.remove();
+            match eframe::WebRunner::new()
+                            .start(
+                                get_egui_canvas(),
+                                web_options,
+                                Box::new(|cc| Ok(Box::new(mcmc_demo::McmcDemo::new(cc)))),
+                            )
+                            .await {
+                Ok(_) => {},
+                Err(err) => {
+                    let fmt_err = format!("{err:?}");
+                    if fmt_err.contains("wgpu") {
+                        display_failing_wgpu_info();
+                    } else {
+                        panic!("{fmt_err}")
+                    }
+                },
             };
         });
     } else {
-        let Some(loading_el_ref) = get_issue_text() else {
-            unreachable!()
-        };
-
-        loading_el_ref.set_inner_html(
-            r#"
-    <p> This application currently requires WebGPU. </p>
-    <p> At the time of writing, this means Chrome (or Chromium). </p>
-    <p> On Linux, you also need to start Chrome with --enable-unsafe-webgpu or set the appropriate command flag in its <a style="color: #ffffff" href="chrome://flags/#enable-unsafe-webgpu">settings</a>. </p>
-    <p> Alternatively, you can download an executable from the <a style="color: #ffffff" href="https://github.com/9SMTM6/mcmc-demo/releases">Github release</a> page. </p>
-"#
-        );
+        display_failing_wgpu_info();
     }
+    remove_loading_el();
 }
