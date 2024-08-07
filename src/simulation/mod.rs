@@ -4,6 +4,7 @@ use rand_distr::{StandardNormal, Uniform};
 pub mod random_walk_metropolis_hastings;
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
+#[derive(Clone)]
 pub struct SRngGaussianIter<Rng> {
     rng: Rng,
 }
@@ -37,6 +38,7 @@ impl<R: Rng + SeedableRng> SRngGaussianIter<R> {
 }
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
+#[derive(Clone)]
 pub struct SRngPercIter<Rng> {
     rng: Rng,
     distr: Uniform<f32>,

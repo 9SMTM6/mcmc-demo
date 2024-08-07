@@ -42,7 +42,7 @@ impl<Final: Send + 'static> BgTaskHandle<Final> {
     }
 
     #[must_use]
-    pub fn get_progress(&mut self) -> Progress {
+    pub fn get_progress(&self) -> Progress {
         self.communicate.get_progress()
     }
 
@@ -50,7 +50,7 @@ impl<Final: Send + 'static> BgTaskHandle<Final> {
     ///
     /// Panics if task is not finished!
     #[must_use]
-    pub fn get_value(mut self) -> Final {
+    pub fn get_value(self) -> Final {
         assert!(matches!(self.get_progress(), Progress::Finished));
         self.background_thread.join().expect("
 While a join on an unfinished task is problematic on the web,

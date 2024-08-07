@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use egui::{self, Shadow, Vec2};
+use egui::{self, ProgressBar, Shadow, Vec2};
 
 use crate::{
     bg_task::{BgCommunicate, BgTaskHandle, Progress},
@@ -37,7 +37,7 @@ pub struct McmcDemo {
     #[cfg(feature = "profile")]
     backend_panel: super::profile::backend_panel::BackendPanel,
     #[cfg_attr(feature = "persistence", serde(skip))]
-    bg_task: Option<BgTaskHandle<String>>,
+    bg_task: Option<BgTaskHandle<Rwmh>>,
     // bg_tasks: Vec<BgTask<String, String>>,
 }
 
@@ -193,42 +193,8 @@ impl eframe::App for McmcDemo {
             self.backend_panel.end_of_frame(ctx);
         }
 
-        if let Some(bg_task) = self.bg_task.as_mut() {
-            match bg_task.get_progress() {
-                Progress::Pending(progress) => log::info!("current state: {progress}",),
-                Progress::Finished => {
-                    let res = self.bg_task.take().unwrap().get_value();
-                    log::info!(
-                        "Finished: {res:#}",
-                    )
-                }
-            }
-        }
-
         #[allow(clippy::collapsible_else_if)]
         egui::Window::new("Simulation").show(ctx, |ui| {
-            if ui.button("start").clicked() {
-                let _ = self.bg_task.insert({
-                    let total = 20;
-                    BgTaskHandle::new(
-                        move |mut communicate: BgCommunicate| {
-                            let mut count = 0usize;
-                            loop {
-                                count += 1;
-                                if communicate.checkup_bg(count) {
-                                    break;
-                                };
-                                if count >= total {
-                                    break;
-                                }
-                                wasm_thread::sleep(Duration::from_millis(100));
-                            }
-                            String::from("Hello from thread")
-                        },
-                        total,
-                    )
-                });
-            }
             if matches!(self.settings, Settings::EditDistribution(_)) {
                 if ui.button("Stop Editing Distribution").clicked() {
                     self.settings = Settings::Default;
@@ -259,14 +225,42 @@ impl eframe::App for McmcDemo {
                 .logarithmic(true)
                 .text("batchsize"),
             );
-            if ui.button("Batch step").clicked() {
-                for _ in 0..size.get_inner() {
-                    self.algo.step(
-                        &self.target_distr,
-                        &mut self.gaussian_distr_iter,
-                        &mut self.uniform_distr_iter,
-                    );
-                }
+            let size = size.get_inner();
+            if let Some(bg_task) = self.bg_task.as_ref() {
+                match bg_task.get_progress() {
+                    Progress::Pending(progress) => {
+                        ui.add(ProgressBar::new(progress));
+                    }
+                    Progress::Finished => {
+                        self.algo = self.bg_task.take().unwrap().get_value();
+                    }
+                };
+            } else if ui.button("Batch step").clicked() {
+                // TODO: All this is at best an early experiment.
+                let _ = self.bg_task.insert({
+                    let mut algo = self.algo.clone();
+                    let target_distr = self.target_distr.clone();
+                    // TODO: HIGHLY problematic!
+                    // This means that the random state doesnt progress
+                    let mut gaussian_distr_iter = self.gaussian_distr_iter.clone();
+                    let mut uniform_distr_iter = self.uniform_distr_iter.clone();
+                    BgTaskHandle::new(
+                        move |mut communicate: BgCommunicate| {
+                            for curr_step in 0..size {
+                                algo.step(
+                                    &target_distr,
+                                    &mut gaussian_distr_iter,
+                                    &mut uniform_distr_iter,
+                                );
+                                if communicate.checkup_bg(curr_step) {
+                                    break;
+                                }
+                            }
+                            algo
+                        },
+                        size,
+                    )
+                });
             }
         });
 
