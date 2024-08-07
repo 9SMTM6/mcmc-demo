@@ -1,10 +1,8 @@
 name: Build Webpage
 
 # By default, runs if you push to main. keeps your deployed app in sync with main branch.
-on:
-  push:
-    branches:
-      - main
+on: [push, pull_request]
+
 # to only run when you do a new github release, comment out above part and uncomment the below trigger.
 # on:
 #   release:
@@ -42,8 +40,10 @@ jobs:
           # set to false if you want all page build to be committed to your gh-pages branch history
           single-commit: true
       - name: Rename (Github pages)
+        if: ${{ github.head_ref || github.ref_name }} == "main"
         run: ./url_rename "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
       - name: Deploy (Github pages)
+        if: ${{ github.head_ref || github.ref_name }} == "main"
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: dist
