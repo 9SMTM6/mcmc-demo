@@ -1,4 +1,4 @@
-name: Github Pages
+name: Build Webpage
 
 # By default, runs if you push to main. keeps your deployed app in sync with main branch.
 on:
@@ -15,7 +15,7 @@ permissions:
   contents: write # for committing to gh-pages branch.
 
 jobs:
-  build-github-pages:
+  build-pages:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4 # repo checkout
@@ -25,8 +25,6 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: Download and install Trunk binary
         run: wget -qO- https://github.com/thedodd/trunk/releases/latest/download/trunk-x86_64-unknown-linux-gnu.tar.gz | tar -xzf-
-      - name: Save github url for search and replace in other deployments
-        run: echo "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}" > github_url.txt
       - name: Build # build
         # Environment $public_url resolves to the github project page.
         # If using a user/organization page, remove the `${{ github.event.repository.name }}` part.
@@ -34,8 +32,18 @@ jobs:
         # this is necessary for github pages where the site is deployed to username.github.io/repo_name and all files must be requested
         # relatively as eframe_template/favicon.ico. if we skip public-url option, the href paths will instead request username.github.io/favicon.ico which
         # will obviously return error 404 not found.
-        run: ./trunk build --release --public-url $(<"github_url.txt") && cp github_url.txt cloudflare_rename.sh dist/
-      - name: Deploy
+        run: ./trunk build --release --public-url __RENAME_ME__ && cp url_rename.sh dist/
+      - name: Save Website Artifacts
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: dist
+          branch: webpage_artifacts_${{ github.head_ref || github.ref_name }}
+          # this option will not maintain any history of your previous pages deployment
+          # set to false if you want all page build to be committed to your gh-pages branch history
+          single-commit: true
+      - name: Rename (Github pages)
+        run: ./url_rename "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
+      - name: Deploy (Github pages)
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: dist
