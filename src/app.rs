@@ -178,14 +178,14 @@ impl eframe::App for McmcDemo {
                 egui::warn_if_debug_build(ui);
             });
             self.bg_task.get_or_insert_with(|| {
-                BgTaskHandle::new(move |to: mpsc::Receiver<String>, from: mpsc::SyncSender<String>| {
+                BgTaskHandle::new::<100, 100>(move |rx: mpsc::Receiver<String>, tx: mpsc::SyncSender<String>| {
                     let mut count = 0;
                     loop {
                         count += 1;
-                        let message = to.recv().unwrap();
+                        let message = rx.recv().unwrap();
                         log::info!("Message from main {message}");
                         if count % 2 == 0 {
-                            from.send("Ping".into()).unwrap();
+                            tx.send("Ping".into()).unwrap();
                         }
                     };
                 })

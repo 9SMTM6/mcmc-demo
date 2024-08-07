@@ -1,6 +1,6 @@
 use std::sync::mpsc;
 
-pub struct BgTaskHandle<Final = (), FromTaskMsg = f32, ToTaskMsg = ()> {
+pub struct BgTaskHandle<Final = (), FromTaskMsg = f32, ToTaskMsg = (), const FROM_CHANNEL_SIZE: usize = 0, const TO_CHANNEL_SIZE: usize = 0> {
     /// Needs to be saved to keep the thread alive on web (?),
     /// Cant be saved in temporary storage because of the Copy requirements on IdTypeMap::insert_temp.
     /// Works like this for the moment, since theres only one of these.
@@ -42,10 +42,9 @@ impl<
 impl<Final: Send + 'static, ToTaskMsg: Send + 'static, FromTaskMsg: Send + 'static>
     BgTaskHandle<Final, FromTaskMsg, ToTaskMsg>
 {
-    pub fn new(task: impl BgTask<ToTaskMsg, FromTaskMsg, Final = Final> + Send + 'static) -> Self {
-        // TODO: make this size generic and/or based on size of send struct.
-        let (to_tx, to_rx) = mpsc::sync_channel::<ToTaskMsg>(200);
-        let (from_tx, from_rx) = mpsc::sync_channel::<FromTaskMsg>(200);
+    pub fn new<const FROM_CHANNEL_SIZE: usize, const TO_CHANNEL_SIZE: usize>(task: impl BgTask<ToTaskMsg, FromTaskMsg, Final = Final> + Send + 'static) -> Self {
+        let (to_tx, to_rx) = mpsc::sync_channel::<ToTaskMsg>(TO_CHANNEL_SIZE);
+        let (from_tx, from_rx) = mpsc::sync_channel::<FromTaskMsg>(FROM_CHANNEL_SIZE);
         let _background_thread = wasm_thread::spawn(move || task.execute(to_rx, from_tx));
         Self {
             _background_thread,
