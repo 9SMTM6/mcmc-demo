@@ -35,18 +35,7 @@ jobs:
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: dist
-          branch: webpage_artifacts_${{ github.head_ref || github.ref_name }}
-          # this option will not maintain any history of your previous pages deployment
-          # set to false if you want all page build to be committed to your gh-pages branch history
-          single-commit: true
-      - name: Rename (Github pages)
-        if: ${{ github.head_ref || github.ref_name }} == "main"
-        run: ./url_rename.sh "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
-      - name: Deploy (Github pages)
-        if: ${{ github.head_ref || github.ref_name }} == "main"
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          folder: dist
+          branch: artifacts/webpage/${{ github.head_ref || github.ref_name }}
           # this option will not maintain any history of your previous pages deployment
           # set to false if you want all page build to be committed to your gh-pages branch history
           single-commit: true
