@@ -47,6 +47,39 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: cargo test --target x86_64-unknown-linux-gnu --lib
 
+  build-webpage:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: fat
+            config_file: Trunk.fat.toml
+          - name: slim
+            config_file: Trunk.toml
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{env.RUST_TOOLCHAIN_VERSION}}
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+      - name: Download and install Trunk binary
+        run: wget -qO- https://github.com/thedodd/trunk/releases/latest/download/trunk-x86_64-unknown-linux-gnu.tar.gz | tar -xzf-
+      - name: Build ${{ matrix.name }}
+        # using --public-url something will allow trunk to modify all the href paths like from favicon.ico to repo_name/favicon.ico .
+        # this is necessary for github pages where the site is deployed to username.github.io/repo_name and all files must be requested
+        # relatively as eframe_template/favicon.ico. if we skip public-url option, the href paths will instead request username.github.io/favicon.ico which
+        # will obviously return error 404 not found.
+        run: ./trunk build --config ${{ matrix.config_file }} --release --public-url __RENAME_ME__
+      - name: Precompress
+        run: brotli ./dist/*/mcmc-demo*bg.wasm
+      - name: Save Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}-artifacts
+          path: dist
+
   build-native:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -123,17 +156,52 @@ jobs:
           name: ${{ matrix.TARGET }}-binary
           path: ${{ github.event.repository.name }}-${{ matrix.TARGET }}${{ matrix.EXTENSION }}
 
-  upload-release:
+  fine-for-deployment:
+    runs-on: ubuntu-latest
+    needs: [clippy, test, build-native, build-webpage]
+    steps:
+      - run: echo "Github, you really should have something for this."
+
+  upload-binaries:
     name: Upload Release
     runs-on: ubuntu-latest
-    needs: [clippy, test, build-native]
+    # screw you github. I wasted a solid hour on trying to do this otherwise.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            # macos-latest seems to already run on arm64(=aarch64):
+            # https://docs.github.com/en/actions/using-jobs/choosing-the-runner-for-a-job#standard-github-hosted-runners-for-public-repositories
+            TARGET: aarch64-apple-darwin
+
+          - os: macos-latest
+            TARGET: x86_64-apple-darwin
+            # even though the runner uses arm64, MacOS on arm64 seems to support building for amd64.
+            # which makes sense, would be bad for devs otherwise.
+            cross: false
+
+          - os: ubuntu-latest
+            TARGET: aarch64-unknown-linux-gnu
+            cross: true
+
+          - os: ubuntu-latest
+            TARGET: armv7-unknown-linux-gnueabihf
+            cross: true
+
+          - os: ubuntu-latest
+            TARGET: x86_64-unknown-linux-gnu
+
+          - os: windows-latest
+            TARGET: x86_64-pc-windows-msvc
+            EXTENSION: .exe
+    needs: [fine-for-deployment]
     if: ${{ github.event_name == 'push' }}
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
-          path: ./artifacts
-
+          name: "${{matrix.TARGET}}-binary"      
       # this requires read-write permissions on the repo:
       # https://github.com/svenstaro/upload-release-action/issues/70
       - name: Upload binaries to release
@@ -141,8 +209,35 @@ jobs:
         if: ${{ github.event_name == 'push' }}
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ./artifacts/*
+          file: ${{ github.event.repository.name }}-${{ matrix.TARGET }}${{ matrix.EXTENSION }}
           asset_name: ${{ github.event.repository.name }}-${{ matrix.TARGET }}${{ matrix.EXTENSION }}
           tag: ${{ github.ref }}
           prerelease: ${{ !startsWith(github.ref, 'refs/tags/') }}
           overwrite: true
+
+  deploy-webpage:
+    runs-on: ubuntu-latest
+    needs: fine-for-deployment
+    permissions:
+      contents: write # for committing to artifacts/* branch.
+    steps:
+      - uses: actions/checkout@v4
+        # with:
+          # I just need a git repo with correct remote for the deploy action
+          # sparse-checkout: .
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: "*-artifacts"
+          path: dist
+          merge-multiple: true
+
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: dist
+          branch: artifacts/webpage/${{ github.head_ref || github.ref_name }}
+          # this option will not maintain any history of your previous pages deployment
+          # set to false if you want all page build to be committed to your gh-pages branch history
+          single-commit: true
+        

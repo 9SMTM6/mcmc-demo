@@ -3,6 +3,10 @@ use tracing::{self, Subscriber};
 use tracing_log;
 use tracing_subscriber::{self as tr_sub, fmt::time::UtcTime};
 
+// trait CfgWasmChain {
+//     fn apply_on_wasm()
+// }
+
 #[cfg(target_arch = "wasm32")]
 pub fn is_chromium() -> bool {
     let user_agent = web_sys::window()
