@@ -151,10 +151,13 @@ jobs:
       - name: Rename
         run: cp target/${{ matrix.TARGET }}/release/${{ github.event.repository.name }}${{ matrix.EXTENSION }} ${{ github.event.repository.name }}-${{ matrix.TARGET }}${{ matrix.EXTENSION }}
 
+      - name: Compress
+        run: zstd ${{ github.event.repository.name }}-${{ matrix.TARGET }}${{ matrix.EXTENSION }}
+
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.TARGET }}-binary
-          path: ${{ github.event.repository.name }}-${{ matrix.TARGET }}${{ matrix.EXTENSION }}
+          path: ${{ github.event.repository.name }}-${{ matrix.TARGET }}${{ matrix.EXTENSION }}.zst
 
   fine-for-deployment:
     runs-on: ubuntu-latest
@@ -209,8 +212,8 @@ jobs:
         if: ${{ github.event_name == 'push' }}
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ${{ github.event.repository.name }}-${{ matrix.TARGET }}${{ matrix.EXTENSION }}
-          asset_name: ${{ github.event.repository.name }}-${{ matrix.TARGET }}${{ matrix.EXTENSION }}
+          file: ${{ github.event.repository.name }}-${{ matrix.TARGET }}${{ matrix.EXTENSION }}.zst
+          asset_name: ${{ github.event.repository.name }}-${{ matrix.TARGET }}${{ matrix.EXTENSION }}.zst
           tag: ${{ github.ref }}
           prerelease: ${{ !startsWith(github.ref, 'refs/tags/') }}
           overwrite: true
@@ -240,4 +243,3 @@ jobs:
           # this option will not maintain any history of your previous pages deployment
           # set to false if you want all page build to be committed to your gh-pages branch history
           single-commit: true
-        
