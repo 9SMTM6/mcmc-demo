@@ -406,11 +406,13 @@ impl eframe::App for McmcDemo {
 }
 
 pub fn ndc_to_canvas_coord(ndc: egui::Pos2, canvas_size: egui::Vec2) -> egui::Pos2 {
-    ((ndc.to_vec2() + egui::Vec2::splat(1.0)) / 2.0 * canvas_size.min_elem()).to_pos2()
+    let center = (canvas_size - egui::Vec2::splat(canvas_size.min_elem())) / 2.0;
+    ((ndc.to_vec2() + egui::Vec2::splat(1.0)) / 2.0 * canvas_size.min_elem() + center).to_pos2()
 }
 
-pub fn canvas_coord_to_ndc(canvas_coord: egui::Pos2, canvas_rect: egui::Vec2) -> egui::Pos2 {
-    (canvas_coord / canvas_rect.min_elem()) * 2.0 - Vec2::splat(1.0)
+pub fn canvas_coord_to_ndc(canvas_coord: egui::Pos2, canvas_size: egui::Vec2) -> egui::Pos2 {
+    let center = (canvas_size - egui::Vec2::splat(canvas_size.min_elem())) / 2.0;
+    ((canvas_coord - center) / canvas_size.min_elem()) * 2.0 - Vec2::splat(1.0)
 }
 
 #[cfg(test)]
