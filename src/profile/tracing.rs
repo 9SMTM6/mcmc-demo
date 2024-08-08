@@ -1,10 +1,7 @@
 use tr_sub::layer::SubscriberExt as _;
 use tracing::{self, Subscriber};
 use tracing_log;
-use tracing_subscriber::{
-    self as tr_sub,
-    fmt::time::UtcTime,
-};
+use tracing_subscriber::{self as tr_sub, fmt::time::UtcTime};
 
 pub fn define_subscriber(
     default_log_level: Option<&str>,
@@ -30,7 +27,8 @@ pub fn define_subscriber(
         })
         .with({
             #[cfg(target_arch = "wasm32")]
-            let used = tracing_web::performance_layer().with_details_from_fields(tr_sub::fmt::format::Pretty::default());
+            let used = tracing_web::performance_layer()
+                .with_details_from_fields(tr_sub::fmt::format::Pretty::default());
             #[cfg(not(target_arch = "wasm32"))]
             let used = tr_sub::layer::Identity::new();
             used
