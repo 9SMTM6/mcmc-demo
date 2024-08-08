@@ -1,6 +1,6 @@
 [build]
 target = "index.fat.html"
-dist = "dist_fat"
+dist = "dist/fat"
 
 [serve.headers]
 # see ./assets/_headers for more documentation

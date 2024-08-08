@@ -1,5 +1,6 @@
 [build]
 minify = "on_release"
+dist = "dist/slim"
 
 [serve.headers]
 # see ./assets/_headers for more documentation

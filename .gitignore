@@ -5,10 +5,6 @@ src/shaders.rs
 # Mac stuff:
 .DS_Store
 
-# trunk output folder
-dist
-dist_fat
-
 # Rust compile target directories:
 target
 target_ra
