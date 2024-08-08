@@ -6,7 +6,7 @@
 
 [toolchain]
 # channel = "stable"
-# seems to cause issues with rust-analyzer. Probably in combination with the build-std, which requires an explicit target
+# If you change this, adjust the toolchain in the pipeline accordingly, otherwise the pipelines will and up very slow.
 channel = "nightly-2024-08-02"
 components = ["rust-src", "rustfmt", "clippy"]
 targets = ["wasm32-unknown-unknown"]
