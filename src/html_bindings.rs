@@ -9,7 +9,7 @@ pub fn get_element_by_id(id: &str) -> Option<web_sys::Element> {
 }
 
 /// # Panics
-/// 
+///
 /// If the element cant be found by its ID (it should be in `index.html` fro mthe start), or if that element isnt a canvas.
 pub fn get_egui_canvas() -> web_sys::HtmlCanvasElement {
     get_element_by_id(CANVAS_ID)
