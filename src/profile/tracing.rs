@@ -3,6 +3,16 @@ use tracing::{self, Subscriber};
 use tracing_log;
 use tracing_subscriber::{self as tr_sub, fmt::time::UtcTime};
 
+#[cfg(target_arch = "wasm32")]
+pub fn is_chromium() -> bool {
+    let user_agent = web_sys::window()
+        .and_then(|win| win.navigator().user_agent().ok())
+        .unwrap_or_else(|| String::new())
+        .to_lowercase();
+
+    user_agent.contains("chrom")
+}
+
 pub fn define_subscriber(
     default_log_level: Option<&str>,
 ) -> impl tracing::Subscriber + Send + Sync {
@@ -19,7 +29,7 @@ pub fn define_subscriber(
             let base = tr_sub::fmt::layer().with_timer(UtcTime::rfc_3339());
             #[cfg(target_arch = "wasm32")]
             let used = base
-                .with_ansi(false)
+                .with_ansi(is_chromium()) // chromium supports ANSI, Firefox does not seem to.
                 .with_writer(tracing_web::MakeWebConsoleWriter::new());
             #[cfg(not(target_arch = "wasm32"))]
             let used = base;
