@@ -34,7 +34,7 @@ jobs:
           toolchain: ${{env.RUST_TOOLCHAIN_VERSION}}
           components: clippy
       - uses: Swatinem/rust-cache@v2
-      - run: cargo clippy --workspace --target ${{matrix.target}} --all-features --  -D warnings
+      - run: cargo clippy --workspace --target ${{matrix.target}} --all-features -- -D warnings
 
   test:
     name: Test Suite
@@ -92,7 +92,7 @@ jobs:
       - name: Building ${{ matrix.TARGET }}
         run: echo "${{ matrix.TARGET }}"
 
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{env.RUST_TOOLCHAIN_VERSION}}
@@ -118,19 +118,30 @@ jobs:
       - name: Rename
         run: cp target/${{ matrix.TARGET }}/release/${{ github.event.repository.name }}${{ matrix.EXTENSION }} ${{ github.event.repository.name }}-${{ matrix.TARGET }}${{ matrix.EXTENSION }}
 
-      - uses: actions/upload-artifact@master
+      - uses: actions/upload-artifact@v4
         with:
-          name: ${{ github.event.repository.name }}-${{ matrix.TARGET }}${{ matrix.EXTENSION }}
+          name: ${{ matrix.TARGET }}-binary
           path: ${{ github.event.repository.name }}-${{ matrix.TARGET }}${{ matrix.EXTENSION }}
+
+  upload-release:
+    name: Upload Release
+    runs-on: ubuntu-latest
+    needs: [clippy, test, build-native]
+    if: ${{ github.event_name == 'push' }}
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
 
       # this requires read-write permissions on the repo:
       # https://github.com/svenstaro/upload-release-action/issues/70
-      - uses: svenstaro/upload-release-action@v2
-        name: Upload binaries to release
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
         if: ${{ github.event_name == 'push' }}
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ${{ github.event.repository.name }}-${{ matrix.TARGET }}${{ matrix.EXTENSION }}
+          file: ./artifacts/*
           asset_name: ${{ github.event.repository.name }}-${{ matrix.TARGET }}${{ matrix.EXTENSION }}
           tag: ${{ github.ref }}
           prerelease: ${{ !startsWith(github.ref, 'refs/tags/') }}
