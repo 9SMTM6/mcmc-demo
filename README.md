@@ -10,12 +10,13 @@
     * its surfaced via naga_oil
     * it might be an oversight. In that commit wgsl did not support `pipeline-overridable constants`, but later there was another PR that merged support, but it might've forgotten about these `writer`s. Or it was an accepted shortcoming, since it doesnt seem to be possible to do that stuff entirely without work (all the valid backends added a `pipeline_constant.rs` file).
     * actually, from my understanding, fixing this for naga wont fix the issue for naga_oil, since naga_oil wants to use naga as a preprocessor.
+  * [wgsl-bindgen issue](https://github.com/Swoorup/wgsl-bindgen/issues/39)
+  * [naga_oil issue](https://github.com/bevyengine/naga_oil/issues/102)
 * wgpu 22.1 update brings some perhaps helpful updates, is blocked on wgsl_bindgen
-* using shared memory multithreading on the web is blocked by https://github.com/emilk/egui/issues/4914
-  * may also be patchable
-  * introducing merge commit: https://github.com/emilk/egui/commit/bfadb90d429c9e6aa1beba37c6c38335e7462eb0
-  * original commit: https://github.com/emilk/egui/pull/3595/commits/c5746dbd37a31d9a90c8987449b4089eb910ad8c
-  * note that nothing was changed but the unification of imports. If concurrency wasn used in another commit building on this, it should be easy to patch
+* [Fixedish] using shared memory multithreading on the web is blocked by https://github.com/emilk/egui/issues/4914
+  * currently using a patched version
+  * reverts relevant changes from: https://github.com/emilk/egui/pull/3595/commits/c5746dbd37a31d9a90c8987449b4089eb910ad8c
+
 
 ## Compute shader
 
@@ -69,66 +70,6 @@ Future ideas:
 
 Currently I only support batched execution, to quickly see results of different configurations.
 In the future I also want to support a substep execution such as in the [original inspiration](https://chi-feng.github.io/mcmc-demo/app.html?algorithm=RandomWalkMH&target=banana).
-
-## wasm-threads
-
-To be able to efficiently execute batches in the background on the web we would need a bunch of things to fall into place.
-We want to be able to execute that task in a background thread.
-However for that to work we need wasm-threads, and theres a few issues with using this.
-
-WASM threads rely on sharedarraybuffers, and these need some headers to be active on the webpage, as described here:
-* https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer#security_requirements
-* https://web.dev/articles/webassembly-threads
-* https://web.dev/articles/coop-coep
-
-Github pages cant do that.
-I've now setup a parallel deployment to cloudflare pages (mcmc-webgpu-demo.pages.dev), that is able to set these headers (and as added bonus also deploys brotli compressed artifacts, not just gzip).
-
-I can test for the availability with `self.crossOriginIsolated`.
-
-Even with these headers, compatibility is questionable, as at least in the beginning mobile browsers did not enable this feature, because it eats resources (as it leads to another process for that page specifically):
-
-> [https://web.dev/articles/webassembly-threads] However, this mitigation was still limited only to Chrome desktop, as Site Isolation is a fairly expensive feature, and couldn't be enabled by default for all sites on low-memory mobile devices nor was it yet implemented by other vendors.
-
-Also note the difficulties in using threads in Rust because of the generic `wasm32-unknown-unknown` target rust uses:
-
-> [https://web.dev/articles/webassembly-threads] If Wasm is intended to be used in a web environment, any interaction with JavaScript APIs is left to external libraries and tooling like wasm-bindgen and wasm-pack. Unfortunately, this means that the standard library is not aware of Web Workers and standard APIs such as std::thread won't work when compiled to WebAssembly.
-
-I've found 2 libraries that solve this well enough for my purposes:
-* wasm-mt (supports generic futures? hard requirement on wasm-pack)
-  * actually no: 
-    > wasm-mt is not efficient in that it does not include support of the standard thread primitive operations: 
-    > 1. shared memory based message passing and mutexes,
-* [wasm_thread](https://github.com/chemicstry/wasm_thread)
-  * updated 5 months ago
-  * API Clone of std::thread
-  * works both native and on web
-  * build process already integrated on here
-  * loads a bunch of js scripts, would be nice to avoid, but ATM it seems like the best deal 
-* [wasm-futures-executor](https://github.com/wngr/wasm-futures-executor)
-  * 2 years ago last update
-  * API Clone of futures_executor::ThreadPool 
-  * identical build process to wasm_thread
-  * though I think it embeds the snippets differently.
-  * i dont think it has a native compat layer, but easy to address with a reexport
-  * I think it works differently when spawning tasks:
-    > There is a significant overhead of sending and spawning futures across the thread boundary. It makes most sense for long-lived tasks (check out the factorial demo, which is a rough 3x performance increase). As always, make sure to profile your use case.
-
-Both will use nightly to rebuild the standard library, and a bunch of other flags (the same seems to be true for the fairly polular `wasm-bindge-rayon`). Which makes things annoying and at least difficult with trunk.
-
-Thunk has a few examples about web-workers (undocumented at root):
-* https://github.com/trunk-rs/trunk/tree/main/examples/webworker
-  * seems to be basic example. Manually creates a js script in rust and loads it
-* https://github.com/trunk-rs/trunk/tree/main/examples/webworker-module
-  * seems to be using trunk to bundle an antumatically created js loader to avoid the managing in the previous example.
-  * has an identical worker script
-* https://github.com/trunk-rs/trunk/tree/main/examples/webworker-gloo
-  * uses gloo-worker, an abstraction on the web api that makes some annoying parts in app.rs go away. Though that requires a 3-way split, into lib with common impl, app.rs and worker.rs
-  * this 3 way split avoids the need for the loading of another module. However it likely also means that A LOT more data has to be loaded, since lib will be used in both, and my lib code is likely to require depending on the major size contributors (eg. wgpu). wasm component model may solve that in the future, but now is the present.
-None of these seem to work with shared memory.
-Considering that I generate a bunch of data in a serial fashion (not sped up by parallelism, this is unavoidable for markov chains AFAIK) and want to then transport data with a shared bufferbinding, this might be problematic. Unless the bufferbinding can survive the serialization over the border between.
-
-See also https://github.com/trunk-rs/trunk/issues/680
 
 ## Support more PRNG and low-discrepancy randomness
 
