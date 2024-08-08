@@ -1,7 +1,10 @@
 use tr_sub::layer::SubscriberExt as _;
 use tracing::{self, Subscriber};
 use tracing_log;
-use tracing_subscriber as tr_sub;
+use tracing_subscriber::{
+    self as tr_sub,
+    fmt::time::UtcTime,
+};
 
 pub fn define_subscriber(
     default_log_level: Option<&str>,
@@ -15,7 +18,23 @@ pub fn define_subscriber(
             tr_sub::EnvFilter::try_from_default_env()
                 .unwrap_or_else(|_| tr_sub::EnvFilter::new(default_log_level.unwrap_or("info"))),
         )
-        .with(tr_sub::fmt::layer())
+        .with({
+            let base = tr_sub::fmt::layer().with_timer(UtcTime::rfc_3339());
+            #[cfg(target_arch = "wasm32")]
+            let used = base
+                .with_ansi(false)
+                .with_writer(tracing_web::MakeWebConsoleWriter::new());
+            #[cfg(not(target_arch = "wasm32"))]
+            let used = base;
+            used
+        })
+        .with({
+            #[cfg(target_arch = "wasm32")]
+            let used = tracing_web::performance_layer().with_details_from_fields(tr_sub::fmt::format::Pretty::default());
+            #[cfg(not(target_arch = "wasm32"))]
+            let used = tr_sub::layer::Identity::new();
+            used
+        })
 }
 
 #[allow(clippy::missing_panics_doc)]

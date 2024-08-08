@@ -22,7 +22,8 @@ mod if_featured {
         reason = "false positive if compiling for wasm"
     )]
     pub fn start_puffin_server() {
-        // puffin server doesnt exist on web, so make that a noop there
+        // puffin server doesnt exist on web, so make that a noop there.
+        // We've got tracing_web that installed a tracing subscriber that reports to the [performance api](https://developer.mozilla.org/en-US/docs/Web/API/Performance).
         #[cfg(not(target_arch = "wasm32"))]
         {
             puffin::set_scopes_on(true); // tell puffin to collect data
