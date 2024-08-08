@@ -1,8 +1,7 @@
 /// TODO: doesnt handle errors in webworker. At all, seemingly.
 /// Gonna have to see whether this is a wasm_thread issue or on my side.
-/// 
+///
 /// Common issue is probably out-of-memory
-
 mod helpers;
 
 pub use helpers::{BgCommunicate, Progress};

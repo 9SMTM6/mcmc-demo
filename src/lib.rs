@@ -1,5 +1,6 @@
 mod app;
 mod bg_task;
+pub mod html_bindings;
 pub mod profile;
 mod settings;
 mod simulation;
