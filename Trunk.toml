@@ -1,19 +1,5 @@
 [build]
 minify = "on_release"
-# this happens often on firefox, but a forced reload always gets rid of this.
-# since firefox isnt supported currently anyways, I'll leave it disabled.
-# test-disabled as compression might cause this to fail
-# no_sri = true
-
-[[hooks]]
-stage = "post_build"
-# falling back to sh to get wildcard expansion
-command = "sh"
-# compress, but only on release
-command_arguments = [
-    "-c",
-    "[ \"$TRUNK_PROFILE\" = \"release\" ] && brotli ${TRUNK_STAGING_DIR}/mcmc-demo*bg.wasm || true",
-]
 
 [serve.headers]
 # see ./assets/_headers for more documentation
