@@ -3,6 +3,9 @@ name: Build Webpage
 # By default, runs if you push to main. keeps your deployed app in sync with main branch.
 on: [push, pull_request]
 
+env:
+  RUST_TOOLCHAIN_VERSION: "nightly-2024-08-02"
+
 # to only run when you do a new github release, comment out above part and uncomment the below trigger.
 # on:
 #   release:
@@ -25,8 +28,9 @@ jobs:
             config_file: Trunk.toml
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@master
         with:
+          toolchain: ${{env.RUST_TOOLCHAIN_VERSION}}
           targets: wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v2
       - name: Download and install Trunk binary
@@ -49,6 +53,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
+      - uses: actions/checkout@v4
+        with:
+          # I just need a git repo with correct remote for the deploy action
+          sparse-checkout: .
       - name: Download Artifacts
         uses: actions/download-artifact@v4
         with:
