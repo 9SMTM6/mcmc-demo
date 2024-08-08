@@ -2,17 +2,19 @@
 
 use web_sys::{wasm_bindgen::JsCast, Element};
 
-const CANVAS_ID: &'static str = "egui_canvas";
+const CANVAS_ID: &str = "egui_canvas";
 
 pub fn get_element_by_id(id: &str) -> Option<web_sys::Element> {
     web_sys::window()?.document()?.get_element_by_id(id)
 }
 
+/// # Panics
+/// 
+/// If the element cant be found by its ID (it should be in `index.html` fro mthe start), or if that element isnt a canvas.
 pub fn get_egui_canvas() -> web_sys::HtmlCanvasElement {
-    get_element_by_id(&CANVAS_ID)
+    get_element_by_id(CANVAS_ID)
         .expect("Unable to find root canvas")
         .dyn_into::<web_sys::HtmlCanvasElement>()
-        .ok()
         .expect("Root element is no canvas")
 }
 
@@ -53,6 +55,7 @@ pub fn try_display_panic(panic_info: &std::panic::PanicHookInfo<'_>) {
     try_display_panic_str(&panic_info.to_string());
 }
 
+#[allow(clippy::missing_panics_doc)]
 pub fn try_display_panic_str(panic_info: &str) {
     if let Some(oob_el_ref) = get_oob_text_el() {
         oob_el_ref.set_inner_html(&format!(
