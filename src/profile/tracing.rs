@@ -7,7 +7,7 @@ use tracing_subscriber::{self as tr_sub, fmt::time::UtcTime};
 pub fn is_chromium() -> bool {
     let user_agent = web_sys::window()
         .and_then(|win| win.navigator().user_agent().ok())
-        .unwrap_or_else(|| String::new())
+        .unwrap_or_default()
         .to_lowercase();
 
     user_agent.contains("chrom")
