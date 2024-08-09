@@ -1,3 +1,5 @@
+// TODO: remove once I render both depending on options selected.
+#![allow(dead_code)]
 use std::{mem::size_of, num::NonZero};
 
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
