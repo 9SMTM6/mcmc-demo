@@ -80,7 +80,7 @@ jobs:
           name: ${{ matrix.name }}-artifacts
           path: dist
 
-  build-native:
+  build-executables:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -156,67 +156,34 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.TARGET }}-binary
+          name: ${{ matrix.TARGET }}-executable
           path: ${{ github.event.repository.name }}-${{ matrix.TARGET }}${{ matrix.EXTENSION }}.zst
 
   fine-for-deployment:
     runs-on: ubuntu-latest
-    needs: [clippy, test, build-native, build-webpage]
+    needs: [clippy, test, build-executables, build-webpage]
     steps:
       - run: echo "Github, you really should have something for this."
 
-  upload-binaries:
+  upload-executables:
     name: Upload Release
     runs-on: ubuntu-latest
-    # screw you github. I wasted a solid hour on trying to do this otherwise.
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: macos-latest
-            # macos-latest seems to already run on arm64(=aarch64):
-            # https://docs.github.com/en/actions/using-jobs/choosing-the-runner-for-a-job#standard-github-hosted-runners-for-public-repositories
-            TARGET: aarch64-apple-darwin
-
-          - os: macos-latest
-            TARGET: x86_64-apple-darwin
-            # even though the runner uses arm64, MacOS on arm64 seems to support building for amd64.
-            # which makes sense, would be bad for devs otherwise.
-            cross: false
-
-          - os: ubuntu-latest
-            TARGET: aarch64-unknown-linux-gnu
-            cross: true
-
-          - os: ubuntu-latest
-            TARGET: armv7-unknown-linux-gnueabihf
-            cross: true
-
-          - os: ubuntu-latest
-            TARGET: x86_64-unknown-linux-gnu
-
-          - os: windows-latest
-            TARGET: x86_64-pc-windows-msvc
-            EXTENSION: .exe
+    permissions:
+      contents: write
     needs: [fine-for-deployment]
     if: ${{ github.event_name == 'push' }}
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
-          name: "${{matrix.TARGET}}-binary"      
-      # this requires read-write permissions on the repo:
-      # https://github.com/svenstaro/upload-release-action/issues/70
-      - name: Upload binaries to release
-        uses: svenstaro/upload-release-action@v2
+          name: "*-executable"
+      - name: Upload binaries to release (create one if not existing)
+        uses: softprops/action-gh-release@v2
         if: ${{ github.event_name == 'push' }}
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ${{ github.event.repository.name }}-${{ matrix.TARGET }}${{ matrix.EXTENSION }}.zst
-          asset_name: ${{ github.event.repository.name }}-${{ matrix.TARGET }}${{ matrix.EXTENSION }}.zst
+          files: ${{ github.event.repository.name }}-*.zst
           tag: ${{ github.ref }}
           prerelease: ${{ !startsWith(github.ref, 'refs/tags/') }}
-          overwrite: true
 
   deploy-webpage:
     runs-on: ubuntu-latest
