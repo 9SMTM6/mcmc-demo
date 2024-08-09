@@ -73,7 +73,7 @@ In the future I also want to support a substep execution such as in the [origina
 
 ## Support more PRNG and low-discrepancy randomness
 
-* actually make PRNG generic and allos choice in UI, currently hard-coded
+* actually make PRNG generic and allow choice in UI, currently hard-coded
 * https://en.wikipedia.org/wiki/Quasi-Monte_Carlo_method
 * https://crates.io/crates/sobol_burley
 * https://crates.io/crates/halton
