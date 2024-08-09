@@ -26,15 +26,17 @@ jobs:
       matrix:
         include:
           - target: x86_64-unknown-linux-gnu
+            toolchain: stable
           - target: wasm32-unknown-unknown
+            toolchain: nightly
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: stable
+          toolchain: ${{matrix.toolchain}}
           components: clippy
       - uses: Swatinem/rust-cache@v2
-      - run: cargo +stable clippy --workspace --target ${{matrix.target}} --all-features -- -D warnings
+      - run: cargo +${{matrix.toolchain}} clippy --workspace --target ${{matrix.target}} --all-features -- -D warnings
 
   test:
     name: Test Suite
