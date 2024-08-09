@@ -34,7 +34,8 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{matrix.toolchain}}
-          components: clippy
+          # for some reason rust-toolchain doesnt respect toolchain file any longer.
+          components: clippy,rust-src
       - uses: Swatinem/rust-cache@v2
       - run: cargo +${{matrix.toolchain}} clippy --workspace --target ${{matrix.target}} --all-features -- -D warnings
 
