@@ -3,8 +3,7 @@
     clippy::pattern_type_mismatch,
     clippy::struct_excessive_bools,
     clippy::missing_panics_doc,
-    clippy::used_underscore_binding,
-    reason = "Copied code, I'm lazy"
+    clippy::used_underscore_binding
 )]
 /// How often we repaint the demo app by default
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -118,7 +117,7 @@ impl BackendPanel {
         if cfg!(debug_assertions) && cfg!(target_arch = "wasm32") {
             ui.separator();
             // For testing panic handling on web:
-            #[allow(clippy::manual_assert, reason = "This has a sideeffect")]
+            #[allow(clippy::manual_assert)]
             if ui.button("panic!()").clicked() {
                 panic!("intentional panic!");
             }

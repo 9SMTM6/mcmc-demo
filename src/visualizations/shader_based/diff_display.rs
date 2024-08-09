@@ -23,10 +23,7 @@ use crate::{
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 pub struct DiffDisplay {
-    #[allow(
-        dead_code,
-        reason = "I'll get to it eventually, please dont disable my pipeline"
-    )]
+    #[allow(dead_code)]
     pub window_radius: f32,
 }
 

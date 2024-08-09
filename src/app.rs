@@ -62,7 +62,7 @@ impl Default for McmcDemo {
 
 impl McmcDemo {
     /// Called once before the first frame.
-    #[allow(clippy::missing_panics_doc, reason = "only used once")]
+    #[allow(clippy::missing_panics_doc)]
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         cc.egui_ctx.style_mut(|style| {
             let visuals = &mut style.visuals;
@@ -90,13 +90,7 @@ impl McmcDemo {
         state
     }
 
-    pub fn get_state(
-        #[allow(
-            unused_variables,
-            reason = "Conditional compilation makes this sometimes unused"
-        )]
-        cc: &eframe::CreationContext<'_>,
-    ) -> Self {
+    pub fn get_state(#[allow(unused_variables)] cc: &eframe::CreationContext<'_>) -> Self {
         // Load previous app state (if any).
         // Note that you must enable the `persistence` feature for this to work.
         #[cfg(feature = "persistence")]
@@ -118,7 +112,7 @@ impl McmcDemo {
         egui::SidePanel::left("backend_panel")
             .resizable(false)
             .show_animated(ctx, is_open, |ui| {
-                #[allow(clippy::shadow_unrelated, reason = "false positive, is related.")]
+                #[allow(clippy::shadow_unrelated)]
                 ui.vertical_centered(|ui| {
                     ui.heading("💻 Backend");
                 });
@@ -133,7 +127,7 @@ impl McmcDemo {
 
         ui.separator();
 
-        #[allow(clippy::shadow_unrelated, reason = "false positive, is related.")]
+        #[allow(clippy::shadow_unrelated)]
         ui.horizontal(|ui| {
             if ui
                 .button("Reset egui")
@@ -163,17 +157,13 @@ impl eframe::App for McmcDemo {
     fn update(
         &mut self,
         ctx: &egui::Context,
-        #[allow(
-            unused_variables,
-            reason = "Conditional compilation makes this sometimes unused"
-        )]
-        frame: &mut eframe::Frame,
+        #[allow(unused_variables)] frame: &mut eframe::Frame,
     ) {
         // Put your widgets into a `SidePanel`, `TopBottomPanel`, `CentralPanel`, `Window` or `Area`.
         // For inspiration and more examples, go to https://emilk.github.io/egui
 
         egui::TopBottomPanel::bottom("footer").show(ctx, |ui| {
-            #[allow(clippy::shadow_unrelated, reason = "false positive, is related.")]
+            #[allow(clippy::shadow_unrelated)]
             ui.horizontal(|ui| {
                 if ui.button("Reset State").clicked() {
                     *self = Default::default();
@@ -274,7 +264,7 @@ impl eframe::App for McmcDemo {
                     .outer_margin(egui::Margin::default())
                     .show(
                         ui,
-                        #[allow(clippy::shadow_unrelated, reason = "false positive, is related.")]
+                        #[allow(clippy::shadow_unrelated)]
                         |ui| {
                             let px_size = ui.available_size();
                             let (rect, response) =

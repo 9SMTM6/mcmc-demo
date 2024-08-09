@@ -6,7 +6,7 @@ pub mod frame_history;
 pub mod tracing;
 
 #[macro_export]
-#[allow(clippy::module_name_repetitions, reason = "makes autoimport nicer")]
+#[allow(clippy::module_name_repetitions)]
 #[allow(edition_2024_expr_fragment_specifier)]
 macro_rules! profile_scope {
     ($scope_name:expr) => {
@@ -17,10 +17,7 @@ macro_rules! profile_scope {
 
 #[cfg(feature = "profile")]
 mod if_featured {
-    #[allow(
-        clippy::missing_const_for_fn,
-        reason = "false positive if compiling for wasm"
-    )]
+    #[allow(clippy::missing_const_for_fn)]
     pub fn start_puffin_server() {
         // puffin server doesnt exist on web, so make that a noop there.
         // We've got tracing_web that installed a tracing subscriber that reports to the [performance api](https://developer.mozilla.org/en-US/docs/Web/API/Performance).
@@ -42,7 +39,7 @@ mod if_featured {
 
                     // We can store the server if we want, but in this case we just want
                     // it to keep running. Dropping it closes the server, so let's not drop it!
-                    #[allow(clippy::mem_forget, reason = "we want to keep it running")]
+                    #[allow(clippy::mem_forget)]
                     std::mem::forget(puffin_server);
                 }
                 Err(err) => {
