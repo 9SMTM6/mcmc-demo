@@ -1633,6 +1633,8 @@ dependencies = [
  "getrandom",
  "log",
  "miette",
+ "naga",
+ "naga_oil",
  "nalgebra",
  "puffin",
  "puffin_http",

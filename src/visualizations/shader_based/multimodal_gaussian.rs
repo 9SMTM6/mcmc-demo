@@ -96,11 +96,11 @@ impl MultiModalGaussianDisplay {
 
         let pipeline = device.create_render_pipeline(&RenderPipelineDescriptor {
             vertex: fullscreen_quad::vertex_state(
-                &fullscreen_quad::create_shader_module_embed_source(device),
+                &fullscreen_quad::create_shader_module_embedded(device, [].into()),
                 &fullscreen_quad::fullscreen_quad_entry(),
             ),
             fragment: Some(multimodal_gaussian::fragment_state(
-                &multimodal_gaussian::create_shader_module_embed_source(device),
+                &multimodal_gaussian::create_shader_module_embedded(device, [].into()),
                 &multimodal_gaussian::fs_main_entry([Some(render_state.target_format.into())]),
             )),
             label: webgpu_debug_name,

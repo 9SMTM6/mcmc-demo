@@ -46,7 +46,7 @@ log = "0.4"
 
 # You only need serde if you want app persistence:
 serde = { version = "1", features = ["derive"], optional = true }
-wgpu = { version = "0.20.1", features = ["webgpu"] }
+wgpu = { version = "0.20.1", features = ["webgpu", "naga-ir"] }
 bytemuck = { version = "1.16.0" }
 nalgebra = { version = "0.33.0" }
 getrandom = { version = "0.2.15", features = ["js"] }
@@ -65,6 +65,8 @@ tracing-subscriber = { version = "0.3.18", optional = true, features = [
 ] }
 wasm_thread = "0.3.0"
 time = { version = "0.3.36", features = ["wasm-bindgen"], optional = true }
+naga_oil = "0.14.0"
+naga = "0.20.0"
 
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
