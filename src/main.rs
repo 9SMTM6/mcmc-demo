@@ -1,5 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
+const DEFAULT_TRACE_LEVEL: Option<&'static str> = Some("wgpu_core=warn,wgpu_hal=warn,info");
+
 // When compiling natively:
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result<()> {
@@ -8,7 +10,7 @@ fn main() -> eframe::Result<()> {
     // Log or trace to stderr (if you run with `RUST_LOG=debug`).
     // tracing has more and precise scope information, and works well with multithreading, where regular logging as a single threaded approach breaks.
     #[cfg(feature = "tracing")]
-    mcmc_demo::set_default_and_redirect_log(mcmc_demo::define_subscriber(Some("info")));
+    mcmc_demo::set_default_and_redirect_log(mcmc_demo::define_subscriber(DEFAULT_TRACE_LEVEL));
     #[cfg(not(feature = "tracing"))]
     env_logger::init();
     #[cfg(feature = "profile")]
@@ -39,7 +41,7 @@ fn main() {
     // Log or trace to stderr (if you run with `RUST_LOG=debug`).
     // tracing has more and precise scope information, and works well with multithreading, where regular logging as a single threaded approach breaks.
     #[cfg(feature = "tracing")]
-    mcmc_demo::set_default_and_redirect_log(mcmc_demo::define_subscriber(Some("info")));
+    mcmc_demo::set_default_and_redirect_log(mcmc_demo::define_subscriber(DEFAULT_TRACE_LEVEL));
     #[cfg(not(feature = "tracing"))]
     // Redirect `log` message to `console.log` and friends:
     eframe::WebLogger::init(log::LevelFilter::Info).ok();
