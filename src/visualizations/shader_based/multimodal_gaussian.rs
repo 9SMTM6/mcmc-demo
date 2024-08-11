@@ -15,6 +15,10 @@ use crate::target_distributions::multimodal_gaussian::MultiModalGaussian;
 
 use super::{resolution_uniform::get_resolution_pair, WgpuBufferBindGroupPair};
 
+pub mod shader_bindings {
+    include!(concat!(env!("OUT_DIR"), "/shaders_bindings/", "multimodal_gaussian.fragment", ".rs"));
+}
+
 struct MultiModalGaussPipeline {
     pipeline: RenderPipeline,
     resolution_bind_group: BindGroup,
