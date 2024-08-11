@@ -1,0 +1,35 @@
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+
+allow-git = [
+    "https://github.com/9smtm6/egui",
+]
+
+[advisories]
+
+[licenses]
+allow = [
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "MIT",
+    "MPL-2.0",
+    "BSD-3-Clause",
+    "BSD-2-Clause",
+    "BSL-1.0",
+    "ISC",
+    "Zlib",
+]
+
+[[licenses.exceptions]]
+allow = ["LicenseRef-UFL-1.0", "OFL-1.1"]
+name = "epaint_default_fonts"
+
+[[licenses.exceptions]]
+allow = ["Unicode-DFS-2016"]
+name = "unicode-ident"
+
+[[licenses.exceptions]]
+allow = ["CC0-1.0"]
+name = "hexf-parse"
