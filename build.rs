@@ -1,7 +1,7 @@
-use miette::{IntoDiagnostic, Result};
+use miette::{ErrReport, IntoDiagnostic, Result};
 use wgsl_bindgen::{RustWgslTypeMap, WgslBindgenOptionBuilder, WgslTypeSerializeStrategy};
 
-fn main() -> Result<()> {
+fn bindgen_generation() -> Result<(), ErrReport> {
     let shader_root_dir = "shaders/";
     let shader_entries = [
         "multimodal_gaussian.fragment",
@@ -23,4 +23,14 @@ fn main() -> Result<()> {
     let bindgen = bindgen.output("src/shaders.rs").build().unwrap();
 
     bindgen.generate().into_diagnostic()
+}
+
+#[allow(dead_code)]
+fn wgsl_to_wgpu_generation() {
+    todo!("will for certain require different shader source files. Doesnt do validation, doesnt do imports. IIRC wanted everything to be in one big shader, which caused me to go to bindgen, in addition to debug labels")
+}
+
+fn main() -> Result<()> {
+    bindgen_generation()?;
+    Ok(())
 }
