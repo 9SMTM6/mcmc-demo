@@ -5,7 +5,7 @@ use egui::{self, ProgressBar, Shadow, Vec2};
 use crate::{
     bg_task::{BgCommunicate, BgTaskHandle, Progress},
     settings::{self, Settings},
-    shaders::types::NormalDistribution,
+    shaders::multimodal_gaussian::NormalDistribution,
     simulation::{
         random_walk_metropolis_hastings::{ProgressMode, Rwmh},
         SRngGaussianIter, SRngPercIter,

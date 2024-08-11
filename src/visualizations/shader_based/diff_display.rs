@@ -13,7 +13,9 @@ use crate::{
     profile_scope,
     shaders::{
         self, diff_display, fullscreen_quad,
-        types::{NormalDistribution, RWMHCountInfo, ResolutionInfo},
+        canvas_ndc_conversion::ResolutionInfo,
+        multimodal_gaussian::NormalDistribution,
+        diff_display::RWMHCountInfo,
     },
     simulation::random_walk_metropolis_hastings::Rwmh,
     target_distributions::multimodal_gaussian::MultiModalGaussian,
@@ -31,7 +33,7 @@ pub struct DiffDisplay {
 
 fn get_approx_triple(
     device: &wgpu::Device,
-    approx_points: Option<&[shaders::types::RWMHAcceptRecord]>,
+    approx_points: Option<&[shaders::diff_display::RWMHAcceptRecord]>,
 ) -> (BindGroup, Buffer, Buffer) {
     let webgpu_debug_name = Some(file!());
 
@@ -53,7 +55,7 @@ fn get_approx_triple(
 
     let info_buffer = device.create_buffer(&BufferDescriptor {
         label: webgpu_debug_name,
-        size: size_of::<shaders::types::RWMHCountInfo>() as u64,
+        size: size_of::<shaders::diff_display::RWMHCountInfo>() as u64,
         usage: BufferUsages::COPY_DST | BufferUsages::UNIFORM,
         mapped_at_creation: false,
     });

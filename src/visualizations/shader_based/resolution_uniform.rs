@@ -2,7 +2,7 @@ use std::num::NonZero;
 
 use wgpu::{util::DeviceExt, BufferBinding};
 
-use crate::shaders::{multimodal_gaussian, types::ResolutionInfo};
+use crate::shaders::{multimodal_gaussian, canvas_ndc_conversion::ResolutionInfo};
 
 use super::WgpuBufferBindGroupPair;
 

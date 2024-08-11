@@ -9,7 +9,8 @@ use wgpu::{
 
 use crate::shaders::{
     fullscreen_quad, multimodal_gaussian,
-    types::{NormalDistribution, ResolutionInfo},
+    multimodal_gaussian::NormalDistribution,
+    canvas_ndc_conversion::ResolutionInfo,
 };
 use crate::target_distributions::multimodal_gaussian::MultiModalGaussian;
 

@@ -1,8 +1,11 @@
-#import constants::PI;
-#import helpers::{percentage_logscaled};
-#import canvas_ndc_conversion::canvas_coord_to_ndc;
-#import "fullscreen_quad.vertex.wgsl";
-#import types::NormalDistribution;
+const PI = radians(180.0);
+
+struct NormalDistribution {
+    position: vec2<f32>,
+    variance: f32,
+    // this will lead to a weight in relation to the other normal distributions
+    scale: f32,
+}
 
 @group(1) @binding(0)
 var<storage, read> gauss_bases: array<NormalDistribution>;
