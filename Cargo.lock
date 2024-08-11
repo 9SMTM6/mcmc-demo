@@ -1635,6 +1635,7 @@ dependencies = [
  "rand",
  "rand_distr",
  "rand_pcg",
+ "regex",
  "serde",
  "time",
  "tracing",

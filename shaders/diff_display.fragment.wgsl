@@ -1,6 +1,6 @@
-#import canvas_ndc_conversion::canvas_coord_to_ndc;
-#import helpers::percentage_logscaled;
-#import multimodal_gaussian::{gauss_bases, calc_gaussian_density}
+#import "canvas_ndc_conversion.wgsl";
+#import "helpers.wgsl";
+#import "multimodal_gaussian.wgsl";
 #import "fullscreen_quad.vertex.wgsl";
 
 struct RWMHAcceptRecord {

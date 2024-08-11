@@ -15,3 +15,6 @@ target_wasm
 
 # https://github.com/lycheeverse/lychee
 .lycheecache
+
+# temp inclusion while I still need wsgl_bindgen
+shaders_resolved/

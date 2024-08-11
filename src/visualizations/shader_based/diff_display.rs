@@ -13,9 +13,8 @@ use crate::{
     profile_scope,
     shaders::{
         self, diff_display, fullscreen_quad,
-        canvas_ndc_conversion::ResolutionInfo,
         multimodal_gaussian::NormalDistribution,
-        diff_display::RWMHCountInfo,
+        diff_display::{RWMHCountInfo, ResolutionInfo},
     },
     simulation::random_walk_metropolis_hastings::Rwmh,
     target_distributions::multimodal_gaussian::MultiModalGaussian,

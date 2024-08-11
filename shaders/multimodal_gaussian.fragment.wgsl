@@ -1,6 +1,6 @@
-#import multimodal_gaussian::calc_gaussian_density;
-#import helpers::percentage_logscaled;
-#import canvas_ndc_conversion::canvas_coord_to_ndc;
+#import "multimodal_gaussian.wgsl";
+#import "helpers.wgsl";
+#import "canvas_ndc_conversion.wgsl";
 #import "fullscreen_quad.vertex.wgsl";
 
 @fragment

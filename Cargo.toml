@@ -83,6 +83,7 @@ console_error_panic_hook = "0.1.7"
 
 [build-dependencies]
 miette = { version = "7.2.0", features = ["fancy"] }
+regex = "1.10.6"
 wgsl_bindgen = "0.15"
 wgsl_to_wgpu = "0.9.0"
 
