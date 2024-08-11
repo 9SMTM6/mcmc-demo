@@ -18,6 +18,8 @@ persistence = [
     "rand_distr/serde1",
     "rand_pcg/serde1",
     "nalgebra/serde-serialize",
+    # not needed currently.
+    # "wgpu/serde",
 ]
 # doesnt work, since it can't translate storagebuffers.
 # And my experiments with passing stuff via textures was not successful.
@@ -32,7 +34,8 @@ tracing = [
     # TODO: ought to be also included only based on target, but I cant seem to find a way to do that.
     "dep:tracing-web",
     "dep:time",
-    "wgpu/trace",
+    # "temporarily removed". Reinstatement issue: https://github.com/gfx-rs/wgpu/issues/5974
+    # "wgpu/trace",
     "rand/log",
 ]
 
@@ -46,7 +49,7 @@ log = "0.4"
 
 # You only need serde if you want app persistence:
 serde = { version = "1", features = ["derive"], optional = true }
-wgpu = { version = "0.20.1", features = ["webgpu"] }
+wgpu = { version = "22.1", features = ["webgpu"] }
 bytemuck = { version = "1.16.0" }
 nalgebra = { version = "0.33.0" }
 getrandom = { version = "0.2.15", features = ["js"] }
@@ -80,7 +83,7 @@ console_error_panic_hook = "0.1.7"
 
 [build-dependencies]
 miette = { version = "7.2.0", features = ["fancy"] }
-wgsl_bindgen = "0.14.1"
+wgsl_bindgen = "0.15"
 wgsl_to_wgpu = "0.9.0"
 
 [profile.release]
@@ -97,6 +100,8 @@ opt-level = 2
 
 
 [patch.crates-io]
+# the release on patched branches MUST match the set version above,
+# otherwise cargo will ignore this (it will warn about it though).
 
 # If you want to use the bleeding edge version of egui and eframe:
 # egui = { git = "https://github.com/emilk/egui", branch = "master" }

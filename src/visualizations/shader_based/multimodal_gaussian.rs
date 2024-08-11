@@ -109,6 +109,7 @@ impl MultiModalGaussianDisplay {
             multiview: None,
             multisample: Default::default(),
             primitive: Default::default(),
+            cache: None,
         });
 
         let WgpuBufferBindGroupPair {
