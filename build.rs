@@ -1,87 +1,40 @@
 use miette::{ErrReport, IntoDiagnostic, Result};
 use wgsl_bindgen::{RustWgslTypeMap, WgslBindgenOptionBuilder, WgslTypeSerializeStrategy};
 use wgsl_to_wgpu::{create_shader_module_embedded, WriteOptions};
-
-fn bindgen_generation() -> Result<(), ErrReport> {
-    let shader_entries = [
-        "multimodal_gaussian.fragment",
-        "fullscreen_quad.vertex",
-        "diff_display.fragment",
-    ];
-
-    let mut out_dir = PathBuf::from(std::env::var("OUT_DIR").unwrap());
-
-    let shader_dir = PathBuf::from("./shaders");
-
-    out_dir.push(shader_dir.file_name().unwrap());
-
-    let bindings_dir = append_to_last_dir(&out_dir, "_resolved")
-        .to_str()
-        .unwrap()
-        .to_owned();
-
-    let mut bindgen = WgslBindgenOptionBuilder::default();
-    bindgen
-        .workspace_root(&bindings_dir)
-        .serialization_strategy(WgslTypeSerializeStrategy::Bytemuck)
-        .derive_serde(cfg!(feature = "persistence"))
-        .type_map(RustWgslTypeMap);
-    for source in shader_entries {
-        bindgen.add_entry_point(format!("{bindings_dir}/{source}.wgsl"));
-    }
-    let bindgen = bindgen.output("src/shaders.rs").build().unwrap();
-
-    bindgen.generate().into_diagnostic()
-}
-
-#[allow(dead_code)]
-fn wgsl_to_wgpu_generation() {
-    let shader_dir = PathBuf::from("./shaders");
-    let resolved_files = handle_c_pragma_once_style_imports(&shader_dir).unwrap();
-
-    let shader_entries = [
-        "multimodal_gaussian.fragment",
-        "fullscreen_quad.vertex",
-        "diff_display.fragment",
-    ]
-    .map(OsString::from);
-
-    let mut out_dir = PathBuf::from(std::env::var("OUT_DIR").unwrap());
-
-    out_dir.push(shader_dir.file_name().unwrap());
-
-    let bindings_dir = append_to_last_dir(&out_dir, "_bindings");
-
-    fs::create_dir_all(&bindings_dir).unwrap();
-
-    shader_entries.into_iter().for_each(|entrypoint| {
-        let wgsl_source = resolved_files.get(&entrypoint).unwrap();
-        let rust_bindings = create_shader_module_embedded(
-            wgsl_source,
-            WriteOptions {
-                derive_bytemuck_host_shareable: true,
-                derive_serde: cfg!(feature = "persistence"),
-                ..Default::default()
-            },
-        )
-        .unwrap();
-        let mut new_filename = entrypoint.clone();
-        new_filename.push(".rs");
-        let mut new_path = bindings_dir.clone();
-        new_path.push(new_filename);
-        fs::write(new_path, rust_bindings).unwrap();
-    });
-    // // Generate the Rust bindings and write to a file.
-    // let text = create_shader_module_embedded(wgsl_source, WriteOptions::default()).unwrap();
-    // let out_dir = std::env::var("OUT_DIR").unwrap();
-    // std::fs::write(format!("{out_dir}/model.rs"), text.as_bytes()).unwrap();
-    // todo!("will for certain require different shader source files. Doesnt do validation, doesnt do imports. IIRC wanted everything to be in one big shader, which caused me to go to bindgen, in addition to debug labels")
-}
-
 use std::collections::{HashMap, HashSet};
 use std::ffi::{OsStr, OsString};
 use std::fs;
 use std::path::{Path, PathBuf};
+
+fn main() -> Result<()> {
+    let shaders_dir = PathBuf::from("./shaders");
+    let resolved_shaders = handle_c_pragma_once_style_imports(&shaders_dir).unwrap();
+    let mut out_dir = PathBuf::from(std::env::var("OUT_DIR").unwrap());
+
+    out_dir.push(shaders_dir.file_name().unwrap());
+
+    let resolved_shaders_dir = append_to_last_dir(&out_dir, "_resolved");
+
+    fs::create_dir_all(resolved_shaders_dir.clone()).unwrap();
+
+    for (el, resolved_source) in resolved_shaders.iter() {
+        let mut file_path = resolved_shaders_dir.clone();
+        let mut file_name = el.clone();
+        file_name.push(".wgsl");
+        file_path.push(file_name);
+        fs::write(file_path, resolved_source).unwrap();
+    }
+    // first use wgsl_bindgen to get nice errors.
+    // TODO: remove once we find a good alternative
+    // TODO: to actually support pipeline overridable constants, these have to be sanitized out.
+    bindgen_generation(&resolved_shaders_dir)?;
+    let bindings_dir = append_to_last_dir(&out_dir, "_bindings");
+
+    fs::create_dir_all(&bindings_dir).unwrap();
+    
+    wgsl_to_wgpu_generation(resolved_shaders, &bindings_dir);
+    Ok(())
+}
 
 /// TODO: Currently only supports direct imports.
 ///
@@ -157,23 +110,61 @@ fn handle_c_pragma_once_style_imports(
         })
         .collect();
 
-    let mut out_dir = PathBuf::from(std::env::var("OUT_DIR").unwrap());
-
-    out_dir.push(directory.file_name().unwrap());
-
-    let new_path = append_to_last_dir(&out_dir, "_resolved");
-
-    fs::create_dir_all(new_path.clone()).unwrap();
-
-    for (el, resolved_source) in wgsl_files.iter() {
-        let mut file_path = new_path.clone();
-        let mut file_name = el.clone();
-        file_name.push(".wgsl");
-        file_path.push(file_name);
-        fs::write(file_path, resolved_source).unwrap();
-    }
-
     Ok(wgsl_files)
+}
+
+fn bindgen_generation(resolved_shaders_dir: &Path) -> Result<(), ErrReport> {
+    let shader_entries = [
+        "multimodal_gaussian.fragment",
+        "fullscreen_quad.vertex",
+        "diff_display.fragment",
+    ];
+
+    let mut bindgen = WgslBindgenOptionBuilder::default();
+    bindgen
+        .workspace_root(&resolved_shaders_dir)
+        .serialization_strategy(WgslTypeSerializeStrategy::Bytemuck)
+        .derive_serde(cfg!(feature = "persistence"))
+        .type_map(RustWgslTypeMap);
+    for source in shader_entries {
+        bindgen.add_entry_point(format!("{resolved_shaders_dir}/{source}.wgsl", resolved_shaders_dir = resolved_shaders_dir.to_string_lossy()));
+    }
+    let bindgen = bindgen.output("src/shaders.rs").build().unwrap();
+
+    bindgen.generate().into_diagnostic()
+}
+
+#[allow(dead_code)]
+fn wgsl_to_wgpu_generation(resolved_shaders: HashMap<OsString, String>, bindings_dir: &PathBuf) {
+    let shader_entries = [
+        "multimodal_gaussian.fragment",
+        "fullscreen_quad.vertex",
+        "diff_display.fragment",
+    ]
+    .map(OsString::from);
+
+    shader_entries.into_iter().for_each(|entrypoint| {
+        let wgsl_source = resolved_shaders.get(&entrypoint).unwrap();
+        let rust_bindings = create_shader_module_embedded(
+            wgsl_source,
+            WriteOptions {
+                derive_bytemuck_host_shareable: true,
+                derive_serde: cfg!(feature = "persistence"),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        let mut new_filename = entrypoint.clone();
+        new_filename.push(".rs");
+        let mut new_path = bindings_dir.clone();
+        new_path.push(new_filename);
+        fs::write(new_path, rust_bindings).unwrap();
+    });
+    // // Generate the Rust bindings and write to a file.
+    // let text = create_shader_module_embedded(wgsl_source, WriteOptions::default()).unwrap();
+    // let out_dir = std::env::var("OUT_DIR").unwrap();
+    // std::fs::write(format!("{out_dir}/model.rs"), text.as_bytes()).unwrap();
+    // todo!("will for certain require different shader source files. Doesnt do validation, doesnt do imports. IIRC wanted everything to be in one big shader, which caused me to go to bindgen, in addition to debug labels")
 }
 
 fn append_to_last_dir(directory: &Path, appendage: impl AsRef<OsStr>) -> PathBuf {
@@ -185,10 +176,4 @@ fn append_to_last_dir(directory: &Path, appendage: impl AsRef<OsStr>) -> PathBuf
 
     new_path.push(new_dir);
     new_path
-}
-
-fn main() -> Result<()> {
-    wgsl_to_wgpu_generation();
-    bindgen_generation()?;
-    Ok(())
 }
