@@ -8,14 +8,16 @@ use wgpu::{
 };
 
 use crate::target_distributions::multimodal_gaussian::MultiModalGaussian;
-use crate::{
-    create_shader_module,
-    shaders::multimodal_gaussian::{self, NormalDistribution, ResolutionInfo},
-};
 
 use super::{fullscreen_quad, resolution_uniform::get_resolution_pair, WgpuBufferBindGroupPair};
 
+use crate::create_shader_module;
+
 create_shader_module!("multimodal_gaussian.fragment");
+
+use shader_bindings::{bind_groups, ResolutionInfo};
+
+pub use shader_bindings::NormalDistribution;
 
 struct MultiModalGaussPipeline {
     pipeline: RenderPipeline,
@@ -65,20 +67,17 @@ pub(super) fn get_gaussian_target_pair(
         }),
     };
 
-    let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-        label: webgpu_debug_name,
-        layout: &multimodal_gaussian::WgpuBindGroup1::get_bind_group_layout(device),
-        entries: &multimodal_gaussian::WgpuBindGroup1Entries::new(
-            multimodal_gaussian::WgpuBindGroup1EntriesParams {
-                gauss_bases: BufferBinding {
-                    buffer: &buffer,
-                    offset: 0,
-                    size: NonZero::new(buffer.size()),
-                },
+    let bind_group = bind_groups::BindGroup1::unsafe_get_bind_group(
+        device, 
+        bind_groups::BindGroupEntries1 {
+            gauss_bases: BufferBinding {
+                buffer: &buffer,
+                offset: 0,
+                size: NonZero::new(buffer.size()),
             },
-        )
-        .as_array(),
-    });
+        },
+        &bind_groups::BindGroup1::LAYOUT_DESCRIPTOR,
+    );
 
     WgpuBufferBindGroupPair { bind_group, buffer }
 }
@@ -89,7 +88,7 @@ impl MultiModalGaussianDisplay {
 
         let webgpu_debug_name = Some(file!());
 
-        let layout = multimodal_gaussian::create_pipeline_layout(device);
+        let layout = shader_bindings::create_pipeline_layout(device);
 
         // chrome: Bgra8Unorm
         // native linux vulkan: Rgba8Unorm
@@ -101,9 +100,9 @@ impl MultiModalGaussianDisplay {
                 &fullscreen_quad::create_shader_module(device),
                 &fullscreen_quad::fullscreen_quad_entry(),
             ),
-            fragment: Some(multimodal_gaussian::fragment_state(
-                &multimodal_gaussian::create_shader_module_embed_source(device),
-                &multimodal_gaussian::fs_main_entry([Some(render_state.target_format.into())]),
+            fragment: Some(shader_bindings::fragment_state(
+                &shader_bindings::create_shader_module(device),
+                &shader_bindings::fs_main_entry([Some(render_state.target_format.into())]),
             )),
             label: webgpu_debug_name,
             layout: Some(&layout),

@@ -1,9 +1,8 @@
 use rand::{Rng, SeedableRng};
 
-use crate::{
-    shaders::diff_display::RWMHAcceptRecord,
-    target_distributions::multimodal_gaussian::MultiModalGaussian,
-};
+use crate::target_distributions::multimodal_gaussian::MultiModalGaussian;
+
+use crate::visualizations::shader_based::diff_display::shader_bindings::RWMHAcceptRecord;
 
 use super::{SRngGaussianIter, SRngPercIter};
 

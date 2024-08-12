@@ -110,6 +110,7 @@ opt-level = 2
 
 egui = { git = "https://github.com/9smtm6/egui", branch = "patched" }
 eframe = { git = "https://github.com/9smtm6/egui", branch = "patched" }
+wgsl_to_wgpu = { git = "https://github.com/9SMTM6/wgsl_to_wgpu", branch = "clean_patched" }
 # wgpu = { git = "https://github.com/9smtm6/wgpu", branch = "patched" }
 
 # If you fork https://github.com/emilk/egui you can test with:

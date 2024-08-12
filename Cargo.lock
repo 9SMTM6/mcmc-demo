@@ -3530,8 +3530,7 @@ dependencies = [
 [[package]]
 name = "wgsl_to_wgpu"
 version = "0.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2d435ca4c80a871c4f87b5de9d06e3f76b76527153f507e7d9acb413b999e929"
+source = "git+https://github.com/9SMTM6/wgsl_to_wgpu?branch=clean_patched#47e87c0c776ede34cbf93c2b1d9ffef8e8e70d01"
 dependencies = [
  "case",
  "naga",

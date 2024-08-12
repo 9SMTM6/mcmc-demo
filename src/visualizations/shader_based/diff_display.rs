@@ -3,6 +3,7 @@
 use std::{mem::size_of, num::NonZero};
 
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
+use shader_bindings::{RWMHAcceptRecord, RWMHCountInfo, ResolutionInfo};
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
     BindGroup, Buffer, BufferBinding, BufferDescriptor, BufferUsages, RenderPipeline,
@@ -11,15 +12,10 @@ use wgpu::{
 
 use crate::{
     create_shader_module, profile_scope,
-    shaders::{
-        self,
-        diff_display::{self, RWMHCountInfo, ResolutionInfo},
-        multimodal_gaussian::NormalDistribution,
-    },
     simulation::random_walk_metropolis_hastings::Rwmh,
     target_distributions::multimodal_gaussian::MultiModalGaussian,
     visualizations::shader_based::{
-        multimodal_gaussian::get_gaussian_target_pair, resolution_uniform::get_resolution_pair,
+        multimodal_gaussian::{get_gaussian_target_pair, shader_bindings::NormalDistribution}, resolution_uniform::get_resolution_pair,
         WgpuBufferBindGroupPair,
     },
 };
@@ -27,6 +23,8 @@ use crate::{
 use super::fullscreen_quad;
 
 create_shader_module!("diff_display.fragment");
+
+use shader_bindings::bind_groups;
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 pub struct DiffDisplay {
@@ -36,7 +34,7 @@ pub struct DiffDisplay {
 
 fn get_approx_triple(
     device: &wgpu::Device,
-    approx_points: Option<&[shaders::diff_display::RWMHAcceptRecord]>,
+    approx_points: Option<&[RWMHAcceptRecord]>,
 ) -> (BindGroup, Buffer, Buffer) {
     let webgpu_debug_name = Some(file!());
 
@@ -58,30 +56,27 @@ fn get_approx_triple(
 
     let info_buffer = device.create_buffer(&BufferDescriptor {
         label: webgpu_debug_name,
-        size: size_of::<shaders::diff_display::RWMHCountInfo>() as u64,
+        size: size_of::<RWMHCountInfo>() as u64,
         usage: BufferUsages::COPY_DST | BufferUsages::UNIFORM,
         mapped_at_creation: false,
     });
 
-    let approx_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-        label: webgpu_debug_name,
-        layout: &diff_display::WgpuBindGroup2::get_bind_group_layout(device),
-        entries: &diff_display::WgpuBindGroup2Entries::new(
-            diff_display::WgpuBindGroup2EntriesParams {
-                accepted: BufferBinding {
-                    buffer: &accept_buffer,
-                    offset: 0,
-                    size: NonZero::new(accept_buffer.size()),
-                },
-                count_info: BufferBinding {
-                    buffer: &info_buffer,
-                    offset: 0,
-                    size: NonZero::new(info_buffer.size()),
-                },
+    let approx_bind_group = bind_groups::BindGroup2::unsafe_get_bind_group(
+        device,
+        bind_groups::BindGroupEntries2 {
+            accepted: BufferBinding {
+                buffer: &accept_buffer,
+                offset: 0,
+                size: NonZero::new(accept_buffer.size()),
             },
-        )
-        .as_array(),
-    });
+            count_info: BufferBinding {
+                buffer: &info_buffer,
+                offset: 0,
+                size: NonZero::new(info_buffer.size()),
+            }
+        },
+        &bind_groups::BindGroup2::LAYOUT_DESCRIPTOR,
+    );
 
     (approx_bind_group, accept_buffer, info_buffer)
 }
@@ -120,16 +115,16 @@ impl DiffDisplay {
 
         let webgpu_debug_name = Some(file!());
 
-        let layout = diff_display::create_pipeline_layout(device);
+        let layout = shader_bindings::create_pipeline_layout(device);
 
         let pipeline = device.create_render_pipeline(&RenderPipelineDescriptor {
             vertex: fullscreen_quad::vertex_state(
                 &fullscreen_quad::create_shader_module(device),
                 &fullscreen_quad::fullscreen_quad_entry(),
             ),
-            fragment: Some(diff_display::fragment_state(
-                &diff_display::create_shader_module_embed_source(device),
-                &diff_display::fs_main_entry([Some(render_state.target_format.into())]),
+            fragment: Some(shader_bindings::fragment_state(
+                &shader_bindings::create_shader_module(device),
+                &shader_bindings::fs_main_entry([Some(render_state.target_format.into())]),
             )),
             label: webgpu_debug_name,
             layout: Some(&layout),
