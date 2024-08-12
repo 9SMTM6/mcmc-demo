@@ -30,11 +30,15 @@ macro_rules! create_shader_module {
             clippy::unreadable_literal,
             clippy::wrong_self_convention,
             clippy::allow_attributes_without_reason,
-            clippy::used_underscore_binding,
+            clippy::used_underscore_binding
         )]
-        #[rustfmt::skip]        
         pub mod $module_name {
-            include!(concat!(env!("OUT_DIR"), "/shaders_bindings/", $shader_name, ".rs"));
+            include!(concat!(
+                env!("OUT_DIR"),
+                "/shaders_bindings/",
+                $shader_name,
+                ".rs"
+            ));
         }
     };
     ($shader_name:expr) => {

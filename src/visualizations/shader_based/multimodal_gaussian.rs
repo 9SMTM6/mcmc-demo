@@ -7,8 +7,11 @@ use wgpu::{
     RenderPipelineDescriptor,
 };
 
-use crate::{create_shader_module, shaders::multimodal_gaussian::{self, NormalDistribution, ResolutionInfo}};
 use crate::target_distributions::multimodal_gaussian::MultiModalGaussian;
+use crate::{
+    create_shader_module,
+    shaders::multimodal_gaussian::{self, NormalDistribution, ResolutionInfo},
+};
 
 use super::{fullscreen_quad, resolution_uniform::get_resolution_pair, WgpuBufferBindGroupPair};
 

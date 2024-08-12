@@ -1,7 +1,8 @@
 use std::f32::consts::PI;
 
 use crate::{
-    shaders::multimodal_gaussian::NormalDistribution, simulation::random_walk_metropolis_hastings::AlgoVec,
+    shaders::multimodal_gaussian::NormalDistribution,
+    simulation::random_walk_metropolis_hastings::AlgoVec,
 };
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]

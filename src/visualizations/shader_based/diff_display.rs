@@ -10,12 +10,18 @@ use wgpu::{
 };
 
 use crate::{
-    create_shader_module, profile_scope, shaders::{
-        self, diff_display::{self, RWMHCountInfo, ResolutionInfo},
+    create_shader_module, profile_scope,
+    shaders::{
+        self,
+        diff_display::{self, RWMHCountInfo, ResolutionInfo},
         multimodal_gaussian::NormalDistribution,
-    }, simulation::random_walk_metropolis_hastings::Rwmh, target_distributions::multimodal_gaussian::MultiModalGaussian, visualizations::shader_based::{
-        multimodal_gaussian::get_gaussian_target_pair, resolution_uniform::get_resolution_pair, WgpuBufferBindGroupPair
-    }
+    },
+    simulation::random_walk_metropolis_hastings::Rwmh,
+    target_distributions::multimodal_gaussian::MultiModalGaussian,
+    visualizations::shader_based::{
+        multimodal_gaussian::get_gaussian_target_pair, resolution_uniform::get_resolution_pair,
+        WgpuBufferBindGroupPair,
+    },
 };
 
 use super::fullscreen_quad;
