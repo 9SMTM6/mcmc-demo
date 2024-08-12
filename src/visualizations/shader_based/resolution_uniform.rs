@@ -8,7 +8,10 @@ use wgpu::{util::DeviceExt, BufferBinding};
 //
 // Sadly I could not find a way to structure the files in such a way that I could make this easy to tell.
 // Rusts nominal type-checking is also none-the-wiser, since the generic wgpu types for buffer and bindgroup erase this info.
-use super::{diff_display::shader_bindings::{bind_groups, ResolutionInfo}, WgpuBufferBindGroupPair};
+use super::{
+    diff_display::shader_bindings::{bind_groups, ResolutionInfo},
+    WgpuBufferBindGroupPair,
+};
 
 pub const INITIAL_RENDER_SIZE: [f32; 2] = [640.0, 480.0];
 
@@ -27,7 +30,7 @@ pub fn get_resolution_pair(device: &wgpu::Device) -> WgpuBufferBindGroupPair {
     let buffer = device.create_buffer_init(&create_buffer_init_descr());
 
     let bind_group = bind_groups::BindGroup0::unsafe_get_bind_group(
-        device, 
+        device,
         bind_groups::BindGroupEntries0 {
             resolution_info: BufferBinding {
                 buffer: &buffer,

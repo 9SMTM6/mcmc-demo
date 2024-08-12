@@ -68,7 +68,7 @@ pub(super) fn get_gaussian_target_pair(
     };
 
     let bind_group = bind_groups::BindGroup1::unsafe_get_bind_group(
-        device, 
+        device,
         bind_groups::BindGroupEntries1 {
             gauss_bases: BufferBinding {
                 buffer: &buffer,

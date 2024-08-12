@@ -12,7 +12,10 @@ use crate::{
     target_distributions::multimodal_gaussian::MultiModalGaussian,
     visualizations::{
         egui_based::point_display::PointDisplay,
-        shader_based::{diff_display::DiffDisplay, multimodal_gaussian::{MultiModalGaussianDisplay, shader_bindings::NormalDistribution}},
+        shader_based::{
+            diff_display::DiffDisplay,
+            multimodal_gaussian::{shader_bindings::NormalDistribution, MultiModalGaussianDisplay},
+        },
     },
 };
 

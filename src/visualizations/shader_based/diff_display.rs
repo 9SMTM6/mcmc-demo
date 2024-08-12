@@ -15,7 +15,8 @@ use crate::{
     simulation::random_walk_metropolis_hastings::Rwmh,
     target_distributions::multimodal_gaussian::MultiModalGaussian,
     visualizations::shader_based::{
-        multimodal_gaussian::{get_gaussian_target_pair, shader_bindings::NormalDistribution}, resolution_uniform::get_resolution_pair,
+        multimodal_gaussian::{get_gaussian_target_pair, shader_bindings::NormalDistribution},
+        resolution_uniform::get_resolution_pair,
         WgpuBufferBindGroupPair,
     },
 };
@@ -73,7 +74,7 @@ fn get_approx_triple(
                 buffer: &info_buffer,
                 offset: 0,
                 size: NonZero::new(info_buffer.size()),
-            }
+            },
         },
         &bind_groups::BindGroup2::LAYOUT_DESCRIPTOR,
     );

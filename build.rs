@@ -1,10 +1,10 @@
 use miette::{ErrReport, IntoDiagnostic, Result};
-use wgsl_bindgen::{RustWgslTypeMap, WgslBindgenOptionBuilder, WgslTypeSerializeStrategy};
-use wgsl_to_wgpu::{create_shader_module_embedded, WriteOptions};
 use std::collections::{HashMap, HashSet};
 use std::ffi::{OsStr, OsString};
 use std::fs;
 use std::path::{Path, PathBuf};
+use wgsl_bindgen::{RustWgslTypeMap, WgslBindgenOptionBuilder, WgslTypeSerializeStrategy};
+use wgsl_to_wgpu::{create_shader_module_embedded, WriteOptions};
 
 fn main() -> Result<()> {
     let shaders_dir = PathBuf::from("./shaders");
@@ -31,7 +31,7 @@ fn main() -> Result<()> {
     let bindings_dir = append_to_last_dir(&out_dir, "_bindings");
 
     fs::create_dir_all(&bindings_dir).unwrap();
-    
+
     wgsl_to_wgpu_generation(resolved_shaders, &bindings_dir);
     Ok(())
 }
@@ -127,7 +127,10 @@ fn bindgen_generation(resolved_shaders_dir: &Path) -> Result<(), ErrReport> {
         .derive_serde(cfg!(feature = "persistence"))
         .type_map(RustWgslTypeMap);
     for source in shader_entries {
-        bindgen.add_entry_point(format!("{resolved_shaders_dir}/{source}.wgsl", resolved_shaders_dir = resolved_shaders_dir.to_string_lossy()));
+        bindgen.add_entry_point(format!(
+            "{resolved_shaders_dir}/{source}.wgsl",
+            resolved_shaders_dir = resolved_shaders_dir.to_string_lossy()
+        ));
     }
     let bindgen = bindgen.output("src/shaders.rs").build().unwrap();
 
