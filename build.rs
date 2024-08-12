@@ -32,7 +32,7 @@ fn main() -> Result<()> {
 
     fs::create_dir_all(&bindings_dir).unwrap();
 
-    wgsl_to_wgpu_generation(resolved_shaders, &bindings_dir);
+    wgsl_to_wgpu_generation(&resolved_shaders, &bindings_dir);
     Ok(())
 }
 
@@ -122,7 +122,7 @@ fn bindgen_generation(resolved_shaders_dir: &Path) -> Result<(), ErrReport> {
 
     let mut bindgen = WgslBindgenOptionBuilder::default();
     bindgen
-        .workspace_root(&resolved_shaders_dir)
+        .workspace_root(resolved_shaders_dir)
         .serialization_strategy(WgslTypeSerializeStrategy::Bytemuck)
         .derive_serde(cfg!(feature = "persistence"))
         .type_map(RustWgslTypeMap);
@@ -138,7 +138,7 @@ fn bindgen_generation(resolved_shaders_dir: &Path) -> Result<(), ErrReport> {
 }
 
 #[allow(dead_code)]
-fn wgsl_to_wgpu_generation(resolved_shaders: HashMap<OsString, String>, bindings_dir: &PathBuf) {
+fn wgsl_to_wgpu_generation(resolved_shaders: &HashMap<OsString, String>, bindings_dir: &Path) {
     let shader_entries = [
         "multimodal_gaussian.fragment",
         "fullscreen_quad.vertex",
@@ -159,7 +159,7 @@ fn wgsl_to_wgpu_generation(resolved_shaders: HashMap<OsString, String>, bindings
         .unwrap();
         let mut new_filename = entrypoint.clone();
         new_filename.push(".rs");
-        let mut new_path = bindings_dir.clone();
+        let mut new_path = bindings_dir.to_owned();
         new_path.push(new_filename);
         fs::write(new_path, rust_bindings).unwrap();
     });
