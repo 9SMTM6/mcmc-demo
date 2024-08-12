@@ -7,17 +7,12 @@ use wgpu::{
     RenderPipelineDescriptor,
 };
 
-use crate::shaders::{
-    fullscreen_quad, multimodal_gaussian,
-    multimodal_gaussian::{NormalDistribution, ResolutionInfo},
-};
+use crate::{create_shader_module, shaders::multimodal_gaussian::{self, NormalDistribution, ResolutionInfo}};
 use crate::target_distributions::multimodal_gaussian::MultiModalGaussian;
 
-use super::{resolution_uniform::get_resolution_pair, WgpuBufferBindGroupPair};
+use super::{fullscreen_quad, resolution_uniform::get_resolution_pair, WgpuBufferBindGroupPair};
 
-pub mod shader_bindings {
-    include!(concat!(env!("OUT_DIR"), "/shaders_bindings/", "multimodal_gaussian.fragment", ".rs"));
-}
+create_shader_module!("multimodal_gaussian.fragment");
 
 struct MultiModalGaussPipeline {
     pipeline: RenderPipeline,
@@ -100,7 +95,7 @@ impl MultiModalGaussianDisplay {
 
         let pipeline = device.create_render_pipeline(&RenderPipelineDescriptor {
             vertex: fullscreen_quad::vertex_state(
-                &fullscreen_quad::create_shader_module_embed_source(device),
+                &fullscreen_quad::create_shader_module(device),
                 &fullscreen_quad::fullscreen_quad_entry(),
             ),
             fragment: Some(multimodal_gaussian::fragment_state(

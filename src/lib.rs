@@ -19,7 +19,8 @@ mod visualizations;
     clippy::unreadable_literal,
     clippy::wrong_self_convention,
     clippy::allow_attributes_without_reason,
-    clippy::used_underscore_binding)]
+    clippy::used_underscore_binding,
+)]
 #[rustfmt::skip]
 mod shaders;
 pub use app::McmcDemo;

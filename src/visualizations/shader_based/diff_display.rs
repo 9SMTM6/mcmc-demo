@@ -10,19 +10,17 @@ use wgpu::{
 };
 
 use crate::{
-    profile_scope,
-    shaders::{
-        self, diff_display, fullscreen_quad,
+    create_shader_module, profile_scope, shaders::{
+        self, diff_display::{self, RWMHCountInfo, ResolutionInfo},
         multimodal_gaussian::NormalDistribution,
-        diff_display::{RWMHCountInfo, ResolutionInfo},
-    },
-    simulation::random_walk_metropolis_hastings::Rwmh,
-    target_distributions::multimodal_gaussian::MultiModalGaussian,
-    visualizations::shader_based::{
-        multimodal_gaussian::get_gaussian_target_pair, resolution_uniform::get_resolution_pair,
-        WgpuBufferBindGroupPair,
-    },
+    }, simulation::random_walk_metropolis_hastings::Rwmh, target_distributions::multimodal_gaussian::MultiModalGaussian, visualizations::shader_based::{
+        multimodal_gaussian::get_gaussian_target_pair, resolution_uniform::get_resolution_pair, WgpuBufferBindGroupPair
+    }
 };
+
+use super::fullscreen_quad;
+
+create_shader_module!("diff_display.fragment");
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 pub struct DiffDisplay {
@@ -120,7 +118,7 @@ impl DiffDisplay {
 
         let pipeline = device.create_render_pipeline(&RenderPipelineDescriptor {
             vertex: fullscreen_quad::vertex_state(
-                &fullscreen_quad::create_shader_module_embed_source(device),
+                &fullscreen_quad::create_shader_module(device),
                 &fullscreen_quad::fullscreen_quad_entry(),
             ),
             fragment: Some(diff_display::fragment_state(

@@ -15,7 +15,10 @@ fn bindgen_generation() -> Result<(), ErrReport> {
 
     out_dir.push(shader_dir.file_name().unwrap());
 
-    let bindings_dir = append_to_last_dir(&out_dir, "_resolved").to_str().unwrap().to_owned();
+    let bindings_dir = append_to_last_dir(&out_dir, "_resolved")
+        .to_str()
+        .unwrap()
+        .to_owned();
 
     let mut bindgen = WgslBindgenOptionBuilder::default();
     bindgen
@@ -53,12 +56,15 @@ fn wgsl_to_wgpu_generation() {
 
     shader_entries.into_iter().for_each(|entrypoint| {
         let wgsl_source = resolved_files.get(&entrypoint).unwrap();
-        let rust_bindings =
-            create_shader_module_embedded(wgsl_source, WriteOptions{
+        let rust_bindings = create_shader_module_embedded(
+            wgsl_source,
+            WriteOptions {
                 derive_bytemuck_host_shareable: true,
                 derive_serde: cfg!(feature = "persistence"),
                 ..Default::default()
-            }).unwrap();
+            },
+        )
+        .unwrap();
         let mut new_filename = entrypoint.clone();
         new_filename.push(".rs");
         let mut new_path = bindings_dir.clone();
@@ -144,8 +150,8 @@ fn handle_c_pragma_once_style_imports(
                         None => line.to_owned(),
                     },
                 )
-                .map(|line| format!("{line}\n"))
-                .collect();
+                .reduce(|accum, line| accum + "\n" + &line)
+                .unwrap_or_default();
 
             (el.to_owned(), resolved_source)
         })
