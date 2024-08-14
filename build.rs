@@ -80,13 +80,14 @@ fn handle_c_pragma_once_style_imports(
             }
 
             let cleaned_source = first_actual_sourcecode
-                .map(|start_line| source
-                    .lines()
-                    .skip(start_line)
-                    .map(String::from)
-                    .reduce(|accum, line| accum + "\n" + &line)
-                    .unwrap_or_default()
-                )
+                .map(|start_line| {
+                    source
+                        .lines()
+                        .skip(start_line)
+                        .map(String::from)
+                        .reduce(|accum, line| accum + "\n" + &line)
+                        .unwrap_or_default()
+                })
                 .unwrap_or_default();
 
             let el = el.strip_prefix(directory).unwrap().file_stem().unwrap();
@@ -177,8 +178,7 @@ fn handle_c_pragma_once_style_imports(
                     .map(|el| el + "\n")
                     .unwrap_or_default();
 
-                let resolved_source = resolved_imports
-                    + cleaned_source;
+                let resolved_source = resolved_imports + cleaned_source;
                 (filename.clone(), resolved_source)
             },
         )

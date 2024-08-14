@@ -20,7 +20,7 @@ macro_rules! create_shader_module {
             clippy::approx_constant,
             clippy::module_name_repetitions,
             clippy::pattern_type_mismatch,
-            clippy::unreadable_literal,
+            clippy::unreadable_literal
         )]
         pub mod $module_name {
             include!(concat!(
