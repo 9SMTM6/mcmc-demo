@@ -1,8 +1,8 @@
 # TODO:
 
-## Current prograss blockers:
+## Current progress blockers:
 
-* wgpu pipeline-overridable constants are not supported on glsl-out
+* [Fixedish, still needs search-replace code] wgpu pipeline-overridable constants are not supported on glsl-out
   * but that is required via https://github.com/gfx-rs/wgpu/blob/7b4cbc26192d6d56a31f8e67769e656a6627b222/wgpu/Cargo.toml#L148C1-L151C20 (maybe removable via patch?)
   * issue: https://github.com/gfx-rs/wgpu/issues/3514
   * this is what I considered for the compute shader to set the compute_group dimensions.
@@ -12,7 +12,6 @@
     * actually, from my understanding, fixing this for naga wont fix the issue for naga_oil, since naga_oil wants to use naga as a preprocessor.
   * [wgsl-bindgen issue](https://github.com/Swoorup/wgsl-bindgen/issues/39)
   * [naga_oil issue](https://github.com/bevyengine/naga_oil/issues/102)
-* wgpu 22.1 update brings some perhaps helpful updates, is blocked on wgsl_bindgen
 * [Fixedish] using shared memory multithreading on the web is blocked by https://github.com/emilk/egui/issues/4914
   * currently using a patched version
   * reverts relevant changes from: https://github.com/emilk/egui/pull/3595/commits/c5746dbd37a31d9a90c8987449b4089eb910ad8c
@@ -38,6 +37,12 @@ I currently envison this approach (lets see how much of this I'll get):
 6. the storage will never have to leave the GPU. Compute it once, read the result it in a fragment shader where the actual colors are determined
 7. with that I could also consider decoupling calculation resolution and render resolution, but I think for now I'll keep them coupled
 8. In order to avoid numerical stability issues I'll probably add some normalization after N steps. I have to decide on a proper strategy for that. Perhaps I can actually do it based on current maximum instead. Most of these strategies will lead to systemctic errors in the precision, since rounding might happen in different situations, but I'm fine with that.
+
+Note that a compute shader in a webworker is supposed to work according to [spec](https://www.w3.org/TR/webgpu/#navigator-gpu), but [apparently firefox doesnt support that](https://developer.mozilla.org/en-US/docs/Web/API/WorkerNavigator/gpu), even on nightly. So here's hoping that they will eventually support it when they release.
+
+Uuuuh. Just saw that it apparently explicitly isn't supported on Chromium Linux either...
+
+Also, even with that stuff, I still might get difficulties moving the buffer over the thread boundary...
 
 ## Scaling of distributions and approximations
 
