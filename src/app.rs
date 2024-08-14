@@ -43,6 +43,8 @@ pub struct McmcDemo {
     backend_panel: super::profile::backend_panel::BackendPanel,
     #[cfg_attr(feature = "persistence", serde(skip))]
     bg_task: Option<BgTaskHandle<Rwmh>>,
+    // #[cfg_attr(feature = "persistence", serde(skip))]
+    // gpu_task: Option<BgTaskHandle<()>>,
     // bg_tasks: Vec<BgTask<String, String>>,
 }
 
@@ -60,6 +62,7 @@ impl Default for McmcDemo {
             #[cfg(feature = "profile")]
             backend_panel: Default::default(),
             bg_task: None,
+            // gpu_task: None,
             // bg_tasks: vec![]
         }
     }

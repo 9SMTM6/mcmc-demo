@@ -79,7 +79,7 @@ pub fn try_display_panic_str(panic_info: &str) {
         assert!(wasm_thread::is_web_worker_thread());
         // TODO: Find some way to transport these to the main thread.
         // JoinHandle::join only returns the value that was panicked with.
-        // Location is dificult to extract.
+        // Location is difficult to extract.
         // Perhaps just pass a stringified panic somewhere.
     };
 }

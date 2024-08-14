@@ -46,8 +46,6 @@ eframe = { version = "0.28.1", default-features = false, features = [
     "wayland",
 ] }
 log = "0.4"
-
-# You only need serde if you want app persistence:
 serde = { version = "1", features = ["derive"], optional = true }
 wgpu = { version = "22.1", features = ["webgpu"] }
 bytemuck = { version = "1.16.0" }

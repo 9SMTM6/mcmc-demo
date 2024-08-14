@@ -53,7 +53,7 @@ impl<Final: Send + 'static> BgTaskHandle<Final> {
 
     /// # Panics
     ///
-    /// Panics if task is not finished!
+    /// Panics if task is not finished or panicked
     #[must_use]
     pub fn get_value(self) -> Final {
         assert!(matches!(self.get_progress(), Progress::Finished));
