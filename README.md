@@ -38,11 +38,24 @@ I currently envison this approach (lets see how much of this I'll get):
 7. with that I could also consider decoupling calculation resolution and render resolution, but I think for now I'll keep them coupled
 8. In order to avoid numerical stability issues I'll probably add some normalization after N steps. I have to decide on a proper strategy for that. Perhaps I can actually do it based on current maximum instead. Most of these strategies will lead to systemctic errors in the precision, since rounding might happen in different situations, but I'm fine with that.
 
+### Webgpu in a background thread
+
 Note that a compute shader in a webworker is supposed to work according to [spec](https://www.w3.org/TR/webgpu/#navigator-gpu), but [apparently firefox doesnt support that](https://developer.mozilla.org/en-US/docs/Web/API/WorkerNavigator/gpu), even on nightly. So here's hoping that they will eventually support it when they release.
 
 Uuuuh. Just saw that it apparently explicitly isn't supported on Chromium Linux either...
 
 Also, even with that stuff, I still might get difficulties moving the buffer over the thread boundary...
+
+### WebGPU Synchronization
+
+Originally I was under the impression that global synchronization on the GPU was impossible, from some article that I might look for again in the future.
+
+But it seems I was mistaken.
+Barriers are indeed only allowed on a workgroup level.
+Atomics however seem to be synchronized on the entire GPU.
+That is at least whats done [here](https://webgpufundamentals.org/webgpu/lessons/webgpu-compute-shaders-histogram.html).
+
+Look that up in the future.
 
 ## Scaling of distributions and approximations
 

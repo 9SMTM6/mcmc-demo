@@ -188,6 +188,12 @@ impl CallbackTrait for RenderCall {
         _egui_encoder: &mut wgpu::CommandEncoder,
         callback_resources: &mut eframe::egui_wgpu::CallbackResources,
     ) -> Vec<wgpu::CommandBuffer> {
+        // TODO: generate diff_calc compute pass with dispatch from `wgpu::CommandEncoder`. 
+        // That method can be used both here as a start, and if its too expensive, the same thing can be moved to a background task of sorts.
+        // Consider notes in readme about availability of stuff in web workers.
+        // I might be able to create some abstraction on top if this stuff that might or might not start the task from a background task
+        // However, be sure to test if I can move buffers between threads without the data going through CPU. 
+        // THat information might be helpful in the future.
         let &mut PipelineStateHolder {
             ref resolution_buffer,
             ref mut target_buffer,
