@@ -54,7 +54,7 @@ fn handle_c_pragma_once_style_imports(
     #[derive(Debug)]
     struct FirstPass {
         source: String,
-        direct_imports: Vec<String>,
+        direct_imports_in_order: Vec<String>,
     }
 
     let include_regex = regex::Regex::new(r#"\#import \"(.+)\.wgsl";"#).unwrap();
@@ -63,25 +63,24 @@ fn handle_c_pragma_once_style_imports(
         .into_iter()
         .map(|el| {
             let source = fs::read_to_string(&el).unwrap();
-            let direct_imports: Vec<_> = source
-                .lines()
-                .filter_map(|line| {
-                    let captures = include_regex.captures(line);
-                    captures.map(|cap| {
-                        let (_, [matched]) = cap.extract();
-                        matched.to_owned()
-                    })
-                })
-                .collect();
+            let mut saw_actual_sourcecode = false;
+            let mut direct_imports_in_order = Vec::<String>::new();
+            for line in source.lines() {
+                if let Some((_, [matched])) = include_regex.captures(line).map(|cap| cap.extract()) {
+                    assert!(!saw_actual_sourcecode, "Import after actual sourcecode");
+                    direct_imports_in_order.push(matched.to_owned())
+                } else if line.trim() != "" {
+                    saw_actual_sourcecode = true;
+                }
+            }
 
             let el = el.strip_prefix(directory).unwrap().file_stem().unwrap();
 
             (
                 el.to_os_string(),
-                // .to_string_lossy().to_string(),
                 FirstPass {
                     source,
-                    direct_imports,
+                    direct_imports_in_order,
                 },
             )
         })
@@ -97,7 +96,7 @@ fn handle_c_pragma_once_style_imports(
                     |line| match include_regex.captures(line).map(|cap| cap.extract()) {
                         Some((_, [matched])) => {
                             let imported = wgsl_files.get(&OsString::from(matched)).unwrap();
-                            assert_eq!(imported.direct_imports.len(), 0);
+                            assert_eq!(imported.direct_imports_in_order.len(), 0);
                             imported.source.clone()
                         }
                         None => line.to_owned(),
@@ -118,6 +117,7 @@ fn bindgen_generation(resolved_shaders_dir: &Path) -> Result<(), ErrReport> {
         "multimodal_gaussian.fragment",
         "fullscreen_quad.vertex",
         "diff_display.fragment",
+        "diff_display.compute",
     ];
 
     let mut bindgen = WgslBindgenOptionBuilder::default();
@@ -143,6 +143,7 @@ fn wgsl_to_wgpu_generation(resolved_shaders: &HashMap<OsString, String>, binding
         "multimodal_gaussian.fragment",
         "fullscreen_quad.vertex",
         "diff_display.fragment",
+        "diff_display.compute",
     ]
     .map(OsString::from);
 
