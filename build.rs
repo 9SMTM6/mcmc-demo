@@ -73,7 +73,7 @@ fn handle_c_pragma_once_style_imports(
                         first_actual_sourcecode.is_none(),
                         "Import after actual sourcecode"
                     );
-                    direct_imports_in_order.push(OsString::from(matched))
+                    direct_imports_in_order.push(OsString::from(matched));
                 } else if first_actual_sourcecode.is_none() && line.trim() != "" {
                     first_actual_sourcecode = Some(idx);
                 }
@@ -112,10 +112,10 @@ fn handle_c_pragma_once_style_imports(
         std::mem::swap(&mut wgsl_files, &mut old_wgsl_files);
         for (
             filename,
-            UnfinalizedPass {
-                cleaned_source,
-                resolved_imports_in_order,
-                unresolved_imports,
+            &UnfinalizedPass {
+                ref cleaned_source,
+                ref resolved_imports_in_order,
+                ref unresolved_imports,
             },
         ) in old_wgsl_files.iter()
         {
@@ -123,7 +123,7 @@ fn handle_c_pragma_once_style_imports(
             let mut new_resolved = resolved_imports_in_order.clone();
             let mut unresolved_beforehand = false;
             for unresolved_import in unresolved_imports {
-                let import = &old_wgsl_files[unresolved_import];
+                let import = &old_wgsl_files.get(unresolved_import).unwrap();
                 if import.unresolved_imports.is_empty() && !unresolved_beforehand {
                     new_resolved.extend(import.resolved_imports_in_order.clone().into_iter());
                     new_resolved.push(unresolved_import.clone());
@@ -163,16 +163,16 @@ fn handle_c_pragma_once_style_imports(
         .map(
             |(
                 filename,
-                UnfinalizedPass {
-                    cleaned_source,
-                    resolved_imports_in_order,
-                    unresolved_imports,
+                &UnfinalizedPass {
+                    ref cleaned_source,
+                    ref resolved_imports_in_order,
+                    ref unresolved_imports,
                 },
             )| {
                 assert!(unresolved_imports.is_empty());
                 let resolved_imports = resolved_imports_in_order
                     .iter()
-                    .map(|import_name| wgsl_files[import_name].cleaned_source.clone())
+                    .map(|import_name| wgsl_files.get(import_name).unwrap().cleaned_source.clone())
                     .filter(|el| el.trim() != "")
                     .reduce(|accum, line| accum + "\n" + &line)
                     .map(|el| el + "\n")
