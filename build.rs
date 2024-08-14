@@ -36,8 +36,6 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-/// TODO: Currently only supports direct imports.
-///
 /// TODO: Maybe I'll find a way to transport the info back to the original file (handle the input spans)
 fn handle_c_pragma_once_style_imports(
     directory: &Path,
@@ -51,65 +49,142 @@ fn handle_c_pragma_once_style_imports(
         }
     }
 
-    #[derive(Debug)]
-    struct FirstPass {
-        source: String,
-        direct_imports_in_order: Vec<String>,
+    #[derive(Debug, Clone)]
+    struct UnfinalizedPass {
+        cleaned_source: String,
+        /// for recording the imports in the order they should be resolved.
+        resolved_imports_in_order: Vec<OsString>,
+        /// These imports still had unresolved imports last pass.
+        unresolved_imports: Vec<OsString>,
     }
 
     let include_regex = regex::Regex::new(r#"\#import \"(.+)\.wgsl";"#).unwrap();
 
-    let wgsl_files: HashMap<_, _> = wgsl_files
+    let mut wgsl_files: HashMap<OsString, UnfinalizedPass> = wgsl_files
         .into_iter()
         .map(|el| {
             let source = fs::read_to_string(&el).unwrap();
-            let mut saw_actual_sourcecode = false;
-            let mut direct_imports_in_order = Vec::<String>::new();
-            for line in source.lines() {
-                if let Some((_, [matched])) = include_regex.captures(line).map(|cap| cap.extract()) {
-                    assert!(!saw_actual_sourcecode, "Import after actual sourcecode");
-                    direct_imports_in_order.push(matched.to_owned())
-                } else if line.trim() != "" {
-                    saw_actual_sourcecode = true;
+            let mut first_actual_sourcecode = None::<usize>;
+            let mut direct_imports_in_order = Vec::<OsString>::new();
+            for (idx, line) in source.lines().enumerate() {
+                if let Some((_, [matched])) = include_regex.captures(line).map(|cap| cap.extract())
+                {
+                    assert!(
+                        first_actual_sourcecode.is_none(),
+                        "Import after actual sourcecode"
+                    );
+                    direct_imports_in_order.push(OsString::from(matched))
+                } else if first_actual_sourcecode.is_none() && line.trim() != "" {
+                    first_actual_sourcecode = Some(idx);
                 }
             }
+
+            let cleaned_source = first_actual_sourcecode
+                .map(|start_line| source
+                    .lines()
+                    .skip(start_line)
+                    .map(String::from)
+                    .reduce(|accum, line| accum + "\n" + &line)
+                    .unwrap_or_default()
+                )
+                .unwrap_or_default();
 
             let el = el.strip_prefix(directory).unwrap().file_stem().unwrap();
 
             (
                 el.to_os_string(),
-                FirstPass {
-                    source,
-                    direct_imports_in_order,
+                UnfinalizedPass {
+                    cleaned_source,
+                    unresolved_imports: direct_imports_in_order,
+                    resolved_imports_in_order: Vec::new(),
                 },
             )
         })
         .collect();
 
-    let wgsl_files: HashMap<_, _> = wgsl_files
-        .iter()
-        .map(|(el, first_pass)| {
-            let resolved_source: String = first_pass
-                .source
-                .lines()
-                .map(
-                    |line| match include_regex.captures(line).map(|cap| cap.extract()) {
-                        Some((_, [matched])) => {
-                            let imported = wgsl_files.get(&OsString::from(matched)).unwrap();
-                            assert_eq!(imported.direct_imports_in_order.len(), 0);
-                            imported.source.clone()
-                        }
-                        None => line.to_owned(),
-                    },
-                )
-                .reduce(|accum, line| accum + "\n" + &line)
-                .unwrap_or_default();
+    let mut loop_count = 0;
+    const MAX_IMPORT_DEPTH: usize = 6;
 
-            (el.to_owned(), resolved_source)
-        })
+    loop {
+        let mut still_unresolved = false;
+        let mut old_wgsl_files = HashMap::<OsString, UnfinalizedPass>::new();
+        std::mem::swap(&mut wgsl_files, &mut old_wgsl_files);
+        for (
+            filename,
+            UnfinalizedPass {
+                cleaned_source,
+                resolved_imports_in_order,
+                unresolved_imports,
+            },
+        ) in old_wgsl_files.iter()
+        {
+            let mut new_unresolved = Vec::<OsString>::new();
+            let mut new_resolved = resolved_imports_in_order.clone();
+            let mut unresolved_beforehand = false;
+            for unresolved_import in unresolved_imports {
+                let import = &old_wgsl_files[unresolved_import];
+                if import.unresolved_imports.is_empty() && !unresolved_beforehand {
+                    new_resolved.extend(import.resolved_imports_in_order.clone().into_iter());
+                    new_resolved.push(unresolved_import.clone());
+                } else {
+                    unresolved_beforehand = true;
+                    new_unresolved.push(unresolved_import.clone());
+                };
+            }
+            let old_content: Option<UnfinalizedPass> = wgsl_files.insert(
+                filename.clone(),
+                UnfinalizedPass {
+                    // thats potentially expensive...
+                    // we could reintroduce a first pass,
+                    // and then map that into a IntermediatePass,
+                    // that only holds the filenames.
+                    // Or simply go wild with Rc's.
+                    cleaned_source: cleaned_source.clone(),
+                    resolved_imports_in_order: new_resolved,
+                    unresolved_imports: new_unresolved,
+                },
+            );
+            assert!(old_content.is_none(), "Double insert");
+            still_unresolved = still_unresolved || unresolved_beforehand;
+        }
+        loop_count += 1;
+
+        if loop_count > MAX_IMPORT_DEPTH {
+            panic!("import depth exceeded");
+        }
+        if !still_unresolved {
+            break;
+        }
+    }
+
+    let resolved_wgsl: HashMap<OsString, String> = wgsl_files
+        .iter()
+        .map(
+            |(
+                filename,
+                UnfinalizedPass {
+                    cleaned_source,
+                    resolved_imports_in_order,
+                    unresolved_imports,
+                },
+            )| {
+                assert!(unresolved_imports.is_empty());
+                let resolved_imports = resolved_imports_in_order
+                    .iter()
+                    .map(|import_name| wgsl_files[import_name].cleaned_source.clone())
+                    .filter(|el| el.trim() != "")
+                    .reduce(|accum, line| accum + "\n" + &line)
+                    .map(|el| el + "\n")
+                    .unwrap_or_default();
+
+                let resolved_source = resolved_imports
+                    + cleaned_source;
+                (filename.clone(), resolved_source)
+            },
+        )
         .collect();
 
-    Ok(wgsl_files)
+    Ok(resolved_wgsl)
 }
 
 fn bindgen_generation(resolved_shaders_dir: &Path) -> Result<(), ErrReport> {
@@ -117,7 +192,6 @@ fn bindgen_generation(resolved_shaders_dir: &Path) -> Result<(), ErrReport> {
         "multimodal_gaussian.fragment",
         "fullscreen_quad.vertex",
         "diff_display.fragment",
-        "diff_display.compute",
     ];
 
     let mut bindgen = WgslBindgenOptionBuilder::default();
@@ -143,7 +217,6 @@ fn wgsl_to_wgpu_generation(resolved_shaders: &HashMap<OsString, String>, binding
         "multimodal_gaussian.fragment",
         "fullscreen_quad.vertex",
         "diff_display.fragment",
-        "diff_display.compute",
     ]
     .map(OsString::from);
 
