@@ -1,5 +1,6 @@
 #import "canvas_ndc_conversion.wgsl";
 
+// TODO: remove again. Its probably not worth the considerable complication.
 override resolution_width: f32 = 1920.0;
 override resolution_height: f32 = 1080.0;
 
