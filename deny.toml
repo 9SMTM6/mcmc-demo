@@ -5,6 +5,7 @@ unknown-git = "deny"
 
 allow-git = [
     "https://github.com/9smtm6/egui",
+    "https://github.com/9SMTM6/wgsl_to_wgpu",
 ]
 
 [advisories]

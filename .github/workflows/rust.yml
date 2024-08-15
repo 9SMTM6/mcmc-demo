@@ -41,6 +41,14 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: cargo clippy --workspace --target wasm32-unknown-unknown --all-features --all-targets -- -D warnings
 
+  cargo-deny:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: EmbarkStudios/cargo-deny-action@v2
+      with:
+        rust-version: stable
+
   test:
     runs-on: ubuntu-latest
     steps:
@@ -131,9 +139,6 @@ jobs:
         if: matrix.cross
         run: |
           cargo +stable install cross --git https://github.com/cross-rs/cross --rev 1b8cf50d20180c1a394099e608141480f934b7f7
-
-      - name: Building ${{ matrix.TARGET }}
-        run: echo "${{ matrix.TARGET }}"
 
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@master
