@@ -14,7 +14,6 @@ fn calc_gaussian_density(ndc_coord: vec2<f32>) -> f32 {
     var combined_prob_density = 0.0;
 
     var max_norm = 0.0;
-    // var distr_norm = 0.0;
 
     for (var i = 0u; i < arrayLength(&gauss_bases); i+=1u) {
         let el = gauss_bases[i];
@@ -30,10 +29,8 @@ fn calc_gaussian_density(ndc_coord: vec2<f32>) -> f32 {
         let prob_contrib = gauss_normalize * exp(-sq_dist / (2 * variance));
         combined_prob_density+= scale * prob_contrib;
         max_norm = max(max_norm, scale);
-        // distr_norm += scale;
     }
 
-    // combined_prob_density /= distr_norm;
     combined_prob_density /= max_norm;
 
     return combined_prob_density;

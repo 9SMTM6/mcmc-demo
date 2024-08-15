@@ -1,12 +1,12 @@
 #import "rwmh_info.wgsl";
 
-struct DiffDisplayOptions {
+struct BinaryDistanceApproxOptions {
     window_radius: f32,
 }
 
 // if reintroduced, increase bindgroup id on others again.
 // @group(2) @binding(0)
-// var<uniform> diff_display_options: DiffDisplayOptions;
+// var<uniform> diff_display_options: BinaryDistanceApproxOptions;
 
 fn binary_distance_approx(ndc_coord: vec2<f32>) -> f32 {
     let total_point_count = count_info.total_point_count;
@@ -18,6 +18,8 @@ fn binary_distance_approx(ndc_coord: vec2<f32>) -> f32 {
 
     // REALLY ugly fix, but I need to start at 1 so that I never submit
     // a zero sized buffer, which otherwise causes WebGPU to refuse the draw call.
+    // https://www.w3.org/TR/WGSL/#buffer-binding-determines-runtime-sized-array-element-count
+    // > WebGPU validation rules ensure that 1 ≤ NRuntime.
     for (var i = 1u; i < arrayLength(&accepted); i+=1u) {
         let el = accepted[i];
 
