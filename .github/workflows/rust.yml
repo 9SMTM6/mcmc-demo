@@ -160,7 +160,7 @@ jobs:
       - name: Compress
         run: |
           zstd ${{ github.event.repository.name }}-${{ matrix.TARGET }}${{ matrix.EXTENSION }}
-          gzip -k ${{ github.event.repository.name }}-${{ matrix.TARGET }}${{ matrix.EXTENSION }}
+          tar caf ${{ github.event.repository.name }}-${{ matrix.TARGET }}${{ matrix.EXTENSION }}.tar.gz ${{ github.event.repository.name }}-${{ matrix.TARGET }}${{ matrix.EXTENSION }}
 
       - uses: actions/upload-artifact@v4
         with:
