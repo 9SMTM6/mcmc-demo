@@ -59,6 +59,7 @@ fn handle_c_pragma_once_style_imports(
     }
 
     let include_regex = regex::Regex::new(r#"\#import \"(.+)\.wgsl";"#).unwrap();
+    let include_regex_error1 = regex::Regex::new(r#"\#import \"(.+)\.wgsl""#).unwrap();
 
     let mut wgsl_files: HashMap<OsString, UnfinalizedPass> = wgsl_files
         .into_iter()
@@ -74,6 +75,8 @@ fn handle_c_pragma_once_style_imports(
                         "Import after actual sourcecode"
                     );
                     direct_imports_in_order.push(OsString::from(matched));
+                } else if let Some((_, [_])) = include_regex_error1.captures(line).map(|cap| cap.extract()) {
+                    panic!("error in import syntax, {el:?}:{idx}.")
                 } else if first_actual_sourcecode.is_none() && line.trim() != "" {
                     first_actual_sourcecode = Some(idx);
                 }
@@ -192,6 +195,7 @@ fn bindgen_generation(resolved_shaders_dir: &Path) -> Result<(), ErrReport> {
         "multimodal_gaussian.fragment",
         "fullscreen_quad.vertex",
         "diff_display.fragment",
+        "binary_distance_approx.compute",
     ];
 
     let mut bindgen = WgslBindgenOptionBuilder::default();
@@ -220,6 +224,7 @@ fn wgsl_to_wgpu_generation(resolved_shaders: &HashMap<OsString, String>, binding
         "multimodal_gaussian.fragment",
         "fullscreen_quad.vertex",
         "diff_display.fragment",
+        "binary_distance_approx.compute",
     ]
     .map(OsString::from);
 
