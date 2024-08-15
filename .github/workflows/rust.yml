@@ -18,6 +18,8 @@ jobs:
       - run: cargo +stable fmt --all -- --check
 
   clippy-native:
+    name: Clippy + Check native
+    # clippy is a superset of cargo check.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -26,9 +28,10 @@ jobs:
           toolchain: stable
           components: clippy
       - uses: Swatinem/rust-cache@v2
-      - run: cargo +stable clippy --workspace --target x86_64-unknown-linux-gnu --all-features -- -D warnings
+      - run: cargo +stable clippy --workspace --target x86_64-unknown-linux-gnu --all-features --all-targets -- -D warnings
 
   clippy-web:
+    name: Clippy + Check wasm
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -36,7 +39,7 @@ jobs:
         with:
           toolchain: ${{env.RUST_NIGHTLY_TOOLCHAIN_VERSION}}
       - uses: Swatinem/rust-cache@v2
-      - run: cargo clippy --workspace --target wasm32-unknown-unknown --all-features -- -D warnings
+      - run: cargo clippy --workspace --target wasm32-unknown-unknown --all-features --all-targets -- -D warnings
 
   test:
     runs-on: ubuntu-latest
@@ -91,16 +94,19 @@ jobs:
             # macos-latest seems to already run on arm64(=aarch64):
             # https://docs.github.com/en/actions/using-jobs/choosing-the-runner-for-a-job#standard-github-hosted-runners-for-public-repositories
             TARGET: aarch64-apple-darwin
+            pretty_name: macos-arm64
 
           - os: macos-latest
             TARGET: x86_64-apple-darwin
             # even though the runner uses arm64, MacOS on arm64 seems to support building for amd64.
             # which makes sense, would be bad for devs otherwise.
             cross: false
+            pretty_name: macos-amd64
 
           - os: ubuntu-latest
             TARGET: aarch64-unknown-linux-gnu
             cross: true
+            pretty_name: linux-gnu-arm64
 
           # who even uses these.
           # - os: ubuntu-latest
@@ -109,10 +115,12 @@ jobs:
 
           - os: ubuntu-latest
             TARGET: x86_64-unknown-linux-gnu
+            pretty_name: linux-gnu-amd64
 
           - os: windows-latest
             TARGET: x86_64-pc-windows-msvc
             EXTENSION: .exe
+            pretty_name: windows-amd64
 
     steps:
       - name: Install cross
@@ -133,8 +141,7 @@ jobs:
           toolchain: stable
           targets: ${{ matrix.TARGET }}
 
-      - name: Rust Cache
-        uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@v2
         with:
           # this is required to avoid failures due to caching of artifacts for different architectures
           # The reason is the potential usage of cross.
@@ -155,18 +162,18 @@ jobs:
           cross build --locked --verbose --release --target=${{ matrix.TARGET }}
 
       - name: Rename
-        run: cp target/${{ matrix.TARGET }}/release/${{ github.event.repository.name }}${{ matrix.EXTENSION }} ${{ github.event.repository.name }}-${{ matrix.TARGET }}${{ matrix.EXTENSION }}
+        run: cp target/${{ matrix.TARGET }}/release/${{ github.event.repository.name }}${{ matrix.EXTENSION }} ${{ github.event.repository.name }}-${{ matrix.pretty_name }}${{ matrix.EXTENSION }}
 
       - name: Compress
         run: |
-          zstd ${{ github.event.repository.name }}-${{ matrix.TARGET }}${{ matrix.EXTENSION }}
-          tar caf ${{ github.event.repository.name }}-${{ matrix.TARGET }}${{ matrix.EXTENSION }}.tar.gz ${{ github.event.repository.name }}-${{ matrix.TARGET }}${{ matrix.EXTENSION }}
+          # zstd ${{ github.event.repository.name }}-${{ matrix.pretty_name }}${{ matrix.EXTENSION }}
+          tar caf ${{ github.event.repository.name }}-${{ matrix.pretty_name }}${{ matrix.EXTENSION }}.tar.gz ${{ github.event.repository.name }}-${{ matrix.pretty_name }}${{ matrix.EXTENSION }}
 
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.TARGET }}-executable
           compression-level: 0
-          path: ${{ github.event.repository.name }}-${{ matrix.TARGET }}${{ matrix.EXTENSION }}.*
+          path: ${{ github.event.repository.name }}-${{ matrix.pretty_name }}${{ matrix.EXTENSION }}.*
 
   fine-for-deployment:
     runs-on: ubuntu-latest
