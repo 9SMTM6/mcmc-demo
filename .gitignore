@@ -1,7 +1,3 @@
-# kinda hotfix, cant figure out how to include! wam_bindgen output 
-# since it generates inner attributes at top level, which rust doesnt accept in an include! root
-src/shaders.rs
-
 # Mac stuff:
 .DS_Store
 
@@ -15,6 +11,3 @@ target_wasm
 
 # https://github.com/lycheeverse/lychee
 .lycheecache
-
-# temp inclusion while I still need wsgl_bindgen
-shaders_resolved/

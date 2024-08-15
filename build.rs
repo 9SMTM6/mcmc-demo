@@ -206,7 +206,10 @@ fn bindgen_generation(resolved_shaders_dir: &Path) -> Result<(), ErrReport> {
             resolved_shaders_dir = resolved_shaders_dir.to_string_lossy()
         ));
     }
-    let bindgen = bindgen.output("src/shaders.rs").build().unwrap();
+    let mut out_file = PathBuf::from(std::env::var("OUT_DIR").unwrap());
+    out_file.push("wgsl_bindgen_generated.rs");
+
+    let bindgen = bindgen.output(out_file).build().unwrap();
 
     bindgen.generate().into_diagnostic()
 }
