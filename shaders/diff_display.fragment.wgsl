@@ -1,11 +1,11 @@
-#import "canvas_ndc_uniform.wgsl";
+#import "canvas_ndc_conversion.wgsl";
 #import "fullscreen_quad.vertex.wgsl";
 #import "diff_display.wgsl";
 #import "helpers.wgsl";
 
 @fragment
 fn fs_main(@builtin(position) canvas_coords: vec4<f32>) -> @location(0) vec4<f32> {
-    let normalized_device_coords = canvas_coord_to_ndc_uniform(canvas_coords.xy);
+    let normalized_device_coords = canvas_coord_to_ndc(canvas_coords.xy);
 
     let diff = approx_target_diff(normalized_device_coords);
 
