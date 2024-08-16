@@ -4,11 +4,6 @@ mod resolution_uniform;
 
 pub use resolution_uniform::INITIAL_RENDER_SIZE;
 
-struct WgpuBufferBindGroupPair {
-    buffer: wgpu::Buffer,
-    bind_group: wgpu::BindGroup,
-}
-
 #[macro_export]
 #[allow(unknown_lints)] // not a lint of stable...
 #[allow(edition_2024_expr_fragment_specifier)]

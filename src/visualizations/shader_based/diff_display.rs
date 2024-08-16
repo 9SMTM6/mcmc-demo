@@ -11,11 +11,12 @@ use crate::{
     simulation::random_walk_metropolis_hastings::Rwmh,
     target_distributions::multimodal_gaussian::MultiModalGaussian,
     visualizations::shader_based::{
-        multimodal_gaussian::{get_gaussian_target_pair, shader_bindings::NormalDistribution},
-        resolution_uniform::get_resolution_pair,
-        WgpuBufferBindGroupPair,
+        multimodal_gaussian::{get_normaldistr_buffer, shader_bindings::NormalDistribution},
+        resolution_uniform::get_resolution_buffer,
     },
 };
+
+// TODO: ERROR!!!!
 
 use super::fullscreen_quad;
 
@@ -29,10 +30,7 @@ pub struct DiffDisplay {
     pub window_radius: f32,
 }
 
-fn get_approx_triple(
-    device: &wgpu::Device,
-    approx_points: Option<&[RWMHAcceptRecord]>,
-) -> (BindGroup, Buffer, Buffer) {
+fn get_approx_buffers(device: &wgpu::Device, approx_points: Option<&[RWMHAcceptRecord]>) -> (wgpu::Buffer, wgpu::Buffer) {
     let webgpu_debug_name = Some(file!());
 
     let accept_buf_use = BufferUsages::COPY_DST | BufferUsages::STORAGE;
@@ -58,16 +56,7 @@ fn get_approx_triple(
         mapped_at_creation: false,
     });
 
-    let approx_bind_group = bind_groups::BindGroup2::unsafe_get_bind_group(
-        device,
-        bind_groups::BindGroupEntries2 {
-            accepted: accept_buffer.as_entire_buffer_binding(),
-            count_info: info_buffer.as_entire_buffer_binding(),
-        },
-        &bind_groups::BindGroup2::LAYOUT_DESCRIPTOR,
-    );
-
-    (approx_bind_group, accept_buffer, info_buffer)
+    (accept_buffer, info_buffer)
 }
 
 struct PipelineStateHolder {
@@ -124,18 +113,12 @@ impl DiffDisplay {
             cache: None,
         });
 
-        let WgpuBufferBindGroupPair {
-            bind_group: resolution_bind_group,
-            buffer: resolution_buffer,
-        } = get_resolution_pair(device);
+        let resolution_buffer = get_resolution_buffer(device);
 
-        let WgpuBufferBindGroupPair {
-            bind_group: target_bind_group,
-            buffer: target_buffer,
-        } = get_gaussian_target_pair(device, None);
+        let normdistr_buffer = get_normaldistr_buffer(device, None);
 
-        let (approx_bind_group, approx_accepted_buffer, approx_info_buffer) =
-            get_approx_triple(device, None);
+        let (approx_accepted_buffer, approx_info_buffer) =
+            get_approx_buffers(device, None);
 
         // Because the graphics pipeline must have the same lifetime as the egui render pass,
         // instead of storing the pipeline in our struct, we insert it into the
@@ -146,12 +129,31 @@ impl DiffDisplay {
             .callback_resources
             .insert(PipelineStateHolder {
                 pipeline,
-                resolution_bind_group,
-                target_bind_group,
+                resolution_bind_group: bind_groups::BindGroup0::unsafe_get_bind_group(
+                    device,
+                    bind_groups::BindGroupEntries0 {
+                        resolution_info: resolution_buffer.as_entire_buffer_binding(),
+                    },
+                    &bind_groups::BindGroup0::LAYOUT_DESCRIPTOR,
+                ),
+                target_bind_group: bind_groups::BindGroup1::unsafe_get_bind_group(
+                    device,
+                    bind_groups::BindGroupEntries1 {
+                        gauss_bases: normdistr_buffer.as_entire_buffer_binding(),
+                    },
+                    &bind_groups::BindGroup1::LAYOUT_DESCRIPTOR,
+                ),
                 resolution_buffer,
-                target_buffer,
+                target_buffer: normdistr_buffer,
+                approx_bind_group: bind_groups::BindGroup2::unsafe_get_bind_group(
+                    device,
+                    bind_groups::BindGroupEntries2 {
+                        accepted: approx_accepted_buffer.as_entire_buffer_binding(),
+                        count_info: approx_info_buffer.as_entire_buffer_binding(),
+                    },
+                    &bind_groups::BindGroup2::LAYOUT_DESCRIPTOR,
+                ),
                 approx_accepted_buffer,
-                approx_bind_group,
                 approx_info_buffer,
             })
         else {
@@ -198,16 +200,28 @@ impl CallbackTrait for RenderCall {
         } = callback_resources.get_mut().unwrap();
         let target = self.targets.as_slice();
         if target_buffer.size() as usize != size_of_val(target) {
-            let WgpuBufferBindGroupPair { buffer, bind_group } =
-                get_gaussian_target_pair(device, Some(target));
-            *target_buffer = buffer;
-            *target_bind_group = bind_group;
+            let normdistr_buffer = get_normaldistr_buffer(device, Some(target));
+            let normdistr_bind_group = bind_groups::BindGroup1::unsafe_get_bind_group(
+                device,
+                bind_groups::BindGroupEntries1 {
+                    gauss_bases: normdistr_buffer.as_entire_buffer_binding(),
+                },
+                &bind_groups::BindGroup1::LAYOUT_DESCRIPTOR,
+            );
+            *target_buffer = normdistr_buffer;
+            *target_bind_group = normdistr_bind_group;
         }
         let approx_accepted = self.algo_state.history.as_slice();
         if approx_accepted_buffer.size() as usize != size_of_val(approx_accepted) {
-            let (bind_group, accept_buffer, info_buffer) =
-                get_approx_triple(device, Some(approx_accepted));
-            *approx_bind_group = bind_group;
+            let (accept_buffer, info_buffer) = get_approx_buffers(device, Some(approx_accepted));
+            *approx_bind_group = bind_groups::BindGroup2::unsafe_get_bind_group(
+                device,
+                bind_groups::BindGroupEntries2 {
+                    accepted: approx_accepted_buffer.as_entire_buffer_binding(),
+                    count_info: approx_info_buffer.as_entire_buffer_binding(),
+                },
+                &bind_groups::BindGroup2::LAYOUT_DESCRIPTOR,
+            );
             *approx_accepted_buffer = accept_buffer;
             *approx_info_buffer = info_buffer;
         }

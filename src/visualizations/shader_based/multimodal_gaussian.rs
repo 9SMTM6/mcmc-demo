@@ -7,7 +7,7 @@ use wgpu::{
 
 use crate::target_distributions::multimodal_gaussian::MultiModalGaussian;
 
-use super::{fullscreen_quad, resolution_uniform::get_resolution_pair, WgpuBufferBindGroupPair};
+use super::{fullscreen_quad, resolution_uniform::get_resolution_buffer};
 
 use crate::create_shader_module;
 
@@ -42,16 +42,12 @@ impl MultiModalGaussianDisplay {
     }
 }
 
-/// this can also be used elsewhere, e.g. diff_display.
-pub(super) fn get_gaussian_target_pair(
-    device: &wgpu::Device,
-    distr: Option<&[NormalDistribution]>,
-) -> WgpuBufferBindGroupPair {
+pub(super) fn get_normaldistr_buffer(device: &wgpu::Device, distr: Option<&[NormalDistribution]>) -> wgpu::Buffer {
     let webgpu_debug_name = Some(file!());
 
     let buf_use = BufferUsages::COPY_DST | BufferUsages::STORAGE;
-
-    let buffer = match distr {
+    
+    match distr {
         Some(distr) => device.create_buffer_init(&BufferInitDescriptor {
             label: webgpu_debug_name,
             usage: buf_use,
@@ -63,17 +59,7 @@ pub(super) fn get_gaussian_target_pair(
             mapped_at_creation: false,
             size: 4,
         }),
-    };
-
-    let bind_group = bind_groups::BindGroup1::unsafe_get_bind_group(
-        device,
-        bind_groups::BindGroupEntries1 {
-            gauss_bases: buffer.as_entire_buffer_binding(),
-        },
-        &bind_groups::BindGroup1::LAYOUT_DESCRIPTOR,
-    );
-
-    WgpuBufferBindGroupPair { bind_group, buffer }
+    }
 }
 
 impl MultiModalGaussianDisplay {
@@ -107,15 +93,9 @@ impl MultiModalGaussianDisplay {
             cache: None,
         });
 
-        let WgpuBufferBindGroupPair {
-            bind_group: resolution_bind_group,
-            buffer: resolution_buffer,
-        } = get_resolution_pair(device);
+        let resolution_buffer = get_resolution_buffer(device);
 
-        let WgpuBufferBindGroupPair {
-            bind_group: elements_bind_group,
-            buffer: elements_buffer,
-        } = get_gaussian_target_pair(device, None);
+        let normdistr_buffer = get_normaldistr_buffer(device, None);
 
         // Because the graphics pipeline must have the same lifetime as the egui render pass,
         // instead of storing the pipeline in our struct, we insert it into the
@@ -127,10 +107,22 @@ impl MultiModalGaussianDisplay {
                 .callback_resources
                 .insert(MultiModalGaussPipeline {
                     pipeline,
-                    resolution_bind_group,
-                    target_bind_group: elements_bind_group,
+                    resolution_bind_group: bind_groups::BindGroup0::unsafe_get_bind_group(
+                        device,
+                        bind_groups::BindGroupEntries0 {
+                            resolution_info: resolution_buffer.as_entire_buffer_binding(),
+                        },
+                        &bind_groups::BindGroup0::LAYOUT_DESCRIPTOR,
+                    ),
+                    target_bind_group: bind_groups::BindGroup1::unsafe_get_bind_group(
+                        device,
+                        bind_groups::BindGroupEntries1 {
+                            gauss_bases: normdistr_buffer.as_entire_buffer_binding(),
+                        },
+                        &bind_groups::BindGroup1::LAYOUT_DESCRIPTOR,
+                    ),
                     resolution_buffer,
-                    target_buffer: elements_buffer,
+                    target_buffer: normdistr_buffer,
                 })
         else {
             unreachable!("pipeline already present?!")
@@ -180,10 +172,16 @@ impl CallbackTrait for RenderCall {
         // };
         let target = self.elements.as_slice();
         if target_buffer.size() as usize != size_of_val(target) {
-            let WgpuBufferBindGroupPair { buffer, bind_group } =
-                get_gaussian_target_pair(device, Some(target));
-            *target_buffer = buffer;
-            *target_bind_group = bind_group;
+            let normdistr_buffer = get_normaldistr_buffer(device, Some(target));
+            let normdistr_bind_group = bind_groups::BindGroup1::unsafe_get_bind_group(
+                device,
+                bind_groups::BindGroupEntries1 {
+                    gauss_bases: normdistr_buffer.as_entire_buffer_binding(),
+                },
+                &bind_groups::BindGroup1::LAYOUT_DESCRIPTOR,
+            );
+            *target_buffer = normdistr_buffer;
+            *target_bind_group = normdistr_bind_group;
         }
         queue.write_buffer(
             resolution_buffer,
