@@ -1,9 +1,7 @@
-use std::num::NonZero;
-
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
-    BindGroup, Buffer, BufferBinding, BufferDescriptor, BufferUsages, RenderPipeline,
+    BindGroup, Buffer, BufferDescriptor, BufferUsages, RenderPipeline,
     RenderPipelineDescriptor,
 };
 
@@ -70,11 +68,7 @@ pub(super) fn get_gaussian_target_pair(
     let bind_group = bind_groups::BindGroup1::unsafe_get_bind_group(
         device,
         bind_groups::BindGroupEntries1 {
-            gauss_bases: BufferBinding {
-                buffer: &buffer,
-                offset: 0,
-                size: NonZero::new(buffer.size()),
-            },
+            gauss_bases: buffer.as_entire_buffer_binding(),
         },
         &bind_groups::BindGroup1::LAYOUT_DESCRIPTOR,
     );

@@ -1,6 +1,4 @@
-use std::num::NonZero;
-
-use wgpu::{util::DeviceExt, BufferBinding};
+use wgpu::util::DeviceExt;
 
 // I use the bindgroups out of the diff_display namespace here,
 // but since these bind-groups are defined in common files, these can also be used for other
@@ -32,11 +30,7 @@ pub fn get_resolution_pair(device: &wgpu::Device) -> WgpuBufferBindGroupPair {
     let bind_group = bind_groups::BindGroup0::unsafe_get_bind_group(
         device,
         bind_groups::BindGroupEntries0 {
-            resolution_info: BufferBinding {
-                buffer: &buffer,
-                offset: 0,
-                size: NonZero::new(buffer.size()),
-            },
+            resolution_info: buffer.as_entire_buffer_binding(),
         },
         &bind_groups::BindGroup0::LAYOUT_DESCRIPTOR,
     );

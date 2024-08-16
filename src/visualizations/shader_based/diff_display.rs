@@ -1,12 +1,8 @@
-// TODO: remove once I render both depending on options selected.
-#![allow(dead_code)]
-use std::{mem::size_of, num::NonZero};
-
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
 use shader_bindings::{RWMHAcceptRecord, RWMHCountInfo, ResolutionInfo};
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
-    BindGroup, Buffer, BufferBinding, BufferDescriptor, BufferUsages, RenderPipeline,
+    BindGroup, Buffer, BufferDescriptor, BufferUsages, RenderPipeline,
     RenderPipelineDescriptor,
 };
 
@@ -65,16 +61,8 @@ fn get_approx_triple(
     let approx_bind_group = bind_groups::BindGroup2::unsafe_get_bind_group(
         device,
         bind_groups::BindGroupEntries2 {
-            accepted: BufferBinding {
-                buffer: &accept_buffer,
-                offset: 0,
-                size: NonZero::new(accept_buffer.size()),
-            },
-            count_info: BufferBinding {
-                buffer: &info_buffer,
-                offset: 0,
-                size: NonZero::new(info_buffer.size()),
-            },
+            accepted: accept_buffer.as_entire_buffer_binding(),
+            count_info: info_buffer.as_entire_buffer_binding(),
         },
         &bind_groups::BindGroup2::LAYOUT_DESCRIPTOR,
     );
