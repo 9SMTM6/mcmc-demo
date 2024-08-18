@@ -10,13 +10,23 @@ all-features = true
 targets = ["x86_64-unknown-linux-gnu", "wasm32-unknown-unknown"]
 
 [features]
-default = ["persistence", "shipped_fonts", "tracing", "x11", "profile"]
+default = [
+    "persistence",
+    "shipped_fonts",
+    "tracing",
+    "x11",
+    "profile",
+    "all_rngs",
+]
 persistence = [
     "dep:serde",
     "eframe/persistence",
     "rand/serde1",
     "rand_distr/serde1",
     "rand_pcg/serde1",
+    "rand_chacha/serde1",
+    "rand_xorshift/serde1",
+    "rand_xoshiro/serde1",
     "nalgebra/serde-serialize",
     # not needed currently.
     # "wgpu/serde",
@@ -38,6 +48,16 @@ tracing = [
     # "wgpu/trace",
     "rand/log",
 ]
+all_rngs = [
+    "rng_chacha",
+    "rng_xoshiro",
+    "rng_xorshift",
+    # "rng_small",
+]
+rng_chacha = ["dep:rand_chacha"]
+rng_xoshiro = ["dep:rand_xoshiro"]
+rng_xorshift = ["dep:rand_xorshift"]
+# rng_small = ["rand/small_rng"]
 
 [dependencies]
 egui = "0.28.1"
@@ -53,7 +73,10 @@ nalgebra = { version = "0.33.0" }
 getrandom = { version = "0.2.15", features = ["js"] }
 rand_pcg = "0.3.1"
 rand_distr = "0.4.3"
-rand = { version = "0.8.5", features = ["log"] }
+rand = { version = "0.8.5", default-features = false, features = [
+    "log",
+    "std",
+] }
 enum_dispatch = "0.3.13"
 puffin = { version = "0.19.0", optional = true }
 puffin_http = { version = "0.16.0", optional = true }
@@ -66,6 +89,11 @@ tracing-subscriber = { version = "0.3.18", optional = true, features = [
 ] }
 wasm_thread = "0.3.0"
 time = { version = "0.3.36", features = ["wasm-bindgen"], optional = true }
+rand_chacha = { version = "0.3.1", optional = true }
+rand_xoshiro = { version = "0.6.0", optional = true }
+rand_xorshift = { version = "0.3.0", optional = true }
+strum = { version = "0.26.3", features = ["derive"] }
+delegate = "0.12.0"
 
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]

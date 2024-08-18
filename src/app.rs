@@ -6,8 +6,7 @@ use crate::{
     bg_task::{BgCommunicate, BgTaskHandle, Progress},
     settings::{self, Settings},
     simulation::{
-        random_walk_metropolis_hastings::{ProgressMode, Rwmh},
-        SRngGaussianIter, SRngPercIter,
+        random_walk_metropolis_hastings::{ProgressMode, Rwmh}, AdoptedRngs, SRngGaussianIter, SRngPercIter
     },
     target_distributions::multimodal_gaussian::MultiModalGaussian,
     visualizations::{
@@ -193,6 +192,8 @@ impl eframe::App for McmcDemo {
 
         #[allow(clippy::collapsible_else_if)]
         egui::Window::new("Simulation").show(ctx, |ui| {
+            let mut test_val = crate::simulation::AdoptedRngsDiscriminants::Pcg32;
+            AdoptedRngs::selection_ui(ui, &mut test_val);
             if matches!(self.settings, Settings::EditDistribution(_)) {
                 if ui.button("Stop Editing Distribution").clicked() {
                     self.settings = Settings::Default;
