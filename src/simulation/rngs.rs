@@ -6,12 +6,10 @@ use rand_pcg::{Pcg32, Pcg64, Pcg64Mcg};
 #[cfg(feature = "rng_xorshift")]
 use rand_xorshift::XorShiftRng;
 #[cfg(feature = "rng_xoshiro")]
-use rand_xoshiro::{SplitMix64, Xoroshiro128Plus, Xoroshiro128PlusPlus};
 use rand_xoshiro::{
-    Xoroshiro128StarStar, Xoroshiro64Star, Xoroshiro64StarStar, Xoshiro128Plus, Xoshiro256Plus,
-    Xoshiro256PlusPlus, Xoshiro256StarStar,
+    SplitMix64, Xoroshiro128Plus, Xoroshiro128StarStar, Xoroshiro64Star, Xoroshiro64StarStar, Xoshiro128Plus, Xoshiro256Plus,
 };
-use strum::{EnumMessage, VariantArray, VariantNames};
+use strum::{EnumMessage, VariantArray};
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Clone)]
@@ -123,6 +121,7 @@ pub enum AdoptedRngs {
         message = "Recommended for f64 generation (which is not what we do). Smaller state than Xoshiro256Plus. Better scrambling than Plus variant, but more expensive"
     ))]
     Xoroshiro128StarStar(Xoroshiro128StarStar),
+    #[cfg(feature = "rng_xoshiro")]
     #[strum_discriminants(strum(message = "Recommended for f32 generation. Smaller state."))]
     Xoroshiro64Plus(Xoroshiro64Star),
     #[cfg(feature = "rng_xoshiro")]
