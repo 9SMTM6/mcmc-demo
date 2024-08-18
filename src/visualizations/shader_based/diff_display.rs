@@ -1,8 +1,7 @@
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
-use shader_bindings::{RWMHAcceptRecord, RWMHCountInfo, ResolutionInfo};
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
-    BindGroup, Buffer, BufferDescriptor, BufferUsages, RenderPipeline,
+    Buffer, BufferDescriptor, BufferUsages, RenderPipeline,
     RenderPipelineDescriptor,
 };
 
@@ -22,7 +21,7 @@ use super::fullscreen_quad;
 
 create_shader_module!("diff_display.fragment");
 
-use shader_bindings::bind_groups;
+use shader_bindings::{bind_groups::{BindGroup0, BindGroup1, BindGroupEntries0, BindGroupEntries1}, RWMHAcceptRecord, RWMHCountInfo, ResolutionInfo};
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 pub struct DiffDisplay {
@@ -61,9 +60,12 @@ fn get_approx_buffers(device: &wgpu::Device, approx_points: Option<&[RWMHAcceptR
 
 struct PipelineStateHolder {
     pipeline: RenderPipeline,
-    resolution_bind_group: BindGroup,
-    target_bind_group: BindGroup,
-    approx_bind_group: BindGroup,
+    // bind_groups: shader_bindings::bind_groups::BindGroups,
+    bind_group_0: shader_bindings::bind_groups::BindGroup0,
+    bind_group_1: shader_bindings::bind_groups::BindGroup1,
+    // resolution_bind_group: BindGroup,
+    // target_bind_group: BindGroup,
+    // approx_bind_group: BindGroup,
     resolution_buffer: Buffer,
     target_buffer: Buffer,
     approx_accepted_buffer: Buffer,
@@ -120,6 +122,16 @@ impl DiffDisplay {
         let (approx_accepted_buffer, approx_info_buffer) =
             get_approx_buffers(device, None);
 
+        let bind_group_0 = BindGroup0::from_bindings(device, BindGroupEntries0 {
+            resolution_info: resolution_buffer.as_entire_buffer_binding(),
+        });
+
+        let bind_group_1 = BindGroup1::from_bindings(device, BindGroupEntries1 {
+            accepted: approx_accepted_buffer.as_entire_buffer_binding(),
+            count_info: approx_info_buffer.as_entire_buffer_binding(),
+            gauss_bases: normdistr_buffer.as_entire_buffer_binding(),
+        });
+
         // Because the graphics pipeline must have the same lifetime as the egui render pass,
         // instead of storing the pipeline in our struct, we insert it into the
         // `callback_resources` type map, which is stored alongside the render pass.
@@ -129,30 +141,10 @@ impl DiffDisplay {
             .callback_resources
             .insert(PipelineStateHolder {
                 pipeline,
-                resolution_bind_group: bind_groups::BindGroup0::unsafe_get_bind_group(
-                    device,
-                    bind_groups::BindGroupEntries0 {
-                        resolution_info: resolution_buffer.as_entire_buffer_binding(),
-                    },
-                    &bind_groups::BindGroup0::LAYOUT_DESCRIPTOR,
-                ),
-                target_bind_group: bind_groups::BindGroup1::unsafe_get_bind_group(
-                    device,
-                    bind_groups::BindGroupEntries1 {
-                        gauss_bases: normdistr_buffer.as_entire_buffer_binding(),
-                    },
-                    &bind_groups::BindGroup1::LAYOUT_DESCRIPTOR,
-                ),
+                bind_group_0,
+                bind_group_1,
                 resolution_buffer,
                 target_buffer: normdistr_buffer,
-                approx_bind_group: bind_groups::BindGroup2::unsafe_get_bind_group(
-                    device,
-                    bind_groups::BindGroupEntries2 {
-                        accepted: approx_accepted_buffer.as_entire_buffer_binding(),
-                        count_info: approx_info_buffer.as_entire_buffer_binding(),
-                    },
-                    &bind_groups::BindGroup2::LAYOUT_DESCRIPTOR,
-                ),
                 approx_accepted_buffer,
                 approx_info_buffer,
             })
@@ -194,37 +186,37 @@ impl CallbackTrait for RenderCall {
             ref mut target_buffer,
             ref mut approx_accepted_buffer,
             ref mut approx_info_buffer,
-            ref mut target_bind_group,
-            ref mut approx_bind_group,
+            ref mut bind_group_0,
+            ref mut bind_group_1,
             ..
         } = callback_resources.get_mut().unwrap();
         let target = self.targets.as_slice();
         if target_buffer.size() as usize != size_of_val(target) {
             let normdistr_buffer = get_normaldistr_buffer(device, Some(target));
-            let normdistr_bind_group = bind_groups::BindGroup1::unsafe_get_bind_group(
-                device,
-                bind_groups::BindGroupEntries1 {
-                    gauss_bases: normdistr_buffer.as_entire_buffer_binding(),
-                },
-                &bind_groups::BindGroup1::LAYOUT_DESCRIPTOR,
-            );
             *target_buffer = normdistr_buffer;
-            *target_bind_group = normdistr_bind_group;
         }
         let approx_accepted = self.algo_state.history.as_slice();
         if approx_accepted_buffer.size() as usize != size_of_val(approx_accepted) {
             let (accept_buffer, info_buffer) = get_approx_buffers(device, Some(approx_accepted));
-            *approx_bind_group = bind_groups::BindGroup2::unsafe_get_bind_group(
-                device,
-                bind_groups::BindGroupEntries2 {
-                    accepted: approx_accepted_buffer.as_entire_buffer_binding(),
-                    count_info: approx_info_buffer.as_entire_buffer_binding(),
-                },
-                &bind_groups::BindGroup2::LAYOUT_DESCRIPTOR,
-            );
             *approx_accepted_buffer = accept_buffer;
             *approx_info_buffer = info_buffer;
+            // these will change in size if the underlying data changes,
+            // so we only write the buffers in that case.
+            queue.write_buffer(
+                approx_accepted_buffer,
+                0,
+                bytemuck::cast_slice(self.algo_state.history.as_slice()),
+            );
+            queue.write_buffer(
+                approx_info_buffer,
+                0,
+                bytemuck::cast_slice(&[RWMHCountInfo {
+                    max_remain_count: self.algo_state.max_remain_count,
+                    total_point_count: self.algo_state.total_point_count,
+                }]),
+            );
         }
+        // TODO: only write these if they actually changed.
         queue.write_buffer(
             resolution_buffer,
             0,
@@ -238,19 +230,16 @@ impl CallbackTrait for RenderCall {
             0,
             bytemuck::cast_slice(self.targets.as_slice()),
         );
-        queue.write_buffer(
-            approx_accepted_buffer,
-            0,
-            bytemuck::cast_slice(self.algo_state.history.as_slice()),
-        );
-        queue.write_buffer(
-            approx_info_buffer,
-            0,
-            bytemuck::cast_slice(&[RWMHCountInfo {
-                max_remain_count: self.algo_state.max_remain_count,
-                total_point_count: self.algo_state.total_point_count,
-            }]),
-        );
+        // TODO: only reassign of required.
+        // If that actually speeds things up, I dunno.
+        *bind_group_0 = BindGroup0::from_bindings(device, BindGroupEntries0 {
+            resolution_info: resolution_buffer.as_entire_buffer_binding(),
+        });
+        *bind_group_1 = BindGroup1::from_bindings(device, BindGroupEntries1 {
+            accepted: approx_accepted_buffer.as_entire_buffer_binding(),
+            count_info: approx_info_buffer.as_entire_buffer_binding(),
+            gauss_bases: target_buffer.as_entire_buffer_binding(),
+        });
         Vec::new()
     }
 
@@ -263,16 +252,13 @@ impl CallbackTrait for RenderCall {
         profile_scope!("draw diff_display");
         let &PipelineStateHolder {
             ref pipeline,
-            ref resolution_bind_group,
-            ref target_bind_group,
-            ref approx_bind_group,
+            ref bind_group_0,
+            ref bind_group_1,
             ..
         } = callback_resources.get().unwrap();
-
         render_pass.set_pipeline(pipeline);
-        render_pass.set_bind_group(0, resolution_bind_group, &[]);
-        render_pass.set_bind_group(1, target_bind_group, &[]);
-        render_pass.set_bind_group(2, approx_bind_group, &[]);
+        bind_group_0.set(render_pass);
+        bind_group_1.set(render_pass);
         render_pass.draw(0..fullscreen_quad::NUM_VERTICES, 0..1);
     }
 }

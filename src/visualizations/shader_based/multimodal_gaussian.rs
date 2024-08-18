@@ -1,7 +1,7 @@
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
-    BindGroup, Buffer, BufferDescriptor, BufferUsages, RenderPipeline,
+    Buffer, BufferDescriptor, BufferUsages, RenderPipeline,
     RenderPipelineDescriptor,
 };
 
@@ -13,14 +13,14 @@ use crate::create_shader_module;
 
 create_shader_module!("multimodal_gaussian.fragment");
 
-use shader_bindings::{bind_groups, ResolutionInfo};
+use shader_bindings::{bind_groups::{BindGroup0, BindGroup1, BindGroupEntries0, BindGroupEntries1}, ResolutionInfo};
 
 pub use shader_bindings::NormalDistribution;
 
 struct MultiModalGaussPipeline {
     pipeline: RenderPipeline,
-    resolution_bind_group: BindGroup,
-    target_bind_group: BindGroup,
+    bind_group_0: BindGroup0,
+    bind_group_1: BindGroup1,
     resolution_buffer: Buffer,
     target_buffer: Buffer,
 }
@@ -97,6 +97,14 @@ impl MultiModalGaussianDisplay {
 
         let normdistr_buffer = get_normaldistr_buffer(device, None);
 
+        let bind_group_0 = BindGroup0::from_bindings(device, BindGroupEntries0 {
+            resolution_info: resolution_buffer.as_entire_buffer_binding(),
+        });
+
+        let bind_group_1 = BindGroup1::from_bindings(device, BindGroupEntries1 {
+            gauss_bases: normdistr_buffer.as_entire_buffer_binding(),
+        });
+
         // Because the graphics pipeline must have the same lifetime as the egui render pass,
         // instead of storing the pipeline in our struct, we insert it into the
         // `callback_resources` type map, which is stored alongside the render pass.
@@ -107,20 +115,8 @@ impl MultiModalGaussianDisplay {
                 .callback_resources
                 .insert(MultiModalGaussPipeline {
                     pipeline,
-                    resolution_bind_group: bind_groups::BindGroup0::unsafe_get_bind_group(
-                        device,
-                        bind_groups::BindGroupEntries0 {
-                            resolution_info: resolution_buffer.as_entire_buffer_binding(),
-                        },
-                        &bind_groups::BindGroup0::LAYOUT_DESCRIPTOR,
-                    ),
-                    target_bind_group: bind_groups::BindGroup1::unsafe_get_bind_group(
-                        device,
-                        bind_groups::BindGroupEntries1 {
-                            gauss_bases: normdistr_buffer.as_entire_buffer_binding(),
-                        },
-                        &bind_groups::BindGroup1::LAYOUT_DESCRIPTOR,
-                    ),
+                    bind_group_0,
+                    bind_group_1,
                     resolution_buffer,
                     target_buffer: normdistr_buffer,
                 })
@@ -148,7 +144,7 @@ impl CallbackTrait for RenderCall {
         let &mut MultiModalGaussPipeline {
             ref mut resolution_buffer,
             ref mut target_buffer,
-            ref mut target_bind_group,
+            ref mut bind_group_1,
             ..
         } = callback_resources.get_mut().unwrap();
         // TODO: figure that out
@@ -173,15 +169,7 @@ impl CallbackTrait for RenderCall {
         let target = self.elements.as_slice();
         if target_buffer.size() as usize != size_of_val(target) {
             let normdistr_buffer = get_normaldistr_buffer(device, Some(target));
-            let normdistr_bind_group = bind_groups::BindGroup1::unsafe_get_bind_group(
-                device,
-                bind_groups::BindGroupEntries1 {
-                    gauss_bases: normdistr_buffer.as_entire_buffer_binding(),
-                },
-                &bind_groups::BindGroup1::LAYOUT_DESCRIPTOR,
-            );
             *target_buffer = normdistr_buffer;
-            *target_bind_group = normdistr_bind_group;
         }
         queue.write_buffer(
             resolution_buffer,
@@ -196,6 +184,11 @@ impl CallbackTrait for RenderCall {
             0,
             bytemuck::cast_slice(self.elements.as_slice()),
         );
+        // TODO: only reassign of required.
+        // If that actually speeds things up, I dunno.
+        *bind_group_1 = BindGroup1::from_bindings(device, BindGroupEntries1 {
+            gauss_bases: target_buffer.as_entire_buffer_binding(),
+        });
         Vec::new()
     }
 
@@ -207,14 +200,14 @@ impl CallbackTrait for RenderCall {
     ) {
         let &MultiModalGaussPipeline {
             ref pipeline,
-            ref resolution_bind_group,
-            target_bind_group: ref elements_bind_group,
+            ref bind_group_0,
+            ref bind_group_1,
             ..
         } = callback_resources.get().unwrap();
 
         render_pass.set_pipeline(pipeline);
-        render_pass.set_bind_group(0, resolution_bind_group, &[]);
-        render_pass.set_bind_group(1, elements_bind_group, &[]);
+        bind_group_0.set(render_pass);
+        bind_group_1.set(render_pass);
         render_pass.draw(0..fullscreen_quad::NUM_VERTICES, 0..1);
     }
 }

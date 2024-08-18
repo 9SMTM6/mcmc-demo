@@ -21,11 +21,11 @@ struct RWMHCountInfo {
     total_point_count: u32,
 }
 
-@group(2) @binding(0)
+@group(1) @binding(20)
 var<storage, read> accepted: array<RWMHAcceptRecord>;
 
-// @group(2) @binding(1)
-// var<storage, read> rejected: array<RWMHRejectRecord>;
-
-@group(2) @binding(1)
+@group(1) @binding(21)
 var<uniform> count_info: RWMHCountInfo;
+
+// @group(1) @binding(22)
+// var<storage, read> rejected: array<RWMHRejectRecord>;
