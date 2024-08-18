@@ -75,7 +75,9 @@ fn handle_c_pragma_once_style_imports(
                         "Import after actual sourcecode"
                     );
                     direct_imports_in_order.push(OsString::from(matched));
-                } else if let Some((_, [_])) = include_regex_error1.captures(line).map(|cap| cap.extract()) {
+                } else if let Some((_, [_])) =
+                    include_regex_error1.captures(line).map(|cap| cap.extract())
+                {
                     panic!("error in import syntax, {el:?}:{idx}.")
                 } else if first_actual_sourcecode.is_none() && line.trim() != "" {
                     first_actual_sourcecode = Some(idx);

@@ -1,8 +1,7 @@
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
-    Buffer, BufferDescriptor, BufferUsages, RenderPipeline,
-    RenderPipelineDescriptor,
+    Buffer, BufferDescriptor, BufferUsages, RenderPipeline, RenderPipelineDescriptor,
 };
 
 use crate::target_distributions::multimodal_gaussian::MultiModalGaussian;
@@ -13,7 +12,10 @@ use crate::create_shader_module;
 
 create_shader_module!("multimodal_gaussian.fragment");
 
-use shader_bindings::{bind_groups::{BindGroup0, BindGroup1, BindGroupEntries0, BindGroupEntries1}, ResolutionInfo};
+use shader_bindings::{
+    bind_groups::{BindGroup0, BindGroup1, BindGroupEntries0, BindGroupEntries1},
+    ResolutionInfo,
+};
 
 pub use shader_bindings::NormalDistribution;
 
@@ -42,11 +44,14 @@ impl MultiModalGaussianDisplay {
     }
 }
 
-pub(super) fn get_normaldistr_buffer(device: &wgpu::Device, distr: Option<&[NormalDistribution]>) -> wgpu::Buffer {
+pub(super) fn get_normaldistr_buffer(
+    device: &wgpu::Device,
+    distr: Option<&[NormalDistribution]>,
+) -> wgpu::Buffer {
     let webgpu_debug_name = Some(file!());
 
     let buf_use = BufferUsages::COPY_DST | BufferUsages::STORAGE;
-    
+
     match distr {
         Some(distr) => device.create_buffer_init(&BufferInitDescriptor {
             label: webgpu_debug_name,
@@ -97,13 +102,19 @@ impl MultiModalGaussianDisplay {
 
         let normdistr_buffer = get_normaldistr_buffer(device, None);
 
-        let bind_group_0 = BindGroup0::from_bindings(device, BindGroupEntries0 {
-            resolution_info: resolution_buffer.as_entire_buffer_binding(),
-        });
+        let bind_group_0 = BindGroup0::from_bindings(
+            device,
+            BindGroupEntries0 {
+                resolution_info: resolution_buffer.as_entire_buffer_binding(),
+            },
+        );
 
-        let bind_group_1 = BindGroup1::from_bindings(device, BindGroupEntries1 {
-            gauss_bases: normdistr_buffer.as_entire_buffer_binding(),
-        });
+        let bind_group_1 = BindGroup1::from_bindings(
+            device,
+            BindGroupEntries1 {
+                gauss_bases: normdistr_buffer.as_entire_buffer_binding(),
+            },
+        );
 
         // Because the graphics pipeline must have the same lifetime as the egui render pass,
         // instead of storing the pipeline in our struct, we insert it into the
@@ -186,9 +197,16 @@ impl CallbackTrait for RenderCall {
         );
         // TODO: only reassign of required.
         // If that actually speeds things up, I dunno.
-        *bind_group_1 = BindGroup1::from_bindings(device, BindGroupEntries1 {
-            gauss_bases: target_buffer.as_entire_buffer_binding(),
-        });
+        // See https://github.com/ScanMountGoat/wgsl_to_wgpu/tree/main?tab=readme-ov-file#bind-groups
+        // > Note that bind groups store references to their underlying resource bindings,
+        // > so it is not necessary to recreate a bind group if the only the uniform or storage buffer contents change.
+        // > Avoid creating new bind groups during rendering if possible for best performance.
+        *bind_group_1 = BindGroup1::from_bindings(
+            device,
+            BindGroupEntries1 {
+                gauss_bases: target_buffer.as_entire_buffer_binding(),
+            },
+        );
         Vec::new()
     }
 

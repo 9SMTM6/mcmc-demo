@@ -1,8 +1,7 @@
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
-    Buffer, BufferDescriptor, BufferUsages, RenderPipeline,
-    RenderPipelineDescriptor,
+    Buffer, BufferDescriptor, BufferUsages, RenderPipeline, RenderPipelineDescriptor,
 };
 
 use crate::{
@@ -21,7 +20,10 @@ use super::fullscreen_quad;
 
 create_shader_module!("diff_display.fragment");
 
-use shader_bindings::{bind_groups::{BindGroup0, BindGroup1, BindGroupEntries0, BindGroupEntries1}, RWMHAcceptRecord, RWMHCountInfo, ResolutionInfo};
+use shader_bindings::{
+    bind_groups::{BindGroup0, BindGroup1, BindGroupEntries0, BindGroupEntries1},
+    RWMHAcceptRecord, RWMHCountInfo, ResolutionInfo,
+};
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 pub struct DiffDisplay {
@@ -29,7 +31,10 @@ pub struct DiffDisplay {
     pub window_radius: f32,
 }
 
-fn get_approx_buffers(device: &wgpu::Device, approx_points: Option<&[RWMHAcceptRecord]>) -> (wgpu::Buffer, wgpu::Buffer) {
+fn get_approx_buffers(
+    device: &wgpu::Device,
+    approx_points: Option<&[RWMHAcceptRecord]>,
+) -> (wgpu::Buffer, wgpu::Buffer) {
     let webgpu_debug_name = Some(file!());
 
     let accept_buf_use = BufferUsages::COPY_DST | BufferUsages::STORAGE;
@@ -119,18 +124,23 @@ impl DiffDisplay {
 
         let normdistr_buffer = get_normaldistr_buffer(device, None);
 
-        let (approx_accepted_buffer, approx_info_buffer) =
-            get_approx_buffers(device, None);
+        let (approx_accepted_buffer, approx_info_buffer) = get_approx_buffers(device, None);
 
-        let bind_group_0 = BindGroup0::from_bindings(device, BindGroupEntries0 {
-            resolution_info: resolution_buffer.as_entire_buffer_binding(),
-        });
+        let bind_group_0 = BindGroup0::from_bindings(
+            device,
+            BindGroupEntries0 {
+                resolution_info: resolution_buffer.as_entire_buffer_binding(),
+            },
+        );
 
-        let bind_group_1 = BindGroup1::from_bindings(device, BindGroupEntries1 {
-            accepted: approx_accepted_buffer.as_entire_buffer_binding(),
-            count_info: approx_info_buffer.as_entire_buffer_binding(),
-            gauss_bases: normdistr_buffer.as_entire_buffer_binding(),
-        });
+        let bind_group_1 = BindGroup1::from_bindings(
+            device,
+            BindGroupEntries1 {
+                accepted: approx_accepted_buffer.as_entire_buffer_binding(),
+                count_info: approx_info_buffer.as_entire_buffer_binding(),
+                gauss_bases: normdistr_buffer.as_entire_buffer_binding(),
+            },
+        );
 
         // Because the graphics pipeline must have the same lifetime as the egui render pass,
         // instead of storing the pipeline in our struct, we insert it into the
@@ -232,14 +242,20 @@ impl CallbackTrait for RenderCall {
         );
         // TODO: only reassign of required.
         // If that actually speeds things up, I dunno.
-        *bind_group_0 = BindGroup0::from_bindings(device, BindGroupEntries0 {
-            resolution_info: resolution_buffer.as_entire_buffer_binding(),
-        });
-        *bind_group_1 = BindGroup1::from_bindings(device, BindGroupEntries1 {
-            accepted: approx_accepted_buffer.as_entire_buffer_binding(),
-            count_info: approx_info_buffer.as_entire_buffer_binding(),
-            gauss_bases: target_buffer.as_entire_buffer_binding(),
-        });
+        *bind_group_0 = BindGroup0::from_bindings(
+            device,
+            BindGroupEntries0 {
+                resolution_info: resolution_buffer.as_entire_buffer_binding(),
+            },
+        );
+        *bind_group_1 = BindGroup1::from_bindings(
+            device,
+            BindGroupEntries1 {
+                accepted: approx_accepted_buffer.as_entire_buffer_binding(),
+                count_info: approx_info_buffer.as_entire_buffer_binding(),
+                gauss_bases: target_buffer.as_entire_buffer_binding(),
+            },
+        );
         Vec::new()
     }
 
