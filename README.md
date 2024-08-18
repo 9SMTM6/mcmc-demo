@@ -104,8 +104,16 @@ Future ideas:
 
 Currently I only support batched execution, to quickly see results of different configurations.
 In the future I also want to support a substep execution such as in the [original inspiration](https://chi-feng.github.io/mcmc-demo/app.html?algorithm=RandomWalkMH&target=banana).
+With a history of past proposals etc.
+Maybe also with history navigation, if that actually fits the workflow (atm I dont thik so, since RNG is seeded once currently, and we should probably reset on changes to e.g. target distribution).
 
 ## Support more PRNG and low-discrepancy randomness
+
+Note that theres a fundamental difference in low-discrepancy RNGs compared to `normal` RNGs.
+They have to be aware of the output distribution they're supposed to resemble. 
+Concretly this means that (to work properly) they need to sample in 2D space immediately.
+The implementations also are all uniform samplers. 
+IDK how to transform that yet while retaining proper low-discrepancy. A normal transformation probably suffices, but that is to be explored.
 
 * actually make PRNG generic and allow choice in UI, currently hard-coded
 * https://en.wikipedia.org/wiki/Quasi-Monte_Carlo_method
