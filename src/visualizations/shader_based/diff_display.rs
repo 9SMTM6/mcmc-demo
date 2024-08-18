@@ -14,8 +14,6 @@ use crate::{
     },
 };
 
-// TODO: ERROR!!!!
-
 use super::fullscreen_quad;
 
 create_shader_module!("diff_display.fragment");
@@ -65,12 +63,8 @@ fn get_approx_buffers(
 
 struct PipelineStateHolder {
     pipeline: RenderPipeline,
-    // bind_groups: shader_bindings::bind_groups::BindGroups,
     bind_group_0: shader_bindings::bind_groups::BindGroup0,
     bind_group_1: shader_bindings::bind_groups::BindGroup1,
-    // resolution_bind_group: BindGroup,
-    // target_bind_group: BindGroup,
-    // approx_bind_group: BindGroup,
     resolution_buffer: Buffer,
     target_buffer: Buffer,
     approx_accepted_buffer: Buffer,
