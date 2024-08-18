@@ -17,39 +17,38 @@ macro_rules! profile_scope {
 }
 
 #[cfg(feature = "profile")]
-mod if_featured {
-    #[allow(clippy::missing_const_for_fn)]
-    pub fn start_puffin_server() {
-        // puffin server doesnt exist on web, so make that a noop there.
-        // We've got tracing_web that installed a tracing subscriber that reports to the [performance api](https://developer.mozilla.org/en-US/docs/Web/API/Performance).
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            puffin::set_scopes_on(true); // tell puffin to collect data
+// puffin server doesn't exist on web.
+// On the web we've got tracing_web that installed a tracing subscriber that reports to the [performance api](https://developer.mozilla.org/en-US/docs/Web/API/Performance).
+#[cfg(not(target_arch = "wasm32"))]
+#[allow(clippy::missing_const_for_fn)]
+pub fn start_puffin_server() {
+    puffin::set_scopes_on(true); // tell puffin to collect data
+    
+    match puffin_http::Server::new("127.0.0.1:8585") {
+        Ok(puffin_server) => {            
+            let res = std::process::Command::new("puffin_viewer")
+            .arg("--url")
+            .arg("127.0.0.1:8585")
+            .spawn()
+            .map_err(|_| {
+                "
+                puffin_viewer not found.
+                
+                Run:  cargo install puffin_viewer && puffin_viewer --url 127.0.0.1:8585
+                "
+            });
 
-            match puffin_http::Server::new("127.0.0.1:8585") {
-                Ok(puffin_server) => {
-                    eprintln!(
-                        "Run:  cargo install puffin_viewer && puffin_viewer --url 127.0.0.1:8585"
-                    );
+            if let Some(msg) = res.err() {
+                eprintln!("{msg}")
+            }
 
-                    std::process::Command::new("puffin_viewer")
-                        .arg("--url")
-                        .arg("127.0.0.1:8585")
-                        .spawn()
-                        .ok();
-
-                    // We can store the server if we want, but in this case we just want
-                    // it to keep running. Dropping it closes the server, so let's not drop it!
-                    #[allow(clippy::mem_forget)]
-                    std::mem::forget(puffin_server);
-                }
-                Err(err) => {
-                    eprintln!("Failed to start puffin server: {err}");
-                }
-            };
+            // We can store the server if we want, but in this case we just want
+            // it to keep running. Dropping it closes the server, so let's not drop it!
+            #[allow(clippy::mem_forget)]
+            std::mem::forget(puffin_server);
         }
-    }
+        Err(err) => {
+            eprintln!("Failed to start puffin server: {err}");
+        }
+    };
 }
-
-#[cfg(feature = "profile")]
-pub use if_featured::*;
