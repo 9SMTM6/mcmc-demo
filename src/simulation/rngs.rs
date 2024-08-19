@@ -1,3 +1,6 @@
+use std::borrow::Borrow;
+
+use egui::Slider;
 use rand::{Rng, RngCore, SeedableRng};
 // #[cfg(feature="rng_small")]
 // use rand::rngs::SmallRng;
@@ -138,15 +141,39 @@ pub enum AdoptedRngs {
     Boxed(Box<dyn RngCore>),
 }
 
-impl AdoptedRngs {
-    pub fn selection_ui(ui: &mut egui::Ui, value: &mut AdoptedRngsDiscriminants) {
-        for ele in AdoptedRngsDiscriminants::VARIANTS.into_iter() {
+impl AdoptedRngsDiscriminants {
+    pub fn selection_ui(&mut self, ui: &mut egui::Ui) {
+        for ele in Self::VARIANTS.into_iter() {
             if *ele == AdoptedRngsDiscriminants::Boxed {
                 continue;
             }
-            ui.selectable_value(value, *ele, ele.to_string())
-                .on_hover_text(ele.get_message().unwrap_or("IDK. Look on google, or the rust-random book/documentation"));
+            ui.selectable_value(self, *ele, ele.to_string())
+                .on_hover_text(ele.get_message().unwrap_or("Look for this on the Rust Rand book/documentation"));
         }
+    }
+}
+
+impl AdoptedRngs {
+    pub fn settings_ui(&mut self, ui: &mut egui::Ui) {
+        #[derive(Clone)]
+        struct Settings {
+            discr: AdoptedRngsDiscriminants,
+            seed: u64,
+        }
+        let id = ui.id();
+        let mut current_settings = ui.data(|type_map| {
+            type_map.get_temp(id).unwrap_or(Settings {
+                discr: AdoptedRngsDiscriminants::from(self.borrow()),
+                seed: 42,
+            })
+        });
+
+        current_settings.discr.selection_ui(ui);
+        ui.add(Slider::new(&mut current_settings.seed, 0..=u64::MAX));
+
+        ui.data_mut(|type_map| {
+            type_map.insert_temp(id, current_settings);
+        })
     }
 }
 

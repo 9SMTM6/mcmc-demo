@@ -1,6 +1,8 @@
 use std::time::Duration;
 
 use egui::{self, ProgressBar, Shadow, Vec2};
+use rand::SeedableRng;
+use rand_pcg::Pcg32;
 
 use crate::{
     bg_task::{BgCommunicate, BgTaskHandle, Progress},
@@ -192,8 +194,7 @@ impl eframe::App for McmcDemo {
 
         #[allow(clippy::collapsible_else_if)]
         egui::Window::new("Simulation").show(ctx, |ui| {
-            let mut test_val = crate::simulation::AdoptedRngsDiscriminants::Pcg32;
-            AdoptedRngs::selection_ui(ui, &mut test_val);
+            AdoptedRngs::Pcg32(Pcg32::from_entropy()).settings_ui(ui);
             if matches!(self.settings, Settings::EditDistribution(_)) {
                 if ui.button("Stop Editing Distribution").clicked() {
                     self.settings = Settings::Default;
