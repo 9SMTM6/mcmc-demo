@@ -13,8 +13,6 @@ fn main() -> eframe::Result<()> {
     mcmc_demo::set_default_and_redirect_log(mcmc_demo::define_subscriber(DEFAULT_TRACE_LEVEL));
     #[cfg(not(feature = "tracing"))]
     env_logger::init();
-    #[cfg(feature = "profile")]
-    mcmc_demo::profile::start_puffin_server();
 
     let native_options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()

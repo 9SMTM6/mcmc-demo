@@ -5,6 +5,8 @@
     clippy::missing_panics_doc,
     clippy::used_underscore_binding
 )]
+
+use super::start_puffin_server;
 /// How often we repaint the demo app by default
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum RunMode {
@@ -127,6 +129,10 @@ impl BackendPanel {
             ui.separator();
             if ui.button("Quit").clicked() {
                 ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close);
+            }
+            #[cfg(all(feature = "profile", not(target_arch = "wasm32")))]
+            if ui.button("Puffin Profiling").clicked() {
+                start_puffin_server();
             }
         }
     }
