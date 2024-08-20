@@ -23,6 +23,8 @@ const PUFFIN_URL: &str = "127.0.0.1:8585";
 // puffin server doesn't exist on web.
 // On the web we've got tracing_web that installed a tracing subscriber that reports to the [performance api](https://developer.mozilla.org/en-US/docs/Web/API/Performance).
 pub fn start_puffin_server() {
+    use std::process::Child;
+
     puffin::set_scopes_on(true); // tell puffin to collect data
 
     match puffin_http::Server::new(PUFFIN_URL) {
@@ -37,7 +39,22 @@ pub fn start_puffin_server() {
 
                 match viewer_process {
                     Ok(mut viewer_process) => {
-                        let viewer_res = viewer_process.wait();
+                        // TODO: properly handle that stuff, so that puffin closes on exit. TO do that I need to move away from the detached thread workflow.
+                        struct KillOnClose<'a> {
+                            process: &'a mut Child
+                        }
+                        impl<'a> KillOnClose<'a> {
+                            fn wait(&mut self) -> Result<std::process::ExitStatus, std::io::Error> {
+                                self.process.wait()
+                            }
+                        }
+                        impl<'a> Drop for KillOnClose<'a> {
+                            fn drop(&mut self) {
+                                self.process.kill();
+                            }
+                        }
+                        let mut handle = KillOnClose{process: &mut viewer_process};
+                        let viewer_res: Result<std::process::ExitStatus, std::io::Error> = handle.wait();
                         if let Err(err) = viewer_res {
                             eprintln!("{err}");
                         }
