@@ -16,28 +16,34 @@ macro_rules! declare_rng_wrapper_macro {
     }
 }
 
-declare_rng_wrapper_macro!(create_rng_wrapper_pcg, mod rand_pcg);
+declare_rng_wrapper_macro!(create_rng_wrapper_pcg, mod rand_pcg, feature = "rng_pcg");
 declare_rng_wrapper_macro!(create_rng_wrapper_xoshiro, mod rand_xoshiro, feature = "rng_xoshiro");
 declare_rng_wrapper_macro!(create_rng_wrapper_xorshift, mod rand_xorshift, feature = "rng_xorshift");
 
 macro_rules! declare_rng_wrappers {
     (
-        pcg: $($pcg_rng: ident),+ ;
-        xoshiro: $($xoshiro_rng: ident),+ ;
-        xorshift: $($xorshift_rng: ident),+;
+        pcg: $($pcg_rng: ident),+ ,;
+        xoshiro: $($xoshiro_rng: ident),+ ,;
+        xorshift: $($xorshift_rng: ident),+ ,;
     ) => {
         $(
+            #[cfg(feature = "rng_pcg")]
             create_rng_wrapper_pcg!(struct $pcg_rng);
         )+
         $(
+            #[cfg(feature = "rng_xoshiro")]
             create_rng_wrapper_xoshiro!(struct $xoshiro_rng);
         )+
         $(
+            #[cfg(feature = "rng_xorshift")]
             create_rng_wrapper_xorshift!(struct $xorshift_rng);
         )+
 
         pub enum WrappedRng {
-            $($pcg_rng(::rand_pcg::$pcg_rng),)+
+            $(
+                #[cfg(feature = "rng_pcg")]
+                $pcg_rng(::rand_pcg::$pcg_rng),
+            )+
             $(
                 #[cfg(feature = "rng_xoshiro")]
                 $xoshiro_rng(::rand_xoshiro::$xoshiro_rng),
@@ -50,7 +56,10 @@ macro_rules! declare_rng_wrappers {
 
         #[derive(PartialEq, Clone, Copy)]
         pub enum WrappedRngDiscriminants {
-            $($pcg_rng,)+
+            $(
+                #[cfg(feature = "rng_pcg")]
+                $pcg_rng,
+            )+
             $(
                 #[cfg(feature = "rng_xoshiro")]
                 $xoshiro_rng,
@@ -62,12 +71,28 @@ macro_rules! declare_rng_wrappers {
         }
 
         impl WrappedRngDiscriminants {
-            pub const VARIANTS: [WrappedRngDiscriminants; 10] = [$(Self::$pcg_rng),+, $(Self::$xoshiro_rng),+, $(Self::$xorshift_rng),+];
+            pub const VARIANTS: &[WrappedRngDiscriminants] = &[
+                $(
+                    #[cfg(feature = "rng_pcg")]
+                    Self::$pcg_rng
+                ),+, 
+                $(
+                    #[cfg(feature = "rng_xoshiro")]
+                    Self::$xoshiro_rng
+                ),+, 
+                $(
+                    #[cfg(feature = "rng_xorshift")]
+                    Self::$xorshift_rng
+                ),+
+            ];
             pub fn seed_from_u64(&self, seed: u64) -> WrappedRng {
                 use WrappedRngDiscriminants as D;
                 use WrappedRng as T;
                 match *self {
-                    $(D::$pcg_rng => T::$pcg_rng(::rand_pcg::$pcg_rng::seed_from_u64(seed)),)+
+                    $(
+                        #[cfg(feature = "rng_pcg")]
+                        D::$pcg_rng => T::$pcg_rng(::rand_pcg::$pcg_rng::seed_from_u64(seed)),
+                    )+
                     $(
                         #[cfg(feature = "rng_xoshiro")]
                         D::$xoshiro_rng => T::$xoshiro_rng(::rand_xoshiro::$xoshiro_rng::seed_from_u64(seed)),
@@ -82,7 +107,10 @@ macro_rules! declare_rng_wrappers {
             pub fn display_name(&self) -> &'static str {
                 use WrappedRngDiscriminants as D;
                 match *self {
-                    $(D::$pcg_rng => stringify!($pcg_rng),)+
+                    $(
+                        #[cfg(feature = "rng_pcg")]
+                        D::$pcg_rng => stringify!($pcg_rng),
+                    )+
                     $(
                         #[cfg(feature = "rng_xoshiro")]
                         D::$xoshiro_rng => stringify!($xoshiro_rng),
@@ -99,7 +127,10 @@ macro_rules! declare_rng_wrappers {
                 use WrappedRng as T;
                 use WrappedRngDiscriminants as D;
                 match value {
-                    $(T::$pcg_rng(_) => D::$pcg_rng),+,
+                    $(
+                        #[cfg(feature = "rng_pcg")]
+                        T::$pcg_rng(_) => D::$pcg_rng
+                    ),+,
                     $(
                         #[cfg(feature = "rng_xoshiro")]
                         T::$xoshiro_rng(_) => D::$xoshiro_rng
@@ -115,25 +146,48 @@ macro_rules! declare_rng_wrappers {
 }
 
 declare_rng_wrappers! {
-    pcg: Pcg32, Pcg64, Pcg64Mcg;
-    xoshiro: Xoshiro256Plus, Xoshiro128Plus, Xoroshiro128Plus, Xoroshiro128StarStar, Xoroshiro64Star, Xoroshiro64StarStar;
-    xorshift: XorShiftRng;
+    pcg:
+        Pcg32, 
+        Pcg64, 
+        Pcg64Mcg,
+    ;
+    xoshiro: 
+        Xoshiro256Plus, 
+        Xoshiro128Plus, 
+        Xoroshiro128Plus, 
+        Xoroshiro128StarStar, 
+        Xoroshiro64Star, 
+        Xoroshiro64StarStar,
+    ;
+    xorshift: 
+        XorShiftRng,
+    ;
 }
 
 impl WrappedRngDiscriminants {
     pub fn explanation(&self) -> &'static str {
         use WrappedRngDiscriminants as D;
         match self {
+            #[cfg(feature = "rng_pcg")]
             D::Pcg32 => "Works okay pretty much everywhere",
+            #[cfg(feature = "rng_pcg")]
             D::Pcg64 => "AFAIK strictly inferior to Pcg64Mcg except on 32bit platforms when generating f64, but since we generate f32, not helpful. Mostly here for completeness",
+            #[cfg(feature = "rng_pcg")]
             D::Pcg64Mcg => "Better than Pcg32 on 64 bit platforms (which does NOT currently include the web!)",
-            D::XorShiftRng => "Better than Pcg32 on 64 bit platforms (which does NOT currently include the web!)",
+            #[cfg(feature = "rng_xoshiro")]
             D::Xoshiro128Plus => "Recommended for f32 generation.",
+            #[cfg(feature = "rng_xoshiro")]
             D::Xoshiro256Plus => "Recommended for f64 generation (which is not what we do).",
+            #[cfg(feature = "rng_xoshiro")]
             D::Xoroshiro128Plus => "Recommended for f64 generation (which is not what we do). Smaller state than Xoshiro256Plus",
+            #[cfg(feature = "rng_xoshiro")]
             D::Xoroshiro128StarStar => "Recommended for f64 generation (which is not what we do). Smaller state than Xoshiro256Plus. Better scrambling than Plus variant, but more expensive",
+            #[cfg(feature = "rng_xoshiro")]
             D::Xoroshiro64Star => "Recommended for f32 generation. Smaller state.",
+            #[cfg(feature = "rng_xoshiro")]
             D::Xoroshiro64StarStar => "Recommended for f32 generation. Smaller state. Better scrambling than Plus variant, but more expensive",
+            #[cfg(feature = "rng_xorshift")]
+            D::XorShiftRng => "Better than Pcg32 on 64 bit platforms (which does NOT currently include the web!)",
             _ => "Look for this in the Rust Rand book/documentation",
         }
     }
@@ -215,7 +269,7 @@ impl WrappedRngDiscriminants {
             // if *ele == WrappedRngDiscriminants::Boxed {
             //     continue;
             // }
-            ui.selectable_value(self, ele, ele.display_name())
+            ui.selectable_value(self, *ele, ele.display_name())
                 .on_hover_text(ele.explanation());
         }
     }
