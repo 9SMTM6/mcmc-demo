@@ -6,6 +6,7 @@ const DEFAULT_TRACE_LEVEL: Option<&'static str> = Some("wgpu_core=warn,wgpu_hal=
 // When compiling natively:
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result<()> {
+    use egui::IconData;
     use mcmc_demo::INITIAL_RENDER_SIZE;
 
     // Log or trace to stderr (if you run with `RUST_LOG=debug`).
@@ -19,9 +20,11 @@ fn main() -> eframe::Result<()> {
         viewport: egui::ViewportBuilder::default()
             .with_min_inner_size(INITIAL_RENDER_SIZE)
             .with_icon(
-                // NOTE: Adding an icon is optional
-                eframe::icon_data::from_png_bytes(&include_bytes!("../assets/icon-256.png")[..])
-                    .expect("Failed to load icon"),
+                // Not keen on converting the svg to a png on top.
+                // Not as if this currently works under wayland anyways.
+                IconData::default(), // NOTE: Adding an icon is optional
+                                     // eframe::icon_data::from_png_bytes(&include_bytes!("../assets/icon-256.png")[..])
+                                     //     .expect("Failed to load icon"),
             ),
         ..Default::default()
     };
