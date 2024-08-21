@@ -77,11 +77,11 @@ macro_rules! declare_rng_wrappers {
                 $(
                     #[cfg(feature = "rng_pcg")]
                     Self::$pcg_rng
-                ),+, 
+                ),+,
                 $(
                     #[cfg(feature = "rng_xoshiro")]
                     Self::$xoshiro_rng
-                ),+, 
+                ),+,
                 $(
                     #[cfg(feature = "rng_xorshift")]
                     Self::$xorshift_rng
@@ -149,19 +149,19 @@ macro_rules! declare_rng_wrappers {
 
 declare_rng_wrappers! {
     pcg:
-        Pcg32, 
-        Pcg64, 
+        Pcg32,
+        Pcg64,
         Pcg64Mcg,
     ;
-    xoshiro: 
-        Xoshiro256Plus, 
-        Xoshiro128Plus, 
-        Xoroshiro128Plus, 
-        Xoroshiro128StarStar, 
-        Xoroshiro64Star, 
+    xoshiro:
+        Xoshiro256Plus,
+        Xoshiro128Plus,
+        Xoroshiro128Plus,
+        Xoroshiro128StarStar,
+        Xoroshiro64Star,
         Xoroshiro64StarStar,
     ;
-    xorshift: 
+    xorshift:
         XorShiftRng,
     ;
 }

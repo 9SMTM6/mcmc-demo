@@ -1,6 +1,8 @@
 {
     // for for build-std flag on nightly requireing an explicit target.
     // otherwise this breaks rust-analyzer
-    // "rust-analyzer.cargo.target": "x86_64-unknown-linux-gnu",
-    "rust-analyzer.cargo.target": "wasm32-unknown-unknown",
+    "rust-analyzer.cargo.target": "x86_64-unknown-linux-gnu",
+    // "rust-analyzer.cargo.target": "wasm32-unknown-unknown",
+    // TODO: if i dont find an alternative, move this file to an extra directory.
+    // "rust-analyzer.files.excludeDirs": ["src/simulation/"],
 }
