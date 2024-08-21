@@ -50,7 +50,7 @@ pub fn start_puffin_server() {
                         }
                         impl<'a> Drop for KillOnClose<'a> {
                             fn drop(&mut self) {
-                                self.process.kill();
+                                drop(self.process.kill());
                             }
                         }
                         let mut handle = KillOnClose {

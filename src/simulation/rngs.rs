@@ -1,3 +1,4 @@
+#![allow(unused)]
 use std::borrow::Borrow;
 
 use egui::Slider;
