@@ -188,7 +188,7 @@ impl WrappedRngDiscriminants {
             D::Xoroshiro64StarStar => "Recommended for f32 generation. Smaller state. Better scrambling than Plus variant, but more expensive",
             #[cfg(feature = "rng_xorshift")]
             D::XorShiftRng => "Better than Pcg32 on 64 bit platforms (which does NOT currently include the web!)",
-            _ => "Look for this in the Rust Rand book/documentation",
+            // _ => "Look for this in the Rust Rand book/documentation",
         }
     }
 }
