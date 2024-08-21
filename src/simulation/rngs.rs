@@ -104,7 +104,7 @@ macro_rules! declare_rng_wrappers {
                 }
             }
 
-            pub fn display_name(&self) -> &'static str {
+            pub const fn display_name(&self) -> &'static str {
                 use WrappedRngDiscriminants as D;
                 match *self {
                     $(
@@ -129,15 +129,15 @@ macro_rules! declare_rng_wrappers {
                 match value {
                     $(
                         #[cfg(feature = "rng_pcg")]
-                        T::$pcg_rng(_) => D::$pcg_rng
+                        &T::$pcg_rng(_) => D::$pcg_rng
                     ),+,
                     $(
                         #[cfg(feature = "rng_xoshiro")]
-                        T::$xoshiro_rng(_) => D::$xoshiro_rng
+                        &T::$xoshiro_rng(_) => D::$xoshiro_rng
                     ),+,
                     $(
                         #[cfg(feature = "rng_xorshift")]
-                        T::$xorshift_rng(_) => D::$xorshift_rng
+                        &T::$xorshift_rng(_) => D::$xorshift_rng
                     ),+
                 }
             }
@@ -165,9 +165,9 @@ declare_rng_wrappers! {
 }
 
 impl WrappedRngDiscriminants {
-    pub fn explanation(&self) -> &'static str {
+    pub const fn explanation(&self) -> &'static str {
         use WrappedRngDiscriminants as D;
-        match self {
+        match *self {
             #[cfg(feature = "rng_pcg")]
             D::Pcg32 => "Works okay pretty much everywhere",
             #[cfg(feature = "rng_pcg")]
@@ -265,7 +265,7 @@ impl<R: Rng + SeedableRng> SRngPercIter<R> {
 
 impl WrappedRngDiscriminants {
     pub fn selection_ui(&mut self, ui: &mut egui::Ui) {
-        for ele in Self::VARIANTS.into_iter() {
+        for ele in Self::VARIANTS.iter() {
             // if *ele == WrappedRngDiscriminants::Boxed {
             //     continue;
             // }
