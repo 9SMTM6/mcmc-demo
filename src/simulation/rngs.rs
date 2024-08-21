@@ -73,7 +73,7 @@ macro_rules! declare_rng_wrappers {
         }
 
         impl WrappedRngDiscriminants {
-            pub const VARIANTS: &[WrappedRngDiscriminants] = &[
+            pub const VARIANTS: &'static [WrappedRngDiscriminants] = &[
                 $(
                     #[cfg(feature = "rng_pcg")]
                     Self::$pcg_rng
@@ -312,6 +312,6 @@ mod test {
     #[test]
     fn sizeof_rand() {
         // size of largest prng + discriminant + alignment (I think)
-        assert!(size_of::<WrappedRng>() <= 32 + 8 + 8)
+        assert!(size_of::<WrappedRng>() <= 32 + 8 + 8);
     }
 }

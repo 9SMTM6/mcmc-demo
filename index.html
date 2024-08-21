@@ -19,6 +19,7 @@
         <!-- I use reference type ec, sicne the currently hard dependency on WebGPU already foregoes any potential for backwards compat -->
         <!-- data-wasm-opt="0"
             data-keep-debug -->
+        <!-- TODO: remove rng_pcg once features are fixed -->
         <link
             data-trunk
             rel="rust"
@@ -26,6 +27,7 @@
             data-reference-types
             data-weak-refs
             data-cargo-no-default-features
+            data-cargo-features="rng_pcg"
             data-bindgen-target="web"
         />
         <!-- this is the base url relative to which other urls will be constructed. trunk will insert this from the public-url option -->

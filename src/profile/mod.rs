@@ -67,7 +67,7 @@ pub fn start_puffin_server() {
                             "Failed to start puffin_viewer: {err}
 
 Try:  cargo install puffin_viewer && puffin_viewer --url {PUFFIN_URL}"
-                        )
+                        );
                     }
                 };
 
