@@ -30,7 +30,9 @@ pub fn remove_el_if_present(id: &str) {
 }
 
 pub fn remove_loading_state() {
-    get_oob_text_el().as_ref().map(|it| it.set_inner_text(""));
+    if let Some(el) = get_oob_text_el().as_ref() {
+        el.set_inner_text("");
+    };
     remove_el_if_present("loading_animation");
 }
 
