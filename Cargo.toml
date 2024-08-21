@@ -11,25 +11,25 @@ targets = ["x86_64-unknown-linux-gnu", "wasm32-unknown-unknown"]
 
 [features]
 default = [
-    "persistence",
+    "all_rngs",
+    "profile",
     "shipped_fonts",
     "tracing",
     "x11",
-    "profile",
-    "all_rngs",
+    "persistence",
 ]
 persistence = [
-    "dep:serde",
     "eframe/persistence",
+    "nalgebra/serde-serialize",
     "rand/serde1",
+    "rand_chacha/serde1",
     "rand_distr/serde1",
     "rand_pcg/serde1",
-    "rand_chacha/serde1",
     "rand_xorshift/serde1",
     "rand_xoshiro/serde1",
-    "nalgebra/serde-serialize",
     # not needed currently.
     # "wgpu/serde",
+    "dep:serde",
 ]
 # doesnt work, since it can't translate storagebuffers.
 # And my experiments with passing stuff via textures was not successful.
@@ -49,37 +49,44 @@ tracing = [
     "rand/log",
 ]
 all_rngs = [
-    "rng_chacha",
-    "rng_xoshiro",
-    "rng_xorshift",
+    "rng_pcg",
     # "rng_small",
+    "rng_xorshift",
+    "rng_xoshiro",
+    "rng_chacha",
 ]
+rng_pcg = ["dep:rand_pcg"]
 rng_chacha = ["dep:rand_chacha"]
 rng_xoshiro = ["dep:rand_xoshiro"]
 rng_xorshift = ["dep:rand_xorshift"]
 # rng_small = ["rand/small_rng"]
 
 [dependencies]
-egui = "0.28.1"
+bytemuck = { version = "1.16.0" }
+delegate = "0.12.0"
 eframe = { version = "0.28.1", default-features = false, features = [
     "wgpu",
     "wayland",
 ] }
-log = "0.4"
-serde = { version = "1", features = ["derive"], optional = true }
-wgpu = { version = "22.1", features = ["webgpu"] }
-bytemuck = { version = "1.16.0" }
-nalgebra = { version = "0.33.0" }
+egui = "0.28.1"
+enum_dispatch = "0.3.13"
 getrandom = { version = "0.2.15", features = ["js"] }
-rand_pcg = "0.3.1"
-rand_distr = "0.4.3"
+log = "0.4"
+nalgebra = { version = "0.33.0" }
+puffin = { version = "0.19.0", optional = true }
+puffin_http = { version = "0.16.0", optional = true }
 rand = { version = "0.8.5", default-features = false, features = [
     "log",
     "std",
 ] }
-enum_dispatch = "0.3.13"
-puffin = { version = "0.19.0", optional = true }
-puffin_http = { version = "0.16.0", optional = true }
+rand_chacha = { version = "0.3.1", optional = true }
+rand_distr = "0.4.3"
+rand_pcg = {version = "0.3.1", optional = true}
+rand_xorshift = { version = "0.3.0", optional = true }
+rand_xoshiro = { version = "0.6.0", optional = true }
+serde = { version = "1", features = ["derive"], optional = true }
+strum = { version = "0.26.3", features = ["derive"] }
+time = { version = "0.3.36", features = ["wasm-bindgen"], optional = true }
 tracing = { version = "0.1.40", optional = true }
 tracing-log = { version = "0.2.0", optional = true }
 tracing-subscriber = { version = "0.3.18", optional = true, features = [
@@ -88,12 +95,7 @@ tracing-subscriber = { version = "0.3.18", optional = true, features = [
     "time",
 ] }
 wasm_thread = "0.3.0"
-time = { version = "0.3.36", features = ["wasm-bindgen"], optional = true }
-rand_chacha = { version = "0.3.1", optional = true }
-rand_xoshiro = { version = "0.6.0", optional = true }
-rand_xorshift = { version = "0.3.0", optional = true }
-strum = { version = "0.26.3", features = ["derive"] }
-delegate = "0.12.0"
+wgpu = { version = "22.1", features = ["webgpu"] }
 
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
@@ -125,17 +127,16 @@ opt-level = 2 # fast and small wasm
 [profile.dev.package."*"]
 opt-level = 2
 
-
 [patch.crates-io]
-# the release on patched branches MUST match the set version above,
-# otherwise cargo will ignore this (it will warn about it though).
+# the release on patched branches MUST match the set version above,# otherwise cargo will ignore this (it will warn about it though).
 
 # If you want to use the bleeding edge version of egui and eframe:
 # egui = { git = "https://github.com/emilk/egui", branch = "master" }
 # eframe = { git = "https://github.com/emilk/egui", branch = "master" }
 
-egui = { git = "https://github.com/9smtm6/egui", branch = "patched" }
 eframe = { git = "https://github.com/9smtm6/egui", branch = "patched" }
+egui = { git = "https://github.com/9smtm6/egui", branch = "patched" }
+
 wgsl_to_wgpu = { git = "https://github.com/9SMTM6/wgsl_to_wgpu", branch = "clean_patched" }
 # wgsl_to_wgpu = { path = "../wgsl_to_wgpu/wgsl_to_wgpu" }
 # wgpu = { git = "https://github.com/9smtm6/wgpu", branch = "patched" }
@@ -154,13 +155,11 @@ rust_2018_idioms = { level = "warn", priority = -1 }
 
 [lints.clippy]
 all = { level = "warn", priority = -1 }
-needless_borrowed_reference = "allow"
 # this isnt actually a thing outside of nightly
 allow_attributes_without_reason = "allow"
 branches_sharing_code = "warn"
 checked_conversions = "warn"
 cognitive_complexity = "warn"
-used_underscore_binding = "warn"
 dbg_macro = "warn"
 # "warn_on_ci"
 expl_impl_clone_on_copy = "deny"
@@ -178,6 +177,7 @@ module_name_repetitions = "warn"
 # set `allowed-duplicate-crates`
 #
 # multiple_crate_versions = "warn"
+needless_borrowed_reference = "allow"
 needless_pass_by_value = "warn"
 no_effect_underscore_binding = "warn"
 pattern_type_mismatch = "warn"
@@ -194,3 +194,4 @@ unnested_or_patterns = "warn"
 unreadable_literal = "warn"
 # unwrap_used = "warn"
 # "warn_on_ci"
+used_underscore_binding = "warn"
