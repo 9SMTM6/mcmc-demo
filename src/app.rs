@@ -8,7 +8,8 @@ use crate::{
     bg_task::{BgCommunicate, BgTaskHandle, Progress},
     settings::{self, Settings},
     simulation::{
-        random_walk_metropolis_hastings::{ProgressMode, Rwmh}, WrappedRng, SRngGaussianIter, SRngPercIter
+        random_walk_metropolis_hastings::{ProgressMode, Rwmh},
+        SRngGaussianIter, SRngPercIter, WrappedRng,
     },
     target_distributions::multimodal_gaussian::MultiModalGaussian,
     visualizations::{

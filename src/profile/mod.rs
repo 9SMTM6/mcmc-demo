@@ -41,7 +41,7 @@ pub fn start_puffin_server() {
                     Ok(mut viewer_process) => {
                         // TODO: properly handle that stuff, so that puffin closes on exit. TO do that I need to move away from the detached thread workflow.
                         struct KillOnClose<'a> {
-                            process: &'a mut Child
+                            process: &'a mut Child,
                         }
                         impl<'a> KillOnClose<'a> {
                             fn wait(&mut self) -> Result<std::process::ExitStatus, std::io::Error> {
@@ -53,17 +53,22 @@ pub fn start_puffin_server() {
                                 self.process.kill();
                             }
                         }
-                        let mut handle = KillOnClose{process: &mut viewer_process};
-                        let viewer_res: Result<std::process::ExitStatus, std::io::Error> = handle.wait();
+                        let mut handle = KillOnClose {
+                            process: &mut viewer_process,
+                        };
+                        let viewer_res: Result<std::process::ExitStatus, std::io::Error> =
+                            handle.wait();
                         if let Err(err) = viewer_res {
                             eprintln!("{err}");
                         }
-                    },
+                    }
                     Err(err) => {
-                        eprintln!("Failed to start puffin_viewer: {err}
+                        eprintln!(
+                            "Failed to start puffin_viewer: {err}
 
-Try:  cargo install puffin_viewer && puffin_viewer --url {PUFFIN_URL}")
-                    },
+Try:  cargo install puffin_viewer && puffin_viewer --url {PUFFIN_URL}"
+                        )
+                    }
                 };
 
                 drop(puffin_server);

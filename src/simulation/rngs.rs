@@ -22,8 +22,8 @@ declare_rng_wrapper_macro!(create_rng_wrapper_xorshift, mod rand_xorshift, featu
 
 macro_rules! declare_rng_wrappers {
     (
-        pcg: $($pcg_rng: ident),+ ; 
-        xoshiro: $($xoshiro_rng: ident),+ ; 
+        pcg: $($pcg_rng: ident),+ ;
+        xoshiro: $($xoshiro_rng: ident),+ ;
         xorshift: $($xorshift_rng: ident),+;
     ) => {
         $(
@@ -35,7 +35,7 @@ macro_rules! declare_rng_wrappers {
         $(
             create_rng_wrapper_xorshift!(struct $xorshift_rng);
         )+
-        
+
         pub enum WrappedRng {
             $($pcg_rng(::rand_pcg::$pcg_rng),)+
             $(
@@ -47,7 +47,7 @@ macro_rules! declare_rng_wrappers {
                 $xorshift_rng(::rand_xorshift::$xorshift_rng),
             )+
         }
-        
+
         #[derive(PartialEq, Clone, Copy)]
         pub enum WrappedRngDiscriminants {
             $($pcg_rng,)+
@@ -60,7 +60,7 @@ macro_rules! declare_rng_wrappers {
                 $xorshift_rng,
             )+
         }
-        
+
         impl WrappedRngDiscriminants {
             pub const VARIANTS: [WrappedRngDiscriminants; 10] = [$(Self::$pcg_rng),+, $(Self::$xoshiro_rng),+, $(Self::$xorshift_rng),+];
             pub fn seed_from_u64(&self, seed: u64) -> WrappedRng {
@@ -78,7 +78,7 @@ macro_rules! declare_rng_wrappers {
                     )+
                 }
             }
-            
+
             pub fn display_name(&self) -> &'static str {
                 use WrappedRngDiscriminants as D;
                 match *self {
@@ -114,10 +114,9 @@ macro_rules! declare_rng_wrappers {
     }
 }
 
-
-declare_rng_wrappers!{
-    pcg: Pcg32, Pcg64, Pcg64Mcg; 
-    xoshiro: Xoshiro256Plus, Xoshiro128Plus, Xoroshiro128Plus, Xoroshiro128StarStar, Xoroshiro64Star, Xoroshiro64StarStar; 
+declare_rng_wrappers! {
+    pcg: Pcg32, Pcg64, Pcg64Mcg;
+    xoshiro: Xoshiro256Plus, Xoshiro128Plus, Xoroshiro128Plus, Xoroshiro128StarStar, Xoroshiro64Star, Xoroshiro64StarStar;
     xorshift: XorShiftRng;
 }
 
@@ -140,7 +139,6 @@ impl WrappedRngDiscriminants {
     }
 }
 
-
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Clone)]
 pub struct SRngGaussianIter<Rng> {
@@ -149,15 +147,15 @@ pub struct SRngGaussianIter<Rng> {
 
 impl<R> Iterator for SRngGaussianIter<R>
 where
-R: Rng + SeedableRng,
+    R: Rng + SeedableRng,
 {
     type Item = f32;
-    
+
     #[inline(always)]
     fn next(&mut self) -> Option<f32> {
         Some(self.rng.sample(StandardNormal))
     }
-    
+
     fn size_hint(&self) -> (usize, Option<usize>) {
         (usize::MAX, None)
     }
@@ -184,15 +182,15 @@ pub struct SRngPercIter<Rng> {
 
 impl<R> Iterator for SRngPercIter<R>
 where
-R: Rng + SeedableRng,
+    R: Rng + SeedableRng,
 {
     type Item = f32;
-    
+
     #[inline(always)]
     fn next(&mut self) -> Option<f32> {
         Some(self.rng.sample(self.distr))
     }
-    
+
     fn size_hint(&self) -> (usize, Option<usize>) {
         (usize::MAX, None)
     }
@@ -205,7 +203,7 @@ impl<R: Rng + SeedableRng> SRngPercIter<R> {
             distr: Uniform::new_inclusive(0.0, 1.0),
         }
     }
-    
+
     pub fn unwrapped_next(&mut self) -> f32 {
         self.next().expect("infinite iterator")
     }
@@ -218,7 +216,7 @@ impl WrappedRngDiscriminants {
             //     continue;
             // }
             ui.selectable_value(self, ele, ele.display_name())
-            .on_hover_text(ele.explanation());
+                .on_hover_text(ele.explanation());
         }
     }
 }
@@ -237,14 +235,14 @@ impl WrappedRng {
                 seed: 42,
             })
         });
-        
+
         current_settings.discr.selection_ui(ui);
         ui.add(Slider::new(&mut current_settings.seed, 0..=u64::MAX));
-        
+
         if ui.button("apply").clicked() {
             *self = current_settings.discr.seed_from_u64(current_settings.seed);
         }
-        
+
         ui.data_mut(|type_map| {
             type_map.insert_temp(id, current_settings);
         });
@@ -254,7 +252,7 @@ impl WrappedRng {
 #[cfg(test)]
 mod test {
     use super::*;
-    
+
     #[test]
     fn sizeof_rand() {
         // TODO: update to enum
