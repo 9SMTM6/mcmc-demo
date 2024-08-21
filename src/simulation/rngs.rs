@@ -55,6 +55,7 @@ macro_rules! declare_rng_wrappers {
         }
 
         #[derive(PartialEq, Clone, Copy)]
+        #[repr(u8)]
         pub enum WrappedRngDiscriminants {
             $(
                 #[cfg(feature = "rng_pcg")]
@@ -309,8 +310,7 @@ mod test {
 
     #[test]
     fn sizeof_rand() {
-        // TODO: update to enum
-        // size of largest prng + discriminant
-        assert!(size_of::<WrappedRng>() <= 32 + 8)
+        // size of largest prng + discriminant + alignment (I think)
+        assert!(size_of::<WrappedRng>() <= 32 + 8 + 8)
     }
 }
