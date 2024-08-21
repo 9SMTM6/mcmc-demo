@@ -5,7 +5,7 @@ mod resolution_uniform;
 pub use resolution_uniform::INITIAL_RENDER_SIZE;
 
 #[macro_export]
-#[allow(unknown_lints)] // not a lint of stable...
+#[allow(unknown_lints)] // not a lint on stable...
 #[allow(edition_2024_expr_fragment_specifier)]
 macro_rules! create_shader_module {
     ($shader_name:expr, $module_name: ident) => {
