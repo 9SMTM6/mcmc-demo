@@ -18,17 +18,19 @@ pub fn get_egui_canvas() -> web_sys::HtmlCanvasElement {
         .expect("Root element is no canvas")
 }
 
-pub fn get_oob_text_el() -> Option<web_sys::Element> {
+pub fn get_oob_text_el() -> Option<web_sys::HtmlElement> {
     web_sys::window()
         .and_then(|w| w.document())
-        .and_then(|d| d.get_element_by_id("oob_communication"))
+        .and_then(|d| d.get_element_by_id("oob_text"))
+        .and_then(|el| el.dyn_into::<web_sys::HtmlElement>().ok())
 }
 
 pub fn remove_el_if_present(id: &str) {
     get_element_by_id(id).as_ref().map(Element::remove);
 }
 
-pub fn remove_loading_el() {
+pub fn remove_loading_state() {
+    get_oob_text_el().as_ref().map(|it| it.set_inner_text(""));
     remove_el_if_present("loading_animation");
 }
 
@@ -72,7 +74,7 @@ pub fn try_display_panic_str(panic_info: &str) {
     </p>
 "#
         ));
-        remove_loading_el();
+        remove_loading_state();
         remove_canvas();
     } else {
         // not sure what panicing here does, but oh well.

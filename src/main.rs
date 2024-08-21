@@ -82,5 +82,5 @@ fn main() {
     } else {
         display_failing_wgpu_info();
     }
-    remove_loading_el();
+    remove_loading_state();
 }

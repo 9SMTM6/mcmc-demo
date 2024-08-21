@@ -148,11 +148,10 @@
     <body>
         <!-- the id is hardcoded in main.rs . so, make sure both match. -->
         <canvas id="egui_canvas"></canvas>
-
-        <!-- the loading spinner will be removed in main.rs (or not) -->
-        <div class="centered" id="oob_communication">
-            <div class="centered", id="oob_text"></div>
-            <div class="lds-dual-ring", id="loading_animation"></div>
+        <div class="centered">
+            <p id="oob_text">Loading...</p>
+            <!-- the loading spinner will be removed in main.rs (or not) -->
+            <div class="lds-dual-ring" id="loading_animation"></div>
         </div>
     </body>
 </html>
