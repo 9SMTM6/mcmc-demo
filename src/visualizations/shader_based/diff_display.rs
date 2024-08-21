@@ -1,3 +1,4 @@
+#![allow(unused)]
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
