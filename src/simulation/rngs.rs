@@ -6,20 +6,19 @@ use rand::{Rng, SeedableRng};
 use rand_distr::{StandardNormal, Uniform};
 
 macro_rules! declare_rng_wrapper_macro {
-    ($macro_name: ident, mod $path: tt$(, feature = $feature: literal)?) => {
+    ($macro_name: ident, mod $path: tt) => {
         #[macro_export]
         macro_rules! $macro_name {
             (struct $rng_name: ident) => {
-                $(#[cfg(feature = $feature)])?
                 pub struct $rng_name(::$path::$rng_name);
             };
         }
     }
 }
 
-declare_rng_wrapper_macro!(create_rng_wrapper_pcg, mod rand_pcg, feature = "rng_pcg");
-declare_rng_wrapper_macro!(create_rng_wrapper_xoshiro, mod rand_xoshiro, feature = "rng_xoshiro");
-declare_rng_wrapper_macro!(create_rng_wrapper_xorshift, mod rand_xorshift, feature = "rng_xorshift");
+declare_rng_wrapper_macro!(create_rng_wrapper_pcg, mod rand_pcg);
+declare_rng_wrapper_macro!(create_rng_wrapper_xoshiro, mod rand_xoshiro);
+declare_rng_wrapper_macro!(create_rng_wrapper_xorshift, mod rand_xorshift);
 
 macro_rules! declare_rng_wrappers {
     (
