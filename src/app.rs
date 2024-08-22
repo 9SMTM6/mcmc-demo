@@ -44,6 +44,13 @@ pub struct McmcDemo {
     #[cfg(feature = "profile")]
     backend_panel: super::profile::backend_panel::BackendPanel,
     #[cfg_attr(feature = "persistence", serde(skip))]
+    // TODO: Create TempState struct that holds a generic field and another optional marker generic.
+    // This SHOULD have a unique TypeId per type it holds (in addition with the generic I can have other things be unique too).
+    // Then I can create a method on this type that takes a UI handle, 
+    // and then both renders the content (think of how to provide the rendering code for that)
+    // as well as keeps the state in ui.data::IdTypeMap.
+    // This way I dont have one big monolith such as here currently, where every small thing like background tasks have their own field and
+    // kindof have to have the same lifetime (or be Option)
     bg_task: Option<BgTaskHandle<Rwmh>>,
     // #[cfg_attr(feature = "persistence", serde(skip))]
     // gpu_task: Option<BgTaskHandle<()>>,
