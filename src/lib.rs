@@ -1,5 +1,4 @@
 mod app;
-mod bg_task;
 mod helpers;
 pub mod profile;
 mod settings;
@@ -10,6 +9,7 @@ pub use app::McmcDemo;
 #[cfg(feature = "tracing")]
 pub use profile::tracing::{define_subscriber, set_default_and_redirect_log};
 pub use visualizations::INITIAL_RENDER_SIZE;
+#[cfg(target_arch = "wasm32")]
 pub use helpers::html_bindings;
 
 #[cfg(not(any(feature = "rng_pcg", feature = "rng_xorshift", feature = "rng_xoshiro")))]

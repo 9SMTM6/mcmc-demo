@@ -5,7 +5,7 @@ use rand::SeedableRng;
 use rand_pcg::Pcg32;
 
 use crate::{
-    bg_task::{BgCommunicate, BgTaskHandle, Progress},
+    helpers::bg_task::{BgCommunicate, BgTaskHandle, Progress},
     settings::{self, Settings},
     simulation::{
         random_walk_metropolis_hastings::{ProgressMode, Rwmh},
