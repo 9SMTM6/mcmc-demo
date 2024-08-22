@@ -71,23 +71,38 @@ macro_rules! declare_rng_wrappers {
             )+
         }
 
-        impl WrappedRng {
-            pub fn get_rng<'a>(&'a mut self) -> &'a mut dyn RngCore {
+        const RNG_CORE_UNIMPLEMENTED: &'static str = "I'm too lazy to do this properly without need, and unwilling to use the provided less efficient methods";
+
+        impl RngCore for WrappedRng {
+            fn next_u32(&mut self) -> u32 {
                 use WrappedRng as T;
                 match self {
                     $(
                         #[cfg(feature = "rng_pcg")]
-                        T::$pcg_rng(inner) => inner,
+                        T::$pcg_rng(inner) => inner.next_u32(),
                     )+
                     $(
                         #[cfg(feature = "rng_xoshiro")]
-                        T::$xoshiro_rng(inner) => inner,
+                        T::$xoshiro_rng(inner) => inner.next_u32(),
                     )+
                     $(
                         #[cfg(feature = "rng_xorshift")]
-                        T::$xorshift_rng(inner) => inner,
+                        T::$xorshift_rng(inner) => inner.next_u32(),
                     )+
                 }
+            }
+        
+            fn next_u64(&mut self) -> u64 {
+                unimplemented!("{RNG_CORE_UNIMPLEMENTED}")
+            }
+        
+            fn fill_bytes(&mut self, dest: &mut [u8]) {
+                unimplemented!("{RNG_CORE_UNIMPLEMENTED}")
+            }
+        
+        
+            fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), rand::Error> {
+                unimplemented!("{RNG_CORE_UNIMPLEMENTED}")
             }
         }
 
@@ -236,9 +251,7 @@ impl <Distr: Distribution<f32>> Iterator for RngIter<Distr> {
     type Item = f32;
     #[inline(always)]
     fn next(&mut self) -> Option<f32> {
-        // eh... dynamic dispatch. In the hot path...
-        // Gotta find an alternative.
-        Some(self.rng.get_rng().sample(&self.distr))
+        Some(self.rng.sample(&self.distr))
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
