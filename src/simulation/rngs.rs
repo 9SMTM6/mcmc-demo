@@ -13,7 +13,7 @@ macro_rules! declare_rng_wrapper_macro {
                 pub struct $rng_name(::$path::$rng_name);
             };
         }
-    }
+    };
 }
 
 declare_rng_wrapper_macro!(create_rng_wrapper_pcg, mod rand_pcg);
@@ -91,16 +91,16 @@ macro_rules! declare_rng_wrappers {
                     )+
                 }
             }
-        
+
             fn next_u64(&mut self) -> u64 {
                 unimplemented!("{RNG_CORE_UNIMPLEMENTED}")
             }
-        
+
             fn fill_bytes(&mut self, dest: &mut [u8]) {
                 unimplemented!("{RNG_CORE_UNIMPLEMENTED}")
             }
-        
-        
+
+
             fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), rand::Error> {
                 unimplemented!("{RNG_CORE_UNIMPLEMENTED}")
             }
@@ -249,7 +249,7 @@ struct RngIter<Distr: Distribution<f32>> {
     distr: Distr,
 }
 
-impl <Distr: Distribution<f32>> Iterator for RngIter<Distr> {
+impl<Distr: Distribution<f32>> Iterator for RngIter<Distr> {
     type Item = f32;
     #[inline(always)]
     fn next(&mut self) -> Option<f32> {
@@ -263,10 +263,7 @@ impl <Distr: Distribution<f32>> Iterator for RngIter<Distr> {
 
 impl<Distr: Distribution<f32>> RngIter<Distr> {
     fn new(rng: WrappedRng, distr: Distr) -> Self {
-        Self {
-            rng, 
-            distr,
-        }
+        Self { rng, distr }
     }
 
     pub fn unwrapped_next(&mut self) -> f32 {

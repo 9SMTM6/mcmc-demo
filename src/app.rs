@@ -234,11 +234,11 @@ impl eframe::App for McmcDemo {
                         self.algo = self.bg_task.take().unwrap().get_value();
                         // process is finished, but because of the control flow I can't show the button for the next batchstep yet.
                         // So this will have to do.
-                        // Alternative would be moving the batch step UI put of this gigantic function and using this here, 
+                        // Alternative would be moving the batch step UI put of this gigantic function and using this here,
                         // moving the ProgressBar rendering back into the Pending branch.
                         // But thats too much work for something still in the flow.
                         1.0
-                    },
+                    }
                 }));
             } else if ui.button("Batch step").clicked() {
                 // TODO: All this is at best an early experiment.
