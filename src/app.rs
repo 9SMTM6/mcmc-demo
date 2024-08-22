@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use egui::{self, ProgressBar, Shadow, Vec2};
+use egui::{self, Id, ProgressBar, Shadow, Vec2};
 use rand::SeedableRng;
 use rand_pcg::Pcg32;
 
@@ -335,7 +335,7 @@ impl eframe::App for McmcDemo {
                                     if pos_resp.clicked() {
                                         ui.data_mut(|type_map| {
                                             type_map
-                                                .insert_temp(res_id, ElementSettings::Opened(idx));
+                                                .insert_temp(Id::NULL, ElementSettings::Opened(idx));
                                         });
                                     }
                                     // .on_hover_and_drag_cursor(egui::CursorIcon::Grabbing);
@@ -361,11 +361,11 @@ impl eframe::App for McmcDemo {
                                     );
                                 }
                                 if let Some(ElementSettings::Opened(idx)) =
-                                    ui.data(|type_map| type_map.get_temp::<ElementSettings>(res_id))
+                                    ui.data(|type_map| type_map.get_temp::<ElementSettings>(Id::NULL))
                                 {
                                     let close_planel = |ui: &mut egui::Ui| {
                                         ui.data_mut(|type_map| {
-                                            type_map.remove::<ElementSettings>(res_id);
+                                            type_map.remove::<ElementSettings>(Id::NULL);
                                         });
                                     };
                                     // a proxy for (the presence of) ElementSettings (required because of the api of window).
