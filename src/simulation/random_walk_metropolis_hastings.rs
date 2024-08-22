@@ -65,11 +65,7 @@ pub struct AlgoParams {
 pub type AlgoVec = nalgebra::Vector2<f32>;
 
 impl AlgoParams {
-    fn propose(
-        &self,
-        start_loc: AlgoVec,
-        gaussian_rng: &mut RngIter<StandardNormal>,
-    ) -> AlgoVec {
+    fn propose(&self, start_loc: AlgoVec, gaussian_rng: &mut RngIter<StandardNormal>) -> AlgoVec {
         let GaussianProposal { sigma } = self.proposal;
 
         let normal_x = start_loc.x + gaussian_rng.unwrapped_next() * sigma;

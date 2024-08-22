@@ -38,7 +38,7 @@ macro_rules! declare_rng_wrappers {
             #[cfg(feature = "rng_xorshift")]
             create_rng_wrapper_xorshift!(struct $xorshift_rng);
         )+
-        
+
         #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
         #[derive(Clone)]
         pub enum WrappedRng {
@@ -55,7 +55,7 @@ macro_rules! declare_rng_wrappers {
                 $xorshift_rng(::rand_xorshift::$xorshift_rng),
             )+
         }
-        
+
         #[derive(PartialEq, Clone, Copy)]
         #[repr(u8)]
         pub enum WrappedRngDiscriminants {
@@ -72,9 +72,9 @@ macro_rules! declare_rng_wrappers {
                 $xorshift_rng,
             )+
         }
-        
+
         const RNG_CORE_UNIMPLEMENTED: &'static str = "I'm too lazy to do this properly without need, and unwilling to use the provided less efficient methods";
-        
+
         impl RngCore for WrappedRng {
             fn next_u32(&mut self) -> u32 {
                 use WrappedRng as T;
@@ -93,7 +93,7 @@ macro_rules! declare_rng_wrappers {
                     )+
                 }
             }
-            
+
             fn next_u64(&mut self) -> u64 {
                 use WrappedRng as T;
                 match self {
@@ -111,17 +111,17 @@ macro_rules! declare_rng_wrappers {
                     )+
                 }
             }
-            
+
             fn fill_bytes(&mut self, _dest: &mut [u8]) {
                 unimplemented!("{RNG_CORE_UNIMPLEMENTED}")
             }
-            
-            
+
+
             fn try_fill_bytes(&mut self, _dest: &mut [u8]) -> Result<(), rand::Error> {
                 unimplemented!("{RNG_CORE_UNIMPLEMENTED}")
             }
         }
-        
+
         impl WrappedRngDiscriminants {
             pub const VARIANTS: &'static [WrappedRngDiscriminants] = &[
             $(
@@ -137,7 +137,7 @@ macro_rules! declare_rng_wrappers {
                 Self::$xorshift_rng
             ),+
             ];
-            
+
             pub fn seed_from_u64(&self, seed: u64) -> WrappedRng {
                 use WrappedRngDiscriminants as D;
                 use WrappedRng as T;
@@ -156,7 +156,7 @@ macro_rules! declare_rng_wrappers {
                     )+
                 }
             }
-            
+
             pub const fn display_name(&self) -> &'static str {
                 use WrappedRngDiscriminants as D;
                 match *self {
@@ -274,7 +274,7 @@ impl<Distr: Distribution<f32>> Iterator for RngIter<Distr> {
     fn next(&mut self) -> Option<f32> {
         Some(self.rng.sample(&self.distr))
     }
-    
+
     fn size_hint(&self) -> (usize, Option<usize>) {
         (usize::MAX, None)
     }
@@ -284,7 +284,7 @@ impl<Distr: Distribution<f32>> RngIter<Distr> {
     pub fn new(rng: WrappedRng, distr: Distr) -> Self {
         Self { rng, distr }
     }
-    
+
     pub fn unwrapped_next(&mut self) -> f32 {
         self.next().expect("infinite iterator")
     }
@@ -307,7 +307,7 @@ impl WrappedRngDiscriminants {
             //     continue;
             // }
             ui.selectable_value(self, *ele, ele.display_name())
-            .on_hover_text(ele.explanation());
+                .on_hover_text(ele.explanation());
         }
     }
 }
@@ -325,10 +325,10 @@ impl WrappedRng {
                 seed: 42,
             })
         });
-        
+
         current_settings.discr.selection_ui(ui);
         ui.add(Slider::new(&mut current_settings.seed, 0..=u64::MAX));
-        
+
         if ui.button("apply").clicked() {
             *self = current_settings.discr.seed_from_u64(current_settings.seed);
             ui.data_mut(|type_map| {
@@ -345,7 +345,7 @@ impl WrappedRng {
 #[cfg(test)]
 mod test {
     use super::*;
-    
+
     #[test]
     fn sizeof_rand() {
         // size of largest prng + discriminant + alignment (I think)
