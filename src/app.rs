@@ -1,12 +1,15 @@
 use std::time::Duration;
 
-use egui::{self, Id, ProgressBar, Shadow, Vec2};
+use egui::{self, ProgressBar, Shadow, Vec2};
 use rand::SeedableRng;
 use rand_distr::StandardNormal;
 use rand_pcg::Pcg32;
 
 use crate::{
-    helpers::bg_task::{BgCommunicate, BgTaskHandle, Progress},
+    helpers::{
+        bg_task::{BgCommunicate, BgTaskHandle, Progress},
+        egui_temp_state::TempState,
+    },
     settings::{self, Settings},
     simulation::{
         random_walk_metropolis_hastings::{ProgressMode, Rwmh},
@@ -313,10 +316,7 @@ impl eframe::App for McmcDemo {
                             // );
 
                             #[derive(Clone, Copy)]
-                            enum ElementSettings {
-                                Opened(usize),
-                                // Closed,
-                            }
+                            struct ElementSettingsOpened(usize);
 
                             self.drawer.paint(painter, rect, &self.algo);
                             if let Settings::EditDistribution(_) = self.settings {
@@ -340,13 +340,11 @@ impl eframe::App for McmcDemo {
                                             .on_hover_and_drag_cursor(egui::CursorIcon::Grabbing);
                                     }
                                     if pos_resp.clicked() {
-                                        ui.data_mut(|type_map| {
-                                            type_map.insert_temp(
-                                                Id::NULL,
-                                                ElementSettings::Opened(idx),
-                                            );
-                                        });
-                                    }
+                                        TempState::<ElementSettingsOpened>::create(
+                                            ElementSettingsOpened(idx),
+                                            ui,
+                                        );
+                                    };
                                     // .on_hover_and_drag_cursor(egui::CursorIcon::Grabbing);
                                     let pos = rect.clamp(pos + pos_resp.drag_delta());
 
@@ -369,13 +367,11 @@ impl eframe::App for McmcDemo {
                                         },
                                     );
                                 }
-                                if let Some(ElementSettings::Opened(idx)) = ui
-                                    .data(|type_map| type_map.get_temp::<ElementSettings>(Id::NULL))
+                                if let Some(ElementSettingsOpened(idx)) =
+                                    TempState::<ElementSettingsOpened>::peek_data(ui)
                                 {
                                     let close_planel = |ui: &mut egui::Ui| {
-                                        ui.data_mut(|type_map| {
-                                            type_map.remove::<ElementSettings>(Id::NULL);
-                                        });
+                                        TempState::<ElementSettingsOpened>::finished(ui);
                                     };
                                     // a proxy for (the presence of) ElementSettings (required because of the api of window).
                                     // has a defered close at the end of the scope.

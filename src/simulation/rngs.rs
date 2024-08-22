@@ -5,6 +5,8 @@ use egui::{Id, Slider};
 use rand::{Rng, RngCore, SeedableRng};
 use rand_distr::{Distribution, Uniform};
 
+use crate::helpers::egui_temp_state::TempState;
+
 macro_rules! declare_rng_wrapper_macro {
     ($macro_name: ident, mod $path: tt) => {
         #[macro_export]
@@ -78,6 +80,7 @@ macro_rules! declare_rng_wrappers {
         impl RngCore for WrappedRng {
             fn next_u32(&mut self) -> u32 {
                 use WrappedRng as T;
+                #[allow(clippy::pattern_type_mismatch)]
                 match self {
                     $(
                         #[cfg(feature = "rng_pcg")]
@@ -96,6 +99,7 @@ macro_rules! declare_rng_wrappers {
 
             fn next_u64(&mut self) -> u64 {
                 use WrappedRng as T;
+                #[allow(clippy::pattern_type_mismatch)]
                 match self {
                     $(
                         #[cfg(feature = "rng_pcg")]
@@ -281,7 +285,7 @@ impl<Distr: Distribution<f32>> Iterator for RngIter<Distr> {
 }
 
 impl<Distr: Distribution<f32>> RngIter<Distr> {
-    pub fn new(rng: WrappedRng, distr: Distr) -> Self {
+    pub const fn new(rng: WrappedRng, distr: Distr) -> Self {
         Self { rng, distr }
     }
 
@@ -319,11 +323,9 @@ impl WrappedRng {
             discr: WrappedRngDiscriminants,
             seed: u64,
         }
-        let mut current_settings = ui.data(|type_map| {
-            type_map.get_temp(Id::NULL).unwrap_or(Settings {
-                discr: WrappedRngDiscriminants::from(self.borrow()),
-                seed: 42,
-            })
+        let mut current_settings = TempState::<Settings>::peek_data(ui).unwrap_or(Settings {
+            discr: WrappedRngDiscriminants::from(self.borrow()),
+            seed: 42,
         });
 
         current_settings.discr.selection_ui(ui);
@@ -331,13 +333,9 @@ impl WrappedRng {
 
         if ui.button("apply").clicked() {
             *self = current_settings.discr.seed_from_u64(current_settings.seed);
-            ui.data_mut(|type_map| {
-                type_map.remove::<Settings>(Id::NULL);
-            });
+            TempState::<Settings>::finished(ui);
         } else {
-            ui.data_mut(|type_map| {
-                type_map.insert_temp(Id::NULL, current_settings);
-            });
+            TempState::<Settings>::set_or_insert_data(ui, current_settings);
         }
     }
 }
