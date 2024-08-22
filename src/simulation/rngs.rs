@@ -2,8 +2,8 @@
 use std::borrow::Borrow;
 
 use egui::Slider;
-use rand::{Rng, SeedableRng};
-use rand_distr::{StandardNormal, Uniform};
+use rand::{Rng, RngCore, SeedableRng};
+use rand_distr::{Distribution, StandardNormal, Uniform};
 
 macro_rules! declare_rng_wrapper_macro {
     ($macro_name: ident, mod $path: tt) => {
@@ -71,6 +71,26 @@ macro_rules! declare_rng_wrappers {
             )+
         }
 
+        impl WrappedRng {
+            pub fn get_rng<'a>(&'a mut self) -> &'a mut dyn RngCore {
+                use WrappedRng as T;
+                match self {
+                    $(
+                        #[cfg(feature = "rng_pcg")]
+                        T::$pcg_rng(inner) => inner,
+                    )+
+                    $(
+                        #[cfg(feature = "rng_xoshiro")]
+                        T::$xoshiro_rng(inner) => inner,
+                    )+
+                    $(
+                        #[cfg(feature = "rng_xorshift")]
+                        T::$xorshift_rng(inner) => inner,
+                    )+
+                }
+            }
+        }
+
         impl WrappedRngDiscriminants {
             pub const VARIANTS: &'static [WrappedRngDiscriminants] = &[
                 $(
@@ -86,6 +106,7 @@ macro_rules! declare_rng_wrappers {
                     Self::$xorshift_rng
                 ),+
             ];
+
             pub fn seed_from_u64(&self, seed: u64) -> WrappedRng {
                 use WrappedRngDiscriminants as D;
                 use WrappedRng as T;
@@ -165,6 +186,18 @@ declare_rng_wrappers! {
     ;
 }
 
+// macro_rules! cfg_feature_items {
+//     (
+//         items: $($item: item)+;
+//         feature = $feature: literal
+//     ) => {
+//         $(
+//             #[cfg(feature = $feature)]
+//             $item
+//         )+
+//     };
+// }
+
 impl WrappedRngDiscriminants {
     pub const fn explanation(&self) -> &'static str {
         use WrappedRngDiscriminants as D;
@@ -191,6 +224,25 @@ impl WrappedRngDiscriminants {
             D::XorShiftRng => "Better than Pcg32 on 64 bit platforms (which does NOT currently include the web!)",
             // _ => "Look for this in the Rust Rand book/documentation",
         }
+    }
+}
+
+struct RngIter<Distr: Distribution<f32>> {
+    rng: WrappedRng,
+    distr: Distr,
+}
+
+impl <Distr: Distribution<f32>> Iterator for RngIter<Distr> {
+    type Item = f32;
+    #[inline(always)]
+    fn next(&mut self) -> Option<f32> {
+        // eh... dynamic dispatch. In the hot path...
+        // Gotta find an alternative.
+        Some(self.rng.get_rng().sample(&self.distr))
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        (usize::MAX, None)
     }
 }
 
