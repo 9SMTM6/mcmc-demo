@@ -3,7 +3,7 @@ use std::borrow::Borrow;
 
 use egui::{Id, Slider};
 use rand::{Rng, RngCore, SeedableRng};
-use rand_distr::{Distribution, StandardNormal, Uniform};
+use rand_distr::{Distribution, Uniform};
 
 macro_rules! declare_rng_wrapper_macro {
     ($macro_name: ident, mod $path: tt) => {
@@ -39,6 +39,8 @@ macro_rules! declare_rng_wrappers {
             create_rng_wrapper_xorshift!(struct $xorshift_rng);
         )+
         
+        #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
+        #[derive(Clone)]
         pub enum WrappedRng {
             $(
                 #[cfg(feature = "rng_pcg")]
@@ -93,15 +95,29 @@ macro_rules! declare_rng_wrappers {
             }
             
             fn next_u64(&mut self) -> u64 {
+                use WrappedRng as T;
+                match self {
+                    $(
+                        #[cfg(feature = "rng_pcg")]
+                        T::$pcg_rng(inner) => inner.next_u64(),
+                    )+
+                    $(
+                        #[cfg(feature = "rng_xoshiro")]
+                        T::$xoshiro_rng(inner) => inner.next_u64(),
+                    )+
+                    $(
+                        #[cfg(feature = "rng_xorshift")]
+                        T::$xorshift_rng(inner) => inner.next_u64(),
+                    )+
+                }
+            }
+            
+            fn fill_bytes(&mut self, _dest: &mut [u8]) {
                 unimplemented!("{RNG_CORE_UNIMPLEMENTED}")
             }
             
-            fn fill_bytes(&mut self, dest: &mut [u8]) {
-                unimplemented!("{RNG_CORE_UNIMPLEMENTED}")
-            }
             
-            
-            fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), rand::Error> {
+            fn try_fill_bytes(&mut self, _dest: &mut [u8]) -> Result<(), rand::Error> {
                 unimplemented!("{RNG_CORE_UNIMPLEMENTED}")
             }
         }
@@ -216,6 +232,7 @@ declare_rng_wrappers! {
 impl WrappedRngDiscriminants {
     pub const fn explanation(&self) -> &'static str {
         use WrappedRngDiscriminants as D;
+        // TODO: these dont seem correct. Sampling with StandardNormal seems to call RngCore::next_u64
         match *self {
             #[cfg(feature = "rng_pcg")]
             D::Pcg32 => "Works okay pretty much everywhere",
@@ -244,7 +261,9 @@ impl WrappedRngDiscriminants {
 
 // TODO: actually remove the enum in here and use the raw RNG. Should be possible.
 // But I've spend enough time on this for now, so I'll get to it whenever I do.
-struct RngIter<Distr: Distribution<f32>> {
+#[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
+#[derive(Clone)]
+pub struct RngIter<Distr: Distribution<f32>> {
     rng: WrappedRng,
     distr: Distr,
 }
@@ -262,7 +281,7 @@ impl<Distr: Distribution<f32>> Iterator for RngIter<Distr> {
 }
 
 impl<Distr: Distribution<f32>> RngIter<Distr> {
-    fn new(rng: WrappedRng, distr: Distr) -> Self {
+    pub fn new(rng: WrappedRng, distr: Distr) -> Self {
         Self { rng, distr }
     }
     
@@ -273,71 +292,11 @@ impl<Distr: Distribution<f32>> RngIter<Distr> {
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Clone)]
-pub struct SRngGaussianIter<Rng> {
-    rng: Rng,
-}
+pub struct Percentage;
 
-impl<R> Iterator for SRngGaussianIter<R>
-where
-R: Rng + SeedableRng,
-{
-    type Item = f32;
-    
-    #[inline(always)]
-    fn next(&mut self) -> Option<f32> {
-        Some(self.rng.sample(StandardNormal))
-    }
-    
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        (usize::MAX, None)
-    }
-}
-
-impl<R: Rng + SeedableRng> SRngGaussianIter<R> {
-    pub fn new(seed: R::Seed) -> Self {
-        Self {
-            rng: R::from_seed(seed),
-        }
-    }
-    
-    pub fn unwrapped_next(&mut self) -> f32 {
-        self.next().expect("infinite iterator")
-    }
-}
-
-#[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
-#[derive(Clone)]
-pub struct SRngPercIter<Rng> {
-    rng: Rng,
-    distr: Uniform<f32>,
-}
-
-impl<R> Iterator for SRngPercIter<R>
-where
-R: Rng + SeedableRng,
-{
-    type Item = f32;
-    
-    #[inline(always)]
-    fn next(&mut self) -> Option<f32> {
-        Some(self.rng.sample(self.distr))
-    }
-    
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        (usize::MAX, None)
-    }
-}
-
-impl<R: Rng + SeedableRng> SRngPercIter<R> {
-    pub fn new(seed: R::Seed) -> Self {
-        Self {
-            rng: R::from_seed(seed),
-            distr: Uniform::new_inclusive(0.0, 1.0),
-        }
-    }
-    
-    pub fn unwrapped_next(&mut self) -> f32 {
-        self.next().expect("infinite iterator")
+impl Distribution<f32> for Percentage {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f32 {
+        rng.sample(Uniform::new_inclusive(0.0, 1.0))
     }
 }
 

@@ -1,10 +1,10 @@
-use rand::{Rng, SeedableRng};
+use rand_distr::StandardNormal;
 
 use crate::target_distributions::multimodal_gaussian::MultiModalGaussian;
 
 use crate::visualizations::shader_based::diff_display::shader_bindings::RWMHAcceptRecord;
 
-use super::{SRngGaussianIter, SRngPercIter};
+use super::{Percentage, RngIter};
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Clone)]
@@ -68,7 +68,7 @@ impl AlgoParams {
     fn propose(
         &self,
         start_loc: AlgoVec,
-        gaussian_rng: &mut SRngGaussianIter<impl Rng + SeedableRng>,
+        gaussian_rng: &mut RngIter<StandardNormal>,
     ) -> AlgoVec {
         let GaussianProposal { sigma } = self.proposal;
 
@@ -131,8 +131,8 @@ impl Rwmh {
     pub fn step(
         &mut self,
         target_distr: &MultiModalGaussian,
-        proposal_rng: &mut SRngGaussianIter<impl Rng + SeedableRng>,
-        accept_rng: &mut SRngPercIter<impl Rng + SeedableRng>,
+        proposal_rng: &mut RngIter<StandardNormal>,
+        accept_rng: &mut RngIter<Percentage>,
     ) {
         let current = &mut self.current_loc;
         let proposal = self.params.propose(current.position.into(), proposal_rng);

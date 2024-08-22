@@ -2,14 +2,14 @@ use std::time::Duration;
 
 use egui::{self, Id, ProgressBar, Shadow, Vec2};
 use rand::SeedableRng;
+use rand_distr::StandardNormal;
 use rand_pcg::Pcg32;
 
 use crate::{
     helpers::bg_task::{BgCommunicate, BgTaskHandle, Progress},
     settings::{self, Settings},
     simulation::{
-        random_walk_metropolis_hastings::{ProgressMode, Rwmh},
-        SRngGaussianIter, SRngPercIter, WrappedRng,
+        random_walk_metropolis_hastings::{ProgressMode, Rwmh}, Percentage, RngIter, WrappedRng, WrappedRngDiscriminants
     },
     target_distributions::multimodal_gaussian::MultiModalGaussian,
     visualizations::{
@@ -39,8 +39,8 @@ pub struct McmcDemo {
     #[allow(dead_code)]
     diff_render: DiffDisplay,
     settings: settings::Settings,
-    gaussian_distr_iter: SRngGaussianIter<rand_pcg::Pcg32>,
-    uniform_distr_iter: SRngPercIter<rand_pcg::Pcg32>,
+    gaussian_distr_iter: RngIter<StandardNormal>,
+    uniform_distr_iter: RngIter<Percentage>,
     #[cfg(feature = "profile")]
     backend_panel: super::profile::backend_panel::BackendPanel,
     #[cfg_attr(feature = "persistence", serde(skip))]
@@ -66,8 +66,8 @@ impl Default for McmcDemo {
             target_distr_render: MultiModalGaussianDisplay {},
             diff_render: DiffDisplay { window_radius: 5.0 },
             settings: Default::default(),
-            gaussian_distr_iter: SRngGaussianIter::<rand_pcg::Pcg32>::new([42; 16]),
-            uniform_distr_iter: SRngPercIter::<rand_pcg::Pcg32>::new([42; 16]),
+            gaussian_distr_iter: RngIter::new(WrappedRngDiscriminants::Pcg32.seed_from_u64(42), StandardNormal),
+            uniform_distr_iter: RngIter::new(WrappedRngDiscriminants::Pcg32.seed_from_u64(42), Percentage),
             #[cfg(feature = "profile")]
             backend_panel: Default::default(),
             bg_task: None,
