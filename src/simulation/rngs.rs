@@ -242,6 +242,8 @@ impl WrappedRngDiscriminants {
     }
 }
 
+// TODO: actually remove the enum in here and use the raw RNG. Should be possible.
+// But I've spend enough time on this for now, so I'll get to it whenever I do.
 struct RngIter<Distr: Distribution<f32>> {
     rng: WrappedRng,
     distr: Distr,
@@ -256,6 +258,19 @@ impl <Distr: Distribution<f32>> Iterator for RngIter<Distr> {
 
     fn size_hint(&self) -> (usize, Option<usize>) {
         (usize::MAX, None)
+    }
+}
+
+impl<Distr: Distribution<f32>> RngIter<Distr> {
+    fn new(rng: WrappedRng, distr: Distr) -> Self {
+        Self {
+            rng, 
+            distr,
+        }
+    }
+
+    pub fn unwrapped_next(&mut self) -> f32 {
+        self.next().expect("infinite iterator")
     }
 }
 
