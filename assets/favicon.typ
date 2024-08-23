@@ -11,8 +11,6 @@
   // fill: black,
 )
 
-#let style = (stroke: black, fill: blue.darken(20%), background: black)
-
 #let rng = gen-rng(42)
 
 #let curr_rdm = ()
@@ -62,15 +60,16 @@
     y-min: norm_min,
     // y-max: norm_max,
     {
-      plot.add-bar(
-        style: style,
-        bar-width: 1.0 / half_num_bins,
-        (..hist_points, (1.0, 0.0)),
-      )
       plot.add(
-        style: (stroke: red),
+        hypograph: true,
+        style: (stroke: red, fill: red),
         domain: (-1.0, 1.0), 
         normal_distr,
+      )
+      plot.add-bar(
+        style: (stroke: black, fill: green.darken(30%), background: black),
+        bar-width: 0.9 / half_num_bins,
+        (..hist_points, (1.0, 0.0)),
       )
       plot.add-anchor("automata", (-0.2, (norm_max + norm_min)/2.0 - 0.02))
     }
@@ -80,23 +79,18 @@
     "plot.automata", 
     [#automaton(
       style:(
-        state: (fill: olive, stroke: none, radius: 0.5),
-        transition: (stroke: (dash:"dashed", paint: olive)),
+        state: (fill: black, stroke: none, radius: 0.40),
+        transition: (stroke: (paint: black)),
         q1: (label: none),
-        q2: (label: none),
-        q3: (label: none),
-        // q1-q2: (anchor: left),
-        q1-q1: (anchor:left),
-        q2-q2: (anchor:top),
-        q3-q3: (anchor:right),
+        q2: (label: none, fill: black.transparentize(50%)),
+        q1-q1: (anchor:top, curve: 0.3),
+        q1-q2: (curve: 0),
       ),
       final: none,
       initial: none,
-      layout: layout.circular.with(offset: -25deg, dir: right, radius: 0.7),
       (
         q1: (q1: none, q2: none),
-        q2: (q2: none, q3: none),
-        q3: (q3: none),
+        q2: (),
       )
     )]
   )
