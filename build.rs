@@ -7,6 +7,7 @@ use wgsl_bindgen::{RustWgslTypeMap, WgslBindgenOptionBuilder, WgslTypeSerializeS
 use wgsl_to_wgpu::{create_shader_module_embedded, WriteOptions};
 
 fn main() -> Result<()> {
+    let start = std::time::Instant::now();
     let shaders_dir = PathBuf::from("./shaders");
     let resolved_shaders = handle_c_pragma_once_style_imports(&shaders_dir).unwrap();
     let mut out_dir = PathBuf::from(std::env::var("OUT_DIR").unwrap());
@@ -33,6 +34,7 @@ fn main() -> Result<()> {
     fs::create_dir_all(&bindings_dir).unwrap();
 
     wgsl_to_wgpu_generation(&resolved_shaders, &bindings_dir);
+    println!("build.rs runtime {runtime} ms", runtime =  start.elapsed().as_millis());
     Ok(())
 }
 
