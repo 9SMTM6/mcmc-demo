@@ -118,7 +118,8 @@ wgsl_to_wgpu = "0.9.0"
 [profile.release]
 opt-level = 2 # fast and small wasm
 # opt-level = "z" #note the override of packages
-# lto = true
+# see: https://fasterthanli.me/articles/why-is-my-rust-build-so-slow#link-time-optimization-lto
+# lto = "thin"
 # codegen-units = 1
 # panic = "abort"
 # strip = true
