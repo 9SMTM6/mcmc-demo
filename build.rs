@@ -34,7 +34,10 @@ fn main() -> Result<()> {
     fs::create_dir_all(&bindings_dir).unwrap();
 
     wgsl_to_wgpu_generation(&resolved_shaders, &bindings_dir);
-    println!("build.rs runtime {runtime} ms", runtime =  start.elapsed().as_millis());
+    println!(
+        "build.rs runtime {runtime} ms",
+        runtime = start.elapsed().as_millis()
+    );
     Ok(())
 }
 
