@@ -8,7 +8,7 @@ use rand_pcg::Pcg32;
 use crate::{
     helpers::{
         bg_task::{BgCommunicate, BgTaskHandle, Progress},
-        egui_temp_state::v2::TempStateExtDelegatedToDataMethods,
+        egui_temp_state::TempStateExtDelegatedToDataMethods,
     }, profile::backend_panel::BackendPanel, settings::{self, Settings}, simulation::{
         random_walk_metropolis_hastings::{ProgressMode, Rwmh},
         Percentage, RngIter, WrappedRng, WrappedRngDiscriminants,
