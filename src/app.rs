@@ -166,16 +166,20 @@ impl eframe::App for McmcDemo {
                             temp_state.remove();
                         }
                     }
-                    if let Some(backend) = temp_state.get() {
-                        let mut backend = backend.lock();
-                        backend.update(ctx, frame);
-                        backend.backend_panel(ctx, frame);
-                        backend.end_of_frame(ctx);
-                    }
                 }
                 egui::warn_if_debug_build(ui);
             });
         });
+
+        #[cfg(feature = "profile")]
+        {
+            if let Some(backend) = ctx.temp_state::<Arc<Mutex<BackendPanel>>>().get() {
+                let mut backend = backend.lock();
+                backend.update(ctx, frame);
+                backend.backend_panel(ctx, frame);
+                backend.end_of_frame(ctx);
+            }
+        }
 
         #[allow(clippy::collapsible_else_if)]
         egui::Window::new("Simulation").show(ctx, |ui| {
