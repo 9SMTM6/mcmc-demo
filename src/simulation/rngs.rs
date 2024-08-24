@@ -325,7 +325,7 @@ impl WrappedRng {
         }
         let temp_state = ui.temp_state::<Settings>();
 
-        let mut current_settings =temp_state.get().unwrap_or(Settings {
+        let mut current_settings = temp_state.get().unwrap_or(Settings {
             discr: WrappedRngDiscriminants::from(self.borrow()),
             seed: 42,
         });

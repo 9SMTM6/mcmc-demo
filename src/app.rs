@@ -9,16 +9,21 @@ use crate::{
     helpers::{
         bg_task::{BgCommunicate, BgTaskHandle, Progress},
         egui_temp_state::TempStateExtDelegatedToDataMethods,
-    }, profile::backend_panel::BackendPanel, settings::{self, Settings}, simulation::{
+    },
+    profile::backend_panel::BackendPanel,
+    settings::{self, Settings},
+    simulation::{
         random_walk_metropolis_hastings::{ProgressMode, Rwmh},
         Percentage, RngIter, WrappedRng, WrappedRngDiscriminants,
-    }, target_distributions::multimodal_gaussian::MultiModalGaussian, visualizations::{
+    },
+    target_distributions::multimodal_gaussian::MultiModalGaussian,
+    visualizations::{
         egui_based::point_display::PointDisplay,
         shader_based::{
             diff_display::DiffDisplay,
             multimodal_gaussian::{shader_bindings::NormalDistribution, MultiModalGaussianDisplay},
         },
-    }
+    },
 };
 
 #[cfg_attr(feature="persistence",
@@ -161,20 +166,16 @@ impl eframe::App for McmcDemo {
                             temp_state.remove();
                         }
                     }
+                    if let Some(backend) = temp_state.get() {
+                        let mut backend = backend.lock();
+                        backend.update(ctx, frame);
+                        backend.backend_panel(ctx, frame);
+                        backend.end_of_frame(ctx);
+                    }
                 }
                 egui::warn_if_debug_build(ui);
             });
         });
-
-        #[cfg(feature = "profile")]
-        {
-            if let Some(backend) = ctx.temp_state::<Arc<Mutex<BackendPanel>>>().get() {
-                let mut backend = backend.lock();
-                backend.update(ctx, frame);
-                backend.backend_panel(ctx, frame);
-                backend.end_of_frame(ctx);
-            }
-        }
 
         #[allow(clippy::collapsible_else_if)]
         egui::Window::new("Simulation").show(ctx, |ui| {
@@ -306,7 +307,8 @@ impl eframe::App for McmcDemo {
                                             .on_hover_and_drag_cursor(egui::CursorIcon::Grabbing);
                                     }
                                     if pos_resp.clicked() {
-                                        ui.temp_state::<ElementSettingsOpened>().create(ElementSettingsOpened(idx));
+                                        ui.temp_state::<ElementSettingsOpened>()
+                                            .create(ElementSettingsOpened(idx));
                                     };
                                     // .on_hover_and_drag_cursor(egui::CursorIcon::Grabbing);
                                     let pos = rect.clamp(pos + pos_resp.drag_delta());
@@ -330,8 +332,7 @@ impl eframe::App for McmcDemo {
                                         },
                                     );
                                 }
-                                if let Some(ElementSettingsOpened(idx)) = ui.temp_state().get()
-                                {
+                                if let Some(ElementSettingsOpened(idx)) = ui.temp_state().get() {
                                     let close_planel = |ui: &mut egui::Ui| {
                                         ui.temp_state::<ElementSettingsOpened>().remove();
                                     };
