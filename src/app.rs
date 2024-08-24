@@ -1,6 +1,6 @@
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
 
-use egui::{self, ProgressBar, Shadow, Vec2};
+use egui::{self, mutex::Mutex, ProgressBar, Shadow, Vec2};
 use rand::SeedableRng;
 use rand_distr::StandardNormal;
 use rand_pcg::Pcg32;
@@ -8,21 +8,17 @@ use rand_pcg::Pcg32;
 use crate::{
     helpers::{
         bg_task::{BgCommunicate, BgTaskHandle, Progress},
-        egui_temp_state::TempState,
-    },
-    settings::{self, Settings},
-    simulation::{
+        egui_temp_state::v2::TempStateExtDelegatedToDataMethods,
+    }, profile::backend_panel::BackendPanel, settings::{self, Settings}, simulation::{
         random_walk_metropolis_hastings::{ProgressMode, Rwmh},
         Percentage, RngIter, WrappedRng, WrappedRngDiscriminants,
-    },
-    target_distributions::multimodal_gaussian::MultiModalGaussian,
-    visualizations::{
+    }, target_distributions::multimodal_gaussian::MultiModalGaussian, visualizations::{
         egui_based::point_display::PointDisplay,
         shader_based::{
             diff_display::DiffDisplay,
             multimodal_gaussian::{shader_bindings::NormalDistribution, MultiModalGaussianDisplay},
         },
-    },
+    }
 };
 
 #[cfg_attr(feature="persistence",
@@ -45,8 +41,6 @@ pub struct McmcDemo {
     settings: settings::Settings,
     gaussian_distr_iter: RngIter<StandardNormal>,
     uniform_distr_iter: RngIter<Percentage>,
-    #[cfg(feature = "profile")]
-    backend_panel: super::profile::backend_panel::BackendPanel,
     #[cfg_attr(feature = "persistence", serde(skip))]
     // TODO: Create TempState struct that holds a generic field and another optional marker generic.
     // This SHOULD have a unique TypeId per type it holds (in addition with the generic I can have other things be unique too).
@@ -78,8 +72,6 @@ impl Default for McmcDemo {
                 WrappedRngDiscriminants::Pcg32.seed_from_u64(42),
                 Percentage,
             ),
-            #[cfg(feature = "profile")]
-            backend_panel: Default::default(),
             bg_task: None,
             // gpu_task: None,
             // bg_tasks: vec![]
@@ -129,45 +121,6 @@ impl McmcDemo {
     }
 }
 
-#[cfg(feature = "profile")]
-impl McmcDemo {
-    fn backend_panel(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
-        // The backend-panel can be toggled on/off.
-        // We show a little animation when the user switches it.
-        let is_open = self.backend_panel.open || ctx.memory(|mem| mem.everything_is_visible());
-
-        egui::SidePanel::left("backend_panel")
-            .resizable(false)
-            .show_animated(ctx, is_open, |ui| {
-                #[allow(clippy::shadow_unrelated)]
-                ui.vertical_centered(|ui| {
-                    ui.heading("💻 Backend");
-                });
-
-                ui.separator();
-                self.backend_panel_contents(ui, frame);
-            });
-    }
-
-    fn backend_panel_contents(&mut self, ui: &mut egui::Ui, frame: &mut eframe::Frame) {
-        self.backend_panel.ui(ui, frame);
-
-        ui.separator();
-
-        #[allow(clippy::shadow_unrelated)]
-        ui.horizontal(|ui| {
-            if ui
-                .button("Reset egui")
-                .on_hover_text("Forget scroll, positions, sizes etc")
-                .clicked()
-            {
-                ui.ctx().memory_mut(|mem| *mem = Default::default());
-                ui.close_menu();
-            }
-        });
-    }
-}
-
 impl eframe::App for McmcDemo {
     /// Called by the frame work to save state before shutdown.
     #[cfg(feature = "persistence")]
@@ -196,18 +149,31 @@ impl eframe::App for McmcDemo {
                     *self = Default::default();
                 }
                 #[cfg(feature = "profile")]
-                ui.toggle_value(&mut self.backend_panel.open, "Backend");
+                {
+                    let temp_state = ctx.temp_state::<Arc<Mutex<BackendPanel>>>();
+                    let is_opened = temp_state.get().is_some();
+                    let mut toggle_proxy = is_opened;
+                    ui.toggle_value(&mut toggle_proxy, "Backend");
+                    if toggle_proxy != is_opened {
+                        if toggle_proxy {
+                            temp_state.create_default();
+                        } else {
+                            temp_state.remove();
+                        }
+                    }
+                }
                 egui::warn_if_debug_build(ui);
             });
         });
 
         #[cfg(feature = "profile")]
         {
-            self.backend_panel.update(ctx, frame);
-
-            self.backend_panel(ctx, frame);
-
-            self.backend_panel.end_of_frame(ctx);
+            if let Some(backend) = ctx.temp_state::<Arc<Mutex<BackendPanel>>>().get() {
+                let mut backend = backend.lock();
+                backend.update(ctx, frame);
+                backend.backend_panel(ctx, frame);
+                backend.end_of_frame(ctx);
+            }
         }
 
         #[allow(clippy::collapsible_else_if)]
@@ -340,10 +306,7 @@ impl eframe::App for McmcDemo {
                                             .on_hover_and_drag_cursor(egui::CursorIcon::Grabbing);
                                     }
                                     if pos_resp.clicked() {
-                                        TempState::<ElementSettingsOpened>::create(
-                                            ElementSettingsOpened(idx),
-                                            ui,
-                                        );
+                                        ui.temp_state::<ElementSettingsOpened>().create(ElementSettingsOpened(idx));
                                     };
                                     // .on_hover_and_drag_cursor(egui::CursorIcon::Grabbing);
                                     let pos = rect.clamp(pos + pos_resp.drag_delta());
@@ -367,11 +330,10 @@ impl eframe::App for McmcDemo {
                                         },
                                     );
                                 }
-                                if let Some(ElementSettingsOpened(idx)) =
-                                    TempState::<ElementSettingsOpened>::peek_data(ui)
+                                if let Some(ElementSettingsOpened(idx)) = ui.temp_state().get()
                                 {
                                     let close_planel = |ui: &mut egui::Ui| {
-                                        TempState::<ElementSettingsOpened>::finished(ui);
+                                        ui.temp_state::<ElementSettingsOpened>().remove();
                                     };
                                     // a proxy for (the presence of) ElementSettings (required because of the api of window).
                                     // has a defered close at the end of the scope.

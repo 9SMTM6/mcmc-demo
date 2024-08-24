@@ -53,8 +53,6 @@ impl Default for RunMode {
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 #[cfg_attr(feature = "persistence", serde(default))]
 pub struct BackendPanel {
-    pub open: bool,
-
     #[cfg_attr(feature = "persistence", serde(skip))]
     // go back to [`RunMode::Reactive`] mode each time we start
     run_mode: RunMode,
@@ -66,6 +64,43 @@ pub struct BackendPanel {
 }
 
 impl BackendPanel {
+    pub fn backend_panel(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+        // todo: ctx also has data* methods, use these instead.
+        // Perhaps do the anyways necessary rework of TempState, and the unstead of accepting ui, accept a trait impl that delegates to the respective data methods.
+        // let Some(state) = ctx.temp_state::<Arc<Mutex<BackendPanel>>>().get() else {
+        //     return;
+        // };
+        egui::SidePanel::left("backend_panel")
+            .resizable(false)
+            .show(ctx, |ui| {
+                #[allow(clippy::shadow_unrelated)]
+                ui.vertical_centered(|ui| {
+                    ui.heading("💻 Backend");
+                });
+
+                ui.separator();
+                self.backend_panel_contents(ui, frame);
+            });
+    }
+
+    pub fn backend_panel_contents(&mut self, ui: &mut egui::Ui, frame: &mut eframe::Frame) {
+        self.ui(ui, frame);
+
+        ui.separator();
+
+        #[allow(clippy::shadow_unrelated)]
+        ui.horizontal(|ui| {
+            if ui
+                .button("Reset egui")
+                .on_hover_text("Forget scroll, positions, sizes etc")
+                .clicked()
+            {
+                ui.ctx().memory_mut(|mem| *mem = Default::default());
+                ui.close_menu();
+            }
+        });
+    }
+
     pub fn update(&mut self, ctx: &egui::Context, frame: &eframe::Frame) {
         self.frame_history
             .on_new_frame(ctx.input(|i| i.time), frame.info().cpu_usage);
