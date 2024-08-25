@@ -212,7 +212,7 @@ impl eframe::App for McmcDemo {
             struct BatchJob(BgTaskHandle<Rwmh>);
 
             let bg_task = self.local_resources.get::<BatchJob>();
-            if let Some(BatchJob(bg_task)) = bg_task {
+            if let Some(&BatchJob(ref bg_task)) = bg_task {
                 ui.add(ProgressBar::new(match bg_task.get_progress() {
                     Progress::Pending(progress) => progress,
                     Progress::Finished => {

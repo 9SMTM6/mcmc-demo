@@ -323,14 +323,12 @@ impl WrappedRng {
             discr: WrappedRngDiscriminants,
             seed: u64,
         }
-        let temp_state: TempUiState<Settings, egui::Ui> = ui.temp_ui_state::<Settings>();
+        let temp_state = ui.temp_ui_state::<Settings>();
 
         let mut current_settings = temp_state.get().unwrap_or(Settings {
             discr: WrappedRngDiscriminants::from(self.borrow()),
             seed: 42,
         });
-
-        drop(temp_state);
 
         current_settings.discr.selection_ui(ui);
         ui.add(Slider::new(&mut current_settings.seed, 0..=u64::MAX));

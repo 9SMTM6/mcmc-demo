@@ -12,7 +12,7 @@ pub trait TempStateExtDelegatedToDataMethods {
     fn data_mut<R>(&self, writer: impl FnOnce(&mut egui::util::IdTypeMap) -> R) -> R;
     fn data<R>(&self, reader: impl FnOnce(&egui::util::IdTypeMap) -> R) -> R;
     #[must_use]
-    fn temp_ui_state<'a, T>(&'a self) -> TempUiState<'a, T, Self>
+    fn temp_ui_state<T>(&self) -> TempUiState<'_, T, Self>
     where
         Self: Sized;
 }
@@ -26,7 +26,7 @@ macro_rules! delegete_for {
             fn data_mut<R>(&self, writer: impl FnOnce(&mut egui::util::IdTypeMap) -> R) -> R {
                 self.data_mut(writer)
             }
-            fn temp_ui_state<'a, T>(&'a self) -> TempUiState<'a, T, Self> {
+            fn temp_ui_state<T>(&self) -> TempUiState<'_, T, Self> {
                 TempUiState {
                     delegate: self,
                     id: egui::Id::NULL,
@@ -43,7 +43,7 @@ delegete_for!(egui::Context);
 impl<'a, T: Copy + Clone + Send + Sync + 'static, Del: TempStateExtDelegatedToDataMethods>
     TempUiState<'a, T, Del>
 {
-    pub fn with_id(self, id: egui::Id) -> Self {
+    pub const fn with_id(self, id: egui::Id) -> Self {
         Self { id, ..self }
     }
 
@@ -58,7 +58,7 @@ impl<'a, T: Copy + Clone + Send + Sync + 'static, Del: TempStateExtDelegatedToDa
     where
         T: Default,
     {
-        self.create(Default::default())
+        self.create(Default::default());
     }
 
     pub fn set_or_create(&self, val: T) {
