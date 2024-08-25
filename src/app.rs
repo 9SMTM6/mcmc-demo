@@ -10,7 +10,6 @@ use crate::{
         bg_task::{BgCommunicate, BgTaskHandle, Progress},
         temp_ui_state::TempStateExtDelegatedToDataMethods,
     },
-    profile::backend_panel::BackendPanel,
     settings::{self, Settings},
     simulation::{
         random_walk_metropolis_hastings::{ProgressMode, Rwmh},
@@ -146,6 +145,7 @@ impl eframe::App for McmcDemo {
                 }
                 #[cfg(feature = "profile")]
                 {
+                    use crate::profile::backend_panel::BackendPanel;
                     let is_opened = self.local_resources.contains::<BackendPanel>();
                     let mut toggle_proxy = is_opened;
                     ui.toggle_value(&mut toggle_proxy, "Backend");
@@ -168,7 +168,7 @@ impl eframe::App for McmcDemo {
 
         #[cfg(feature = "profile")]
         {
-            if let Some(backend) = self.local_resources.get_mut::<BackendPanel>() {
+            if let Some(backend) = self.local_resources.get_mut::<crate::profile::backend_panel::BackendPanel>() {
                 backend.update(ctx, frame);
                 backend.backend_panel(ctx, frame);
                 backend.end_of_frame(ctx);
