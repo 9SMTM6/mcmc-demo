@@ -1,0 +1,25 @@
+--- index.html	2024-08-25 19:18:40.037892107 +0200
++++ index.fat.html	2024-08-25 19:19:13.312512434 +0200
+@@ -10,7 +10,7 @@
+ 
+     <head>
+         <!-- change this to your project name -->
+-        <title>MCMC demo</title>
++        <title>MCMC demo (debug with all features and unoptimized)</title>
+ 
+         <!-- config for our rust wasm binary. go to https://trunkrs.dev/assets/#rust for more customization -->
+         <!-- TODO: missing --fast-math flag to wasm-opt, which may make a difference. -->
+@@ -25,11 +25,10 @@
+         <link
+             data-trunk
+             rel="rust"
+-            data-wasm-opt="2"
++            data-wasm-opt="0"
++            data-keep-debug
+             data-reference-types
+             data-weak-refs
+-            data-cargo-no-default-features
+-            data-cargo-features="rng_pcg"
+             data-bindgen-target="web"
+         />
+         <!-- THIS WILL BE CHANGED IN A PATCH TO CREATE A FAT WEBPAGE -->

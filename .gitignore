@@ -4,6 +4,9 @@
 # trunk output folder
 dist/*/
 
+# generated patched fat index.html
+index.fat.html
+
 # Rust compile target directories:
 target
 target_ra
