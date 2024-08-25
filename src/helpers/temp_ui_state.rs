@@ -43,6 +43,7 @@ delegete_for!(egui::Context);
 impl<'a, T: Copy + Clone + Send + Sync + 'static, Del: TempStateExtDelegatedToDataMethods>
     TempUiState<'a, T, Del>
 {
+    #[allow(unused)]
     pub const fn with_id(self, id: egui::Id) -> Self {
         Self { id, ..self }
     }
@@ -54,6 +55,7 @@ impl<'a, T: Copy + Clone + Send + Sync + 'static, Del: TempStateExtDelegatedToDa
         });
     }
 
+    #[allow(unused)]
     pub fn create_default(&self)
     where
         T: Default,

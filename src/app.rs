@@ -238,7 +238,7 @@ impl eframe::App for McmcDemo {
                     // There is probably a less hacky way that also works on other aspect ratios etc, but for now it'll have to do.
                     .desired_width(200.0),
                 );
-                ctx.request_repaint_after(Duration::from_millis(16))
+                ctx.request_repaint_after(Duration::from_millis(16));
             } else if ui.button("Batch step").clicked() {
                 // TODO: All this is at best an early experiment.
                 let existing = self.local_resources.insert(BatchJob({
