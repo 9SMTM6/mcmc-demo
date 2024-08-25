@@ -128,10 +128,14 @@ jobs:
             TARGET: x86_64-unknown-linux-gnu
             pretty_name: linux-gnu-amd64
 
-          - os: windows-latest
-            TARGET: x86_64-pc-windows-msvc
-            EXTENSION: .exe
-            pretty_name: windows-amd64
+          # disabled for now, as github workers are SLOW on windows.
+          # Alternatively switch away from rust-cache, but it'll still be slower:
+          # https://github.com/bukowa/tauri-e2e/issues/3
+          # But I might want to explore that when I actually release.
+          # - os: windows-latest
+          #   TARGET: x86_64-pc-windows-msvc
+          #   EXTENSION: .exe
+          #   pretty_name: windows-amd64
 
     steps:
       - name: Install cross
