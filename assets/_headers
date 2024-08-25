@@ -9,5 +9,8 @@
     # not strictly required, just allows you to load assets from the same... subdomain IIRC.
     cross-origin-resource-policy: same-site
     #  please dont re-encode my brotli compression with your shitty version
-    Cache-Control: no-transform
-    Content-Encoding: br
+    # Doesn't work:
+    # https://community.cloudflare.com/t/how-to-serve-directly-my-brotli-and-gzip-pre-compressed-css-and-js-instead-of-the-cloudflare-compressed-ones/247288/10
+    # https://community.cloudflare.com/t/serve-precompressed-files-from-cdn-brotli-level-11-zopfli/236752/7
+    # Cache-Control: no-transform
+    # Content-Encoding: br
