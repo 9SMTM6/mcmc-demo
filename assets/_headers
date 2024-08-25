@@ -11,4 +11,3 @@
     #  please dont re-encode my brotli compression with your shitty version
     Cache-Control: no-transform
     Content-Encoding: br
-

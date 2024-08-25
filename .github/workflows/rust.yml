@@ -87,8 +87,8 @@ jobs:
         # relatively as eframe_template/favicon.ico. if we skip public-url option, the href paths will instead request username.github.io/favicon.ico which
         # will obviously return error 404 not found.
         run: ./trunk build --config ${{ matrix.config_file }} --release --public-url __RENAME_ME__
-      - name: Precompress
-        run: brotli ./dist/*/*
+      - name: Precompress every file
+        run: find ./dist/ -type f -exec brotli -k -f {} \;
       - name: Save Artifacts
         uses: actions/upload-artifact@v4
         with:
