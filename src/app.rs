@@ -213,23 +213,30 @@ impl eframe::App for McmcDemo {
 
             let bg_task = self.local_resources.get::<BatchJob>();
             if let Some(&BatchJob(ref bg_task)) = bg_task {
-                ui.add(ProgressBar::new(match bg_task.get_progress() {
-                    Progress::Pending(progress) => progress,
-                    Progress::Finished => {
-                        self.algo = self
-                            .local_resources
-                            .remove::<BatchJob>()
-                            .unwrap()
-                            .0
-                            .get_value();
-                        // process is finished, but because of the control flow I can't show the button for the next batchstep yet.
-                        // So this will have to do.
-                        // Alternative would be moving the batch step UI put of this gigantic function and using this here,
-                        // moving the ProgressBar rendering back into the Pending branch.
-                        // But thats too much work for something still in the flow.
-                        1.0
-                    }
-                }));
+                ui.add(
+                    ProgressBar::new(match bg_task.get_progress() {
+                        Progress::Pending(progress) => progress,
+                        Progress::Finished => {
+                            self.algo = self
+                                .local_resources
+                                .remove::<BatchJob>()
+                                .unwrap()
+                                .0
+                                .get_value();
+                            // process is finished, but because of the control flow I can't show the button for the next batchstep yet.
+                            // So this will have to do.
+                            // Alternative would be moving the batch step UI put of this gigantic function and using this here,
+                            // moving the ProgressBar rendering back into the Pending branch.
+                            // But thats too much work for something still in the flow.
+                            1.0
+                        }
+                    })
+                    // this "fixes" the layout when displaying the progress bar.
+                    // Without adding this, it will take up more horizontal space then the settings element took up originally,
+                    // which looks very glitchy.
+                    // There is probably a less hacky way that also works on other aspect ratios etc, but for now it'll have to do.
+                    .desired_width(200.0),
+                );
                 ctx.request_repaint_after(Duration::from_millis(16))
             } else if ui.button("Batch step").clicked() {
                 // TODO: All this is at best an early experiment.
