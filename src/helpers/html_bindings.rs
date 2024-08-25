@@ -47,10 +47,10 @@ pub fn display_failing_wgpu_info() {
 
     oob_el_ref.set_inner_html(
         r#"
-<p> This application currently requires WebGPU. </p>
-<p> At the time of writing, this means Chrome (or Chromium based browsers). </p>
-<p> On Linux, you also need to start Chrome with --enable-unsafe-webgpu or set the appropriate command flag in its <a style="color: #ffffff" href="chrome://flags/#enable-unsafe-webgpu">settings</a>. </p>
-<p> Alternatively, you can download an executable from the <a style="color: #ffffff" href="https://github.com/9SMTM6/mcmc-demo/releases">Github release</a> page. </p>
+<p> This application currently requires an WebGPU-enabled browser. </p>
+<p> Alternatively, you can download an executable from the <a href="https://github.com/9SMTM6/mcmc-demo/releases" target="_blank" rel="noopener noreferrer">Github release</a> page. </p>
+<p> At the time of writing, WebGPU-enabled browser means Chrome (or Chromium based browsers). </p>
+<p> On Linux, you also need to start Chrome with --enable-unsafe-webgpu or set the appropriate command flag here <u> chrome://flags/#enable-unsafe-webgpu</u>, as well as having enabled Vulkan (you can see that status at <u/>chrome://gpu</u>). Enabling this can be rather involved, so if its not already enabled or you've got an Intel iGPU I'd give up on it.</p>
 "#
     );
 }
