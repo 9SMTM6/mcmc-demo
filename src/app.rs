@@ -1,19 +1,15 @@
 use egui::{
     self,
-    mutex::Mutex,
     ProgressBar, Shadow, Vec2,
 };
 use rand::SeedableRng;
 use rand_distr::StandardNormal;
 use rand_pcg::Pcg32;
 use type_map::TypeMap;
-use std::{sync::Arc, time::Duration};
+use std::time::Duration;
 
 use crate::{
-    helpers::{
-        bg_task::{self, BgCommunicate, BgTaskHandle, Progress},
-        egui_temp_state::TempStateExtDelegatedToDataMethods,
-    },
+    helpers::{bg_task::{BgCommunicate, BgTaskHandle, Progress}, temp_ui_state::TempStateExtDelegatedToDataMethods},
     profile::backend_panel::BackendPanel,
     settings::{self, Settings},
     simulation::{
@@ -50,9 +46,11 @@ pub struct McmcDemo {
     settings: settings::Settings,
     gaussian_distr_iter: RngIter<StandardNormal>,
     uniform_distr_iter: RngIter<Percentage>,
-    /// This holds transitive values and resource managers for the main thread.
+    /// This holds resource managers for the main thread.
+    /// 
+    /// If you want to hold copyable temporary ui state, use [`TempStateExtDelegatedToDataMethods`] instead.
     #[cfg_attr(feature = "persistence", serde(skip))]
-    local_temp_resources: TypeMap,
+    local_resources: TypeMap,
 }
 
 impl Default for McmcDemo {
@@ -72,7 +70,7 @@ impl Default for McmcDemo {
                 WrappedRngDiscriminants::Pcg32.seed_from_u64(42),
                 Percentage,
             ),
-            local_temp_resources: TypeMap::new(),
+            local_resources: TypeMap::new(),
         }
     }
 }
@@ -148,15 +146,16 @@ impl eframe::App for McmcDemo {
                 }
                 #[cfg(feature = "profile")]
                 {
-                    let temp_state = ctx.temp_state::<Arc<Mutex<BackendPanel>>>();
-                    let is_opened = temp_state.get().is_some();
+                    let is_opened = self.local_resources.contains::<BackendPanel>();
                     let mut toggle_proxy = is_opened;
                     ui.toggle_value(&mut toggle_proxy, "Backend");
                     if toggle_proxy != is_opened {
                         if toggle_proxy {
-                            temp_state.create_default();
+                            let None = self.local_resources.insert::<BackendPanel>(Default::default()) else {
+                                unreachable!()
+                            };
                         } else {
-                            temp_state.remove();
+                            self.local_resources.remove::<BackendPanel>();
                         }
                     }
                 }
@@ -166,8 +165,7 @@ impl eframe::App for McmcDemo {
 
         #[cfg(feature = "profile")]
         {
-            if let Some(backend) = ctx.temp_state::<Arc<Mutex<BackendPanel>>>().get() {
-                let mut backend = backend.lock();
+            if let Some(backend) = self.local_resources.get_mut::<BackendPanel>() {
                 backend.update(ctx, frame);
                 backend.backend_panel(ctx, frame);
                 backend.end_of_frame(ctx);
@@ -210,14 +208,14 @@ impl eframe::App for McmcDemo {
             let size = size.get_inner();
             struct BatchJob(BgTaskHandle<Rwmh>);
 
-            let bg_task = self.local_temp_resources.get::<BatchJob>();
+            let bg_task = self.local_resources.get::<BatchJob>();
             if let Some(BatchJob(bg_task)) = bg_task
             {
                 ui.add(ProgressBar::new(
                     match bg_task.get_progress() {
                         Progress::Pending(progress) => progress,
                         Progress::Finished => {
-                            self.algo = self.local_temp_resources.remove::<BatchJob>().unwrap().0.get_value();
+                            self.algo = self.local_resources.remove::<BatchJob>().unwrap().0.get_value();
                             // process is finished, but because of the control flow I can't show the button for the next batchstep yet.
                             // So this will have to do.
                             // Alternative would be moving the batch step UI put of this gigantic function and using this here,
@@ -229,7 +227,7 @@ impl eframe::App for McmcDemo {
                 ));
             } else if ui.button("Batch step").clicked() {
                 // TODO: All this is at best an early experiment.
-                let existing = self.local_temp_resources.insert(BatchJob({
+                let existing = self.local_resources.insert(BatchJob({
                     let mut algo = self.algo.clone();
                     let target_distr = self.target_distr.clone();
                     // TODO: HIGHLY problematic!
@@ -311,7 +309,7 @@ impl eframe::App for McmcDemo {
                                             .on_hover_and_drag_cursor(egui::CursorIcon::Grabbing);
                                     }
                                     if pos_resp.clicked() {
-                                        ui.temp_state::<ElementSettingsOpened>()
+                                        ui.temp_ui_state::<ElementSettingsOpened>()
                                             .create(ElementSettingsOpened(idx));
                                     };
                                     // .on_hover_and_drag_cursor(egui::CursorIcon::Grabbing);
@@ -336,9 +334,9 @@ impl eframe::App for McmcDemo {
                                         },
                                     );
                                 }
-                                if let Some(ElementSettingsOpened(idx)) = ui.temp_state().get() {
+                                if let Some(ElementSettingsOpened(idx)) = ui.temp_ui_state().get() {
                                     let close_planel = |ui: &mut egui::Ui| {
-                                        ui.temp_state::<ElementSettingsOpened>().remove();
+                                        ui.temp_ui_state::<ElementSettingsOpened>().remove();
                                     };
                                     // a proxy for (the presence of) ElementSettings (required because of the api of window).
                                     // has a defered close at the end of the scope.

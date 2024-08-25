@@ -1,3 +1,3 @@
 pub mod bg_task;
-pub mod egui_temp_state;
+pub mod temp_ui_state;
 pub mod html_bindings;

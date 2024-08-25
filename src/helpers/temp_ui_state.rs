@@ -1,6 +1,8 @@
 use std::marker::PhantomData;
 
-pub struct TempState<'a, T, Del> {
+/// Do NOT use this with resource managers, use [`McmcDemo::local_temp_resources`] instead.
+/// This is only for copyable local state (so without eg. references) where its more comfortable to use.
+pub struct TempUiState<'a, T, Del> {
     delegate: &'a Del,
     id: egui::Id,
     _phantom: PhantomData<T>,
@@ -9,7 +11,8 @@ pub struct TempState<'a, T, Del> {
 pub trait TempStateExtDelegatedToDataMethods {
     fn data_mut<R>(&self, writer: impl FnOnce(&mut egui::util::IdTypeMap) -> R) -> R;
     fn data<R>(&self, reader: impl FnOnce(&egui::util::IdTypeMap) -> R) -> R;
-    fn temp_state<'a, T>(&'a self) -> TempState<'a, T, Self>
+    #[must_use]
+    fn temp_ui_state<'a, T>(&'a self) -> TempUiState<'a, T, Self>
     where
         Self: Sized;
 }
@@ -23,8 +26,8 @@ macro_rules! delegete_for {
             fn data_mut<R>(&self, writer: impl FnOnce(&mut egui::util::IdTypeMap) -> R) -> R {
                 self.data_mut(writer)
             }
-            fn temp_state<'a, T>(&'a self) -> TempState<'a, T, Self> {
-                TempState {
+            fn temp_ui_state<'a, T>(&'a self) -> TempUiState<'a, T, Self> {
+                TempUiState {
                     delegate: self,
                     id: egui::Id::NULL,
                     _phantom: PhantomData,
@@ -37,8 +40,8 @@ macro_rules! delegete_for {
 delegete_for!(egui::Ui);
 delegete_for!(egui::Context);
 
-impl<'a, T: Clone + Send + Sync + 'static, Del: TempStateExtDelegatedToDataMethods>
-    TempState<'a, T, Del>
+impl<'a, T: Copy + Clone + Send + Sync + 'static, Del: TempStateExtDelegatedToDataMethods>
+    TempUiState<'a, T, Del>
 {
     pub fn with_id(self, id: egui::Id) -> Self {
         Self { id, ..self }

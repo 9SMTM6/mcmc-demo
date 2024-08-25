@@ -5,7 +5,7 @@ use egui::{Id, Slider};
 use rand::{Rng, RngCore, SeedableRng};
 use rand_distr::{Distribution, Uniform};
 
-use crate::helpers::egui_temp_state::{TempState, TempStateExtDelegatedToDataMethods};
+use crate::helpers::temp_ui_state::{TempUiState, TempStateExtDelegatedToDataMethods};
 
 macro_rules! declare_rng_wrapper_macro {
     ($macro_name: ident, mod $path: tt) => {
@@ -318,12 +318,12 @@ impl WrappedRngDiscriminants {
 
 impl WrappedRng {
     pub fn settings_ui(&mut self, ui: &mut egui::Ui) {
-        #[derive(Clone)]
+        #[derive(Clone, Copy)]
         struct Settings {
             discr: WrappedRngDiscriminants,
             seed: u64,
         }
-        let temp_state = ui.temp_state::<Settings>();
+        let temp_state: TempUiState<Settings, egui::Ui> = ui.temp_ui_state::<Settings>();
 
         let mut current_settings = temp_state.get().unwrap_or(Settings {
             discr: WrappedRngDiscriminants::from(self.borrow()),
@@ -337,9 +337,9 @@ impl WrappedRng {
 
         if ui.button("apply").clicked() {
             *self = current_settings.discr.seed_from_u64(current_settings.seed);
-            ui.temp_state::<Settings>().remove();
+            ui.temp_ui_state::<Settings>().remove();
         } else {
-            ui.temp_state::<Settings>().set_or_create(current_settings);
+            ui.temp_ui_state::<Settings>().set_or_create(current_settings);
         }
     }
 }
