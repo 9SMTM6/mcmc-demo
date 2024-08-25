@@ -230,6 +230,7 @@ impl eframe::App for McmcDemo {
                         1.0
                     }
                 }));
+                ctx.request_repaint_after(Duration::from_millis(16))
             } else if ui.button("Batch step").clicked() {
                 // TODO: All this is at best an early experiment.
                 let existing = self.local_resources.insert(BatchJob({
@@ -388,7 +389,6 @@ impl eframe::App for McmcDemo {
                         },
                     );
             });
-        ctx.request_repaint_after(Duration::from_millis(500));
     }
 }
 
