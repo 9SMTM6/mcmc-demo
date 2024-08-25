@@ -30,7 +30,7 @@ pub struct DiffDisplay {
     pub window_radius: f32,
 }
 
-fn get_approx_buffers(
+pub fn get_approx_buffers(
     device: &wgpu::Device,
     approx_points: Option<&[RWMHAcceptRecord]>,
 ) -> (wgpu::Buffer, wgpu::Buffer) {

@@ -135,7 +135,8 @@ fn handle_c_pragma_once_style_imports(
             for unresolved_import in unresolved_imports {
                 let import = &old_wgsl_files.get(unresolved_import).unwrap();
                 if import.unresolved_imports.is_empty() && !unresolved_beforehand {
-                    new_resolved.extend(import.resolved_imports_in_order.clone().into_iter());
+                    let old_new_resolved = new_resolved.clone();
+                    new_resolved.extend(import.resolved_imports_in_order.clone().into_iter().filter(|el| !old_new_resolved.contains(el)));
                     new_resolved.push(unresolved_import.clone());
                 } else {
                     unresolved_beforehand = true;
@@ -180,6 +181,7 @@ fn handle_c_pragma_once_style_imports(
                 },
             )| {
                 assert!(unresolved_imports.is_empty());
+                println!("{filename:?} {resolved_imports_in_order:?}");
                 let resolved_imports = resolved_imports_in_order
                     .iter()
                     .map(|import_name| wgsl_files.get(import_name).unwrap().cleaned_source.clone())
@@ -203,6 +205,7 @@ fn bindgen_generation(resolved_shaders_dir: &Path) -> Result<(), ErrReport> {
         "fullscreen_quad.vertex",
         "diff_display.fragment",
         "binary_distance_approx.compute",
+        "binary_distance_approx.fragment",
     ];
 
     let mut bindgen = WgslBindgenOptionBuilder::default();
@@ -232,6 +235,7 @@ fn wgsl_to_wgpu_generation(resolved_shaders: &HashMap<OsString, String>, binding
         "fullscreen_quad.vertex",
         "diff_display.fragment",
         "binary_distance_approx.compute",
+        "binary_distance_approx.fragment",
     ]
     .map(OsString::from);
 
