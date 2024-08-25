@@ -1,13 +1,17 @@
-use std::{sync::Arc, time::Duration};
-
-use egui::{self, mutex::Mutex, ProgressBar, Shadow, Vec2};
+use egui::{
+    self,
+    mutex::Mutex,
+    ProgressBar, Shadow, Vec2,
+};
 use rand::SeedableRng;
 use rand_distr::StandardNormal;
 use rand_pcg::Pcg32;
+use type_map::TypeMap;
+use std::{sync::Arc, time::Duration};
 
 use crate::{
     helpers::{
-        bg_task::{BgCommunicate, BgTaskHandle, Progress},
+        bg_task::{self, BgCommunicate, BgTaskHandle, Progress},
         egui_temp_state::TempStateExtDelegatedToDataMethods,
     },
     profile::backend_panel::BackendPanel,
@@ -46,18 +50,9 @@ pub struct McmcDemo {
     settings: settings::Settings,
     gaussian_distr_iter: RngIter<StandardNormal>,
     uniform_distr_iter: RngIter<Percentage>,
+    /// This holds transitive values and resource managers for the main thread.
     #[cfg_attr(feature = "persistence", serde(skip))]
-    // TODO: Create TempState struct that holds a generic field and another optional marker generic.
-    // This SHOULD have a unique TypeId per type it holds (in addition with the generic I can have other things be unique too).
-    // Then I can create a method on this type that takes a UI handle,
-    // and then both renders the content (think of how to provide the rendering code for that)
-    // as well as keeps the state in ui.data::IdTypeMap.
-    // This way I dont have one big monolith such as here currently, where every small thing like background tasks have their own field and
-    // kindof have to have the same lifetime (or be Option)
-    bg_task: Option<BgTaskHandle<Rwmh>>,
-    // #[cfg_attr(feature = "persistence", serde(skip))]
-    // gpu_task: Option<BgTaskHandle<()>>,
-    // bg_tasks: Vec<BgTask<String, String>>,
+    local_temp_resources: TypeMap,
 }
 
 impl Default for McmcDemo {
@@ -77,9 +72,7 @@ impl Default for McmcDemo {
                 WrappedRngDiscriminants::Pcg32.seed_from_u64(42),
                 Percentage,
             ),
-            bg_task: None,
-            // gpu_task: None,
-            // bg_tasks: vec![]
+            local_temp_resources: TypeMap::new(),
         }
     }
 }
@@ -215,22 +208,28 @@ impl eframe::App for McmcDemo {
                 .text("batchsize"),
             );
             let size = size.get_inner();
-            if let Some(bg_task) = self.bg_task.as_ref() {
-                ui.add(ProgressBar::new(match bg_task.get_progress() {
-                    Progress::Pending(progress) => progress,
-                    Progress::Finished => {
-                        self.algo = self.bg_task.take().unwrap().get_value();
-                        // process is finished, but because of the control flow I can't show the button for the next batchstep yet.
-                        // So this will have to do.
-                        // Alternative would be moving the batch step UI put of this gigantic function and using this here,
-                        // moving the ProgressBar rendering back into the Pending branch.
-                        // But thats too much work for something still in the flow.
-                        1.0
-                    }
-                }));
+            struct BatchJob(BgTaskHandle<Rwmh>);
+
+            let bg_task = self.local_temp_resources.get::<BatchJob>();
+            if let Some(BatchJob(bg_task)) = bg_task
+            {
+                ui.add(ProgressBar::new(
+                    match bg_task.get_progress() {
+                        Progress::Pending(progress) => progress,
+                        Progress::Finished => {
+                            self.algo = self.local_temp_resources.remove::<BatchJob>().unwrap().0.get_value();
+                            // process is finished, but because of the control flow I can't show the button for the next batchstep yet.
+                            // So this will have to do.
+                            // Alternative would be moving the batch step UI put of this gigantic function and using this here,
+                            // moving the ProgressBar rendering back into the Pending branch.
+                            // But thats too much work for something still in the flow.
+                            1.0
+                        }
+                    },
+                ));
             } else if ui.button("Batch step").clicked() {
                 // TODO: All this is at best an early experiment.
-                let _ = self.bg_task.insert({
+                let existing = self.local_temp_resources.insert(BatchJob({
                     let mut algo = self.algo.clone();
                     let target_distr = self.target_distr.clone();
                     // TODO: HIGHLY problematic!
@@ -253,7 +252,8 @@ impl eframe::App for McmcDemo {
                         },
                         size,
                     )
-                });
+                }));
+                assert!(existing.is_none());
             }
         });
 
