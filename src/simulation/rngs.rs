@@ -331,7 +331,7 @@ impl WrappedRng {
         });
 
         current_settings.discr.selection_ui(ui);
-        // If I set this to u64::MAX to provide all options, its not realistically possible to select many values. 
+        // If I set this to u64::MAX to provide all options, its not realistically possible to select many values.
         ui.add(Slider::new(&mut current_settings.seed, 0..=300).text("Seed"));
 
         if ui.button("apply").clicked() {
