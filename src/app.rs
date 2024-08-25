@@ -1,15 +1,15 @@
-use egui::{
-    self,
-    ProgressBar, Shadow, Vec2,
-};
+use egui::{self, ProgressBar, Shadow, Vec2};
 use rand::SeedableRng;
 use rand_distr::StandardNormal;
 use rand_pcg::Pcg32;
-use type_map::TypeMap;
 use std::time::Duration;
+use type_map::TypeMap;
 
 use crate::{
-    helpers::{bg_task::{BgCommunicate, BgTaskHandle, Progress}, temp_ui_state::TempStateExtDelegatedToDataMethods},
+    helpers::{
+        bg_task::{BgCommunicate, BgTaskHandle, Progress},
+        temp_ui_state::TempStateExtDelegatedToDataMethods,
+    },
     profile::backend_panel::BackendPanel,
     settings::{self, Settings},
     simulation::{
@@ -47,7 +47,7 @@ pub struct McmcDemo {
     gaussian_distr_iter: RngIter<StandardNormal>,
     uniform_distr_iter: RngIter<Percentage>,
     /// This holds resource managers for the main thread.
-    /// 
+    ///
     /// If you want to hold copyable temporary ui state, use [`TempStateExtDelegatedToDataMethods`] instead.
     #[cfg_attr(feature = "persistence", serde(skip))]
     local_resources: TypeMap,
@@ -151,7 +151,10 @@ impl eframe::App for McmcDemo {
                     ui.toggle_value(&mut toggle_proxy, "Backend");
                     if toggle_proxy != is_opened {
                         if toggle_proxy {
-                            let None = self.local_resources.insert::<BackendPanel>(Default::default()) else {
+                            let None = self
+                                .local_resources
+                                .insert::<BackendPanel>(Default::default())
+                            else {
                                 unreachable!()
                             };
                         } else {
@@ -209,22 +212,24 @@ impl eframe::App for McmcDemo {
             struct BatchJob(BgTaskHandle<Rwmh>);
 
             let bg_task = self.local_resources.get::<BatchJob>();
-            if let Some(BatchJob(bg_task)) = bg_task
-            {
-                ui.add(ProgressBar::new(
-                    match bg_task.get_progress() {
-                        Progress::Pending(progress) => progress,
-                        Progress::Finished => {
-                            self.algo = self.local_resources.remove::<BatchJob>().unwrap().0.get_value();
-                            // process is finished, but because of the control flow I can't show the button for the next batchstep yet.
-                            // So this will have to do.
-                            // Alternative would be moving the batch step UI put of this gigantic function and using this here,
-                            // moving the ProgressBar rendering back into the Pending branch.
-                            // But thats too much work for something still in the flow.
-                            1.0
-                        }
-                    },
-                ));
+            if let Some(BatchJob(bg_task)) = bg_task {
+                ui.add(ProgressBar::new(match bg_task.get_progress() {
+                    Progress::Pending(progress) => progress,
+                    Progress::Finished => {
+                        self.algo = self
+                            .local_resources
+                            .remove::<BatchJob>()
+                            .unwrap()
+                            .0
+                            .get_value();
+                        // process is finished, but because of the control flow I can't show the button for the next batchstep yet.
+                        // So this will have to do.
+                        // Alternative would be moving the batch step UI put of this gigantic function and using this here,
+                        // moving the ProgressBar rendering back into the Pending branch.
+                        // But thats too much work for something still in the flow.
+                        1.0
+                    }
+                }));
             } else if ui.button("Batch step").clicked() {
                 // TODO: All this is at best an early experiment.
                 let existing = self.local_resources.insert(BatchJob({
