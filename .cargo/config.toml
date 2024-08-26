@@ -3,15 +3,10 @@
 
 [target.wasm32-unknown-unknown]
 rustflags = [
-    # clipboard api is still unstable, so web-sys requires the below flag to be passed for copy (ctrl + c) to work
-    # https://rustwasm.github.io/docs/wasm-bindgen/web-sys/unstable-apis.html
-    # check status at https://developer.mozilla.org/en-US/docs/Web/API/Clipboard#browser_compatibility
-    # we don't use `[build]` because of rust analyzer's build cache invalidation https://github.com/emilk/eframe_template/issues/93
+    # This is currently still required because of my own usage of the WebGPU API.
+    # If I move that out of rust code then I dont need to this any longer, and can also speed up responsiveness to that failure condition.
+    # TODO: do that and remve this flag.
     "--cfg=web_sys_unstable_apis",
-    # TODO: this is the reason I can't have wasm-threads.
-    # It seems to cause some issues in the interactions between type_map and wgpu with Sync, forced by egui-wgpu.
-    # I'll wait until after the upgrade to wgpu 22.x, as that has a good chance of fixing this issue, as it addressed at least lifetime bounds.
-    # That update meanwhile is blocked on wgsl_analyzer: https://github.com/Swoorup/wgsl-bindgen/issues/37 
     "-C",
     "target-feature=+atomics,+bulk-memory,+mutable-globals",
 ]
