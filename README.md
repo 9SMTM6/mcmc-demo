@@ -29,7 +29,7 @@ I currently envison this approach (lets see how much of this I'll get):
 0. still use max-scaling. With near-uniform distributions we otherwise get a far to depressed dynamic range where things actually happen.
 1. determine device limits to divide work accordingly
 2. since we don't render directly anymore, I've got much more freedom in splitting up the workload, concretely optimizing for typical buffers. So I intend to break up the determination of the approx distribution into multiple sets of reference points.
-3. do it in a compute shader - todo: with pipeline-overridable constants for render size (https://github.com/gfx-rs/wgpu/releases/tag/v0.20.0)
+3. do it in a compute shader
 4. The result can be stored either:
     * in a texture.
     * a storage buffer (as long as that is efficient, textures are optimized to only load parts)
@@ -39,6 +39,15 @@ I currently envison this approach (lets see how much of this I'll get):
 8. In order to avoid numerical stability issues I'll probably add some normalization after N steps. I have to decide on a proper strategy for that. Perhaps I can actually do it based on current maximum instead. Most of these strategies will lead to systemctic errors in the precision, since rounding might happen in different situations, but I'm fine with that.
 
 ### Webgpu in a background thread
+
+I might be able to create some abstraction that might or might not start the a gpu compute task from a background thread
+
+Consider that moving any (? certainly CommandEncoder, Device, Buffer etc) between threads is forbidden on the web:
+* https://github.com/gfx-rs/wgpu/issues/2652
+* https://wgpu.rs/doc/wgpu/#other (fragile-send-sync-non-atomic-wasm)
+* kinda conflicts with spec? https://www.w3.org/TR/webgpu/#canvas-hooks
+* other than that I could not find any real mention of thread or web worker (other than availability of creation methods)
+  in neither the wgsl nor the webgpu spec.
 
 Note that a compute shader in a webworker is supposed to work according to [spec](https://www.w3.org/TR/webgpu/#navigator-gpu), but [apparently firefox doesnt support that](https://developer.mozilla.org/en-US/docs/Web/API/WorkerNavigator/gpu), even on nightly. So here's hoping that they will eventually support it when they release.
 

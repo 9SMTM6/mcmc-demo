@@ -201,8 +201,7 @@ impl eframe::App for McmcDemo {
                 unsafe {
                     egui::Slider::new(
                         size.get_inner_mut(),
-                        // TODO: Increase limit of... storage buffer size or whatever to maximum allowed,
-                        // use that maximum here to determine slider maximum, by determining how much space is left, roughly.
+                        // TODO: use default webgpu maximum size here to determine slider maximum, by determining how much space is left, roughly.
                         1..=(usize::MAX / usize::MAX.ilog2() as usize),
                     )
                 }
@@ -240,7 +239,6 @@ impl eframe::App for McmcDemo {
                 );
                 ctx.request_repaint_after(Duration::from_millis(16));
             } else if ui.button("Batch step").clicked() {
-                // TODO: All this is at best an early experiment.
                 let existing = self.local_resources.insert(BatchJob({
                     let mut algo = self.algo.clone();
                     let target_distr = self.target_distr.clone();

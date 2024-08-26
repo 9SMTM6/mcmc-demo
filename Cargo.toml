@@ -41,7 +41,6 @@ tracing = [
     "dep:tracing",
     "dep:tracing-log",
     "dep:tracing-subscriber",
-    # TODO: ought to be also included only based on target, but I cant seem to find a way to do that.
     "dep:tracing-web",
     "dep:time",
     # "temporarily removed". Reinstatement issue: https://github.com/gfx-rs/wgpu/issues/5974

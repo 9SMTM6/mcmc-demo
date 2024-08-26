@@ -175,17 +175,6 @@ impl CallbackTrait for RenderCall {
         _egui_encoder: &mut wgpu::CommandEncoder,
         callback_resources: &mut eframe::egui_wgpu::CallbackResources,
     ) -> Vec<wgpu::CommandBuffer> {
-        // TODO: generate diff_calc compute pass with dispatch from `wgpu::CommandEncoder`.
-        // That method can be used both here as a start, and if its too expensive, the same thing can be moved to a background task of sorts.
-        // Consider notes in readme about availability of stuff in web workers.
-        // I might be able to create some abstraction on top if this stuff that might or might not start the task from a background task
-
-        // Consider that moving any (? certainly CommandEncoder, Device, Buffer etc) between threads is forbidden on the web:
-        // * https://github.com/gfx-rs/wgpu/issues/2652
-        // * https://wgpu.rs/doc/wgpu/#other (fragile-send-sync-non-atomic-wasm)
-        // * kinda conflicts with spec? https://www.w3.org/TR/webgpu/#canvas-hooks
-        // * other than that I could not find any real mention of thread or web worker (other than availability of creation methods)
-        //   in neither the wgsl nor the webgpu spec.
         let &mut PipelineStateHolder {
             ref resolution_buffer,
             ref mut target_buffer,

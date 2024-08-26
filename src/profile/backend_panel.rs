@@ -65,11 +65,6 @@ pub struct BackendPanel {
 
 impl BackendPanel {
     pub fn backend_panel(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
-        // todo: ctx also has data* methods, use these instead.
-        // Perhaps do the anyways necessary rework of TempState, and the unstead of accepting ui, accept a trait impl that delegates to the respective data methods.
-        // let Some(state) = ctx.temp_state::<Arc<Mutex<BackendPanel>>>().get() else {
-        //     return;
-        // };
         egui::SidePanel::left("backend_panel")
             .resizable(false)
             .show(ctx, |ui| {
