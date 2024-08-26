@@ -133,9 +133,10 @@
     </style>
     <script type="module">
         // check for webgpu compatibility, if not found, display the warning message.
-        navigator.gpu?.requestAdapter().catch(() => {
+        const show_warning = () => {
             document.getElementById("no_webgpu")?.removeAttribute("hidden");
-        })
+        };
+        navigator.gpu?.requestAdapter().catch(show_warning) ?? show_warning()
     </script>
 </head>
 
