@@ -1,6 +1,3 @@
-# - uses: extractions/setup-just@v2
-
-
 generate_favicon:
     typst compile assets/favicon.typ --format svg
 

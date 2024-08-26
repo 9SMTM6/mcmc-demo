@@ -10,7 +10,7 @@ pub fn get_element_by_id(id: &str) -> Option<web_sys::Element> {
 
 /// # Panics
 ///
-/// If the element cant be found by its ID (it should be in `index.html` fro mthe start), or if that element isnt a canvas.
+/// If the element cant be found by its ID (it should be in `index.html` from the start), or if that element isnt a canvas.
 pub fn get_egui_canvas() -> web_sys::HtmlCanvasElement {
     get_element_by_id(CANVAS_ID)
         .expect("Unable to find root canvas")
@@ -33,6 +33,9 @@ pub(super) fn remove_canvas() {
     remove_el_if_present(CANVAS_ID);
 }
 
+/// # Panics
+///
+/// If the element cant be found by its ID (it should be in `index.html` from the start), or if removal fails
 pub fn show_element_by_id(id: &str) {
     get_element_by_id(id)
         .map(|el| el.remove_attribute("hidden"))
