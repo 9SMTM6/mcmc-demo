@@ -114,7 +114,6 @@
                 color: #f0f0f0;
                 font-size: 24px;
                 font-family: Ubuntu-Light, Helvetica, sans-serif;
-                text-align: center;
             }
 
             a{
@@ -167,7 +166,17 @@
                 <p> This application currently requires an WebGPU-enabled browser. </p>
                 <p> Alternatively, you can download an executable from the <a href="https://github.com/9SMTM6/mcmc-demo/releases" target="_blank" rel="noopener noreferrer">Github release</a> page. </p>
                 <p> At the time of writing, WebGPU-enabled browser means Chrome (or Chromium based browsers). </p>
-                <p> On Linux, you also need to start Chrome with --enable-unsafe-webgpu or set the appropriate command flag here <u> chrome://flags/#enable-unsafe-webgpu</u>, as well as having enabled Vulkan (you can see that status at <u/>chrome://gpu</u>). Enabling this can be rather involved, so if its not already enabled or you've got an Intel iGPU I'd give up on it.</p>
+                <p style="text-align: left"> On Linux, you also need to:
+                    <ul>
+                        <li>
+                            start Chrome with --enable-unsafe-webgpu or set the appropriate command flag here <u> chrome://flags/#enable-unsafe-webgpu</u>, 
+                        </li>
+                        <li>
+                            as well as having enabled Vulkan (you can see that status at <u/>chrome://gpu</u>). 
+                            Enabling Vulkan can currently be rather involved if you don't use an Intel GPU (yes, AMD is also problematic).
+                        </li>
+                    </ul>
+            </p>
             </div>
             <div hidden id="panic_el">
                 <p> The app has crashed.</p>
