@@ -1,0 +1,18 @@
+on: [push, pull_request]
+
+name: QA
+
+jobs:
+  cargo-deny:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: EmbarkStudios/cargo-deny-action@v2
+      with:
+        rust-version: stable
+  spell-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check spelling of entire workspace
+        uses: crate-ci/typos@master
