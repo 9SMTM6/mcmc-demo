@@ -1,25 +1,22 @@
---- index.html	2024-08-25 19:18:40.037892107 +0200
-+++ index.fat.html	2024-08-25 19:19:13.312512434 +0200
-@@ -10,7 +10,7 @@
+--- index.html	2024-08-26 22:56:22.153516982 +0200
++++ index.fat.html	2024-08-26 22:56:17.890202388 +0200
+@@ -7,7 +7,7 @@
  
-     <head>
-         <!-- change this to your project name -->
--        <title>MCMC demo</title>
-+        <title>MCMC demo (debug with all features and unoptimized)</title>
+ <head>
+     <!-- change this to your project name -->
+-    <title>MCMC demo</title>
++    <title>MCMC demo (debug with all features and unoptimized)</title>
  
-         <!-- config for our rust wasm binary. go to https://trunkrs.dev/assets/#rust for more customization -->
-         <!-- TODO: missing --fast-math flag to wasm-opt, which may make a difference. -->
-@@ -25,11 +25,10 @@
-         <link
-             data-trunk
-             rel="rust"
--            data-wasm-opt="2"
-+            data-wasm-opt="0"
-+            data-keep-debug
-             data-reference-types
-             data-weak-refs
--            data-cargo-no-default-features
--            data-cargo-features="rng_pcg"
-             data-bindgen-target="web"
-         />
-         <!-- THIS WILL BE CHANGED IN A PATCH TO CREATE A FAT WEBPAGE -->
+     <!-- config for our rust wasm binary. go to https://trunkrs.dev/assets/#rust for more customization -->
+     <!-- TODO: missing --fast-math flag to wasm-opt, which may make a difference. -->
+@@ -19,8 +19,8 @@
+     <!-- TODO: remove rng_pcg once features are fixed -->
+ 
+     <!-- THIS WILL BE CHANGED IN A PATCH TO CREATE A FAT WEBPAGE -->
+-    <link data-trunk rel="rust" data-wasm-opt="2" data-reference-types data-weak-refs data-cargo-no-default-features
+-        data-cargo-features="rng_pcg" data-bindgen-target="web" />
++    <link data-trunk rel="rust" data-wasm-opt="0" data-keep-debug data-reference-types data-weak-refs
++        data-bindgen-target="web" />
+     <!-- THIS WILL BE CHANGED IN A PATCH TO CREATE A FAT WEBPAGE -->
+ 
+     <!-- this is the base url relative to which other urls will be constructed. trunk will insert this from the public-url option -->
