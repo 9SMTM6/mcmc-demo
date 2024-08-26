@@ -73,7 +73,7 @@ fn main() {
                     Err(err)
                 }
             })
-            .unwrap()
+            .unwrap();
     });
     remove_loading_state();
 }
