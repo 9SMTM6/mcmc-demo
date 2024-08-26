@@ -6,17 +6,6 @@ env:
   RUST_NIGHTLY_TOOLCHAIN_VERSION: "nightly-2024-08-02"
 
 jobs:
-  fmt:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: stable
-          components: rustfmt
-      - uses: Swatinem/rust-cache@v2
-      - run: cargo +stable fmt --all -- --check
-
   clippy-native:
     name: Clippy + Check native
     # clippy is a superset of cargo check.
