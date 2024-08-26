@@ -7,3 +7,7 @@ dist = "dist/slim"
 "cross-origin-embedder-policy"= "require-corp"
 "cross-origin-opener-policy"= "same-origin"
 "cross-origin-resource-policy"= "same-site"
+
+# hotfix for CI failure (probably caused due to newer wasm-bindgen which is selected based on Cargo.toml version)
+[tools]
+wasm_opt = "version_118"
