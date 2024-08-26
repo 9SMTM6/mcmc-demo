@@ -151,16 +151,45 @@
                 }
             }
         </style>
+        <script type="module">
+            // check for webgpu compatibility, if not found, display the warning message.
+            navigator.gpu?.requestAdapter().catch(()=> {
+                document.getElementById("no_webgpu")?.removeAttribute("hidden");
+            })
+        </script>
     </head>
 
     <body>
         <!-- the id is hardcoded in main.rs . so, make sure both match. -->
         <canvas id="egui_canvas"></canvas>
         <div class="centered">
-            <p id="oob_text">Loading...</p>
+            <div hidden id="no_webgpu">
+                <p> This application currently requires an WebGPU-enabled browser. </p>
+                <p> Alternatively, you can download an executable from the <a href="https://github.com/9SMTM6/mcmc-demo/releases" target="_blank" rel="noopener noreferrer">Github release</a> page. </p>
+                <p> At the time of writing, WebGPU-enabled browser means Chrome (or Chromium based browsers). </p>
+                <p> On Linux, you also need to start Chrome with --enable-unsafe-webgpu or set the appropriate command flag here <u> chrome://flags/#enable-unsafe-webgpu</u>, as well as having enabled Vulkan (you can see that status at <u/>chrome://gpu</u>). Enabling this can be rather involved, so if its not already enabled or you've got an Intel iGPU I'd give up on it.</p>
+            </div>
+            <div hidden id="panic_el">
+                <p> The app has crashed.</p>
+                <p style="font-size:12px">
+                    <div 
+                        style="background: black; color:white; font-family: monospace; text-align: left"
+                        id="panic_message"
+                    >{panic_message}</div>
+                </p>
+                <p style="font-size:14px">
+                    See the developer console for more details.
+                </p>
+                <p style="font-size:14px">
+                    Reload the page to try again.
+                </p>
+            </div>
+            <p id="oob_text">
+                Loading...
+            </p>
             <!-- the loading spinner will be removed in main.rs (or not) -->
             <div class="lds-dual-ring" id="loading_animation"></div>
-        </div>
+    </div>
     </body>
 </html>
 

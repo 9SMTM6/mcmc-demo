@@ -3,10 +3,6 @@
 
 [target.wasm32-unknown-unknown]
 rustflags = [
-    # This is currently still required because of my own usage of the WebGPU API.
-    # If I move that out of rust code then I dont need to this any longer, and can also speed up responsiveness to that failure condition.
-    # TODO: do that and remve this flag.
-    "--cfg=web_sys_unstable_apis",
     "-C",
     "target-feature=+atomics,+bulk-memory,+mutable-globals",
 ]

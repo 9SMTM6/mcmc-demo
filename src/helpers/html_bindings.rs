@@ -19,9 +19,7 @@ pub fn get_egui_canvas() -> web_sys::HtmlCanvasElement {
 }
 
 pub fn get_oob_text_el() -> Option<web_sys::HtmlElement> {
-    web_sys::window()
-        .and_then(|w| w.document())
-        .and_then(|d| d.get_element_by_id("oob_text"))
+    get_element_by_id("oob_text")
         .and_then(|el| el.dyn_into::<web_sys::HtmlElement>().ok())
 }
 
@@ -40,19 +38,12 @@ pub(super) fn remove_canvas() {
     remove_el_if_present(CANVAS_ID);
 }
 
-pub fn display_failing_wgpu_info() {
-    let Some(oob_el_ref) = get_oob_text_el() else {
-        unreachable!("Could not find warning element");
-    };
+pub fn show_element_by_id(id: &str) {
+    get_element_by_id(id).map(|el| el.remove_attribute("hidden")).unwrap().unwrap();
+}
 
-    oob_el_ref.set_inner_html(
-        r#"
-<p> This application currently requires an WebGPU-enabled browser. </p>
-<p> Alternatively, you can download an executable from the <a href="https://github.com/9SMTM6/mcmc-demo/releases" target="_blank" rel="noopener noreferrer">Github release</a> page. </p>
-<p> At the time of writing, WebGPU-enabled browser means Chrome (or Chromium based browsers). </p>
-<p> On Linux, you also need to start Chrome with --enable-unsafe-webgpu or set the appropriate command flag here <u> chrome://flags/#enable-unsafe-webgpu</u>, as well as having enabled Vulkan (you can see that status at <u/>chrome://gpu</u>). Enabling this can be rather involved, so if its not already enabled or you've got an Intel iGPU I'd give up on it.</p>
-"#
-    );
+pub fn display_failing_wgpu_info() {
+    show_element_by_id("no_webgpu");
 }
 
 pub fn try_display_panic(panic_info: &std::panic::PanicHookInfo<'_>) {
@@ -61,21 +52,9 @@ pub fn try_display_panic(panic_info: &std::panic::PanicHookInfo<'_>) {
 
 #[allow(clippy::missing_panics_doc)]
 pub fn try_display_panic_str(panic_info: &str) {
-    if let Some(oob_el_ref) = get_oob_text_el() {
-        oob_el_ref.set_inner_html(&format!(
-            r#"
-    <p> The app has crashed.</p>
-    <p style="font-size:12px">
-        <div style="background: black; color=white; font-family: monospace; text-align: left">{panic_info}</div>
-    </p>
-    <p style="font-size:14px">
-        See the developer console for more details.
-    </p>
-    <p style="font-size:14px">
-        Reload the page to try again.
-    </p>
-"#
-        ));
+    if let Some(el) = get_element_by_id("panic_message") {
+        el.set_text_content(Some(panic_info));
+        show_element_by_id("panic_el");
         remove_loading_state();
         remove_canvas();
     } else {
