@@ -34,7 +34,10 @@ pub(super) fn remove_canvas() {
 }
 
 pub fn show_element_by_id(id: &str) {
-    get_element_by_id(id).map(|el| el.remove_attribute("hidden")).unwrap().unwrap();
+    get_element_by_id(id)
+        .map(|el| el.remove_attribute("hidden"))
+        .unwrap()
+        .unwrap();
 }
 
 pub fn try_display_panic(panic_info: &std::panic::PanicHookInfo<'_>) {

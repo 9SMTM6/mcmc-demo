@@ -136,7 +136,13 @@ fn handle_c_pragma_once_style_imports(
                 let import = &old_wgsl_files.get(unresolved_import).unwrap();
                 if import.unresolved_imports.is_empty() && !unresolved_beforehand {
                     let old_new_resolved = new_resolved.clone();
-                    new_resolved.extend(import.resolved_imports_in_order.clone().into_iter().filter(|el| !old_new_resolved.contains(el)));
+                    new_resolved.extend(
+                        import
+                            .resolved_imports_in_order
+                            .clone()
+                            .into_iter()
+                            .filter(|el| !old_new_resolved.contains(el)),
+                    );
                     new_resolved.push(unresolved_import.clone());
                 } else {
                     unresolved_beforehand = true;

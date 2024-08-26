@@ -67,11 +67,12 @@ jobs:
         include:
           - name: fat
             config_file: Trunk.fat.toml
-            pre_build: patch index.html -o index.fat.html < index.fat.html.patch
+            pre_build: just patch_fat_html
           - name: slim
             config_file: Trunk.toml
     steps:
       - uses: actions/checkout@v4
+      - uses: extractions/setup-just@v2
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{env.RUST_NIGHTLY_TOOLCHAIN_VERSION}}
