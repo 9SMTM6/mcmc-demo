@@ -55,7 +55,7 @@ pub fn try_display_panic_str(panic_info: &str) {
         remove_loading_state();
         remove_canvas();
     } else {
-        // not sure what panicing here does, but oh well.
+        // not sure what panicking here does, but oh well.
         assert!(wasm_thread::is_web_worker_thread());
         // TODO: Find some way to transport these to the main thread.
         // JoinHandle::join only returns the value that was panicked with.

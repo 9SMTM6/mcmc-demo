@@ -19,7 +19,7 @@
 
 ## Compute shader
 
-I dont know if any of the below ideas for speeding up the diff rendering would work out. And in the end, dont think I'll get much use out of knowing how to do that (meanign I'll forget it anyways).
+I dont know if any of the below ideas for speeding up the diff rendering would work out. And in the end, dont think I'll get much use out of knowing how to do that (meaning I'll forget it anyways).
 
 One thing where the probability of reuse is much higher, and that more connects to my past knowledge, is compute shaders.
 Its a bit annoying to go away from the ability to render everything in real time always, but at the same time that lifts hard limits that were always going to be there with the previous approach - whether we were close to reaching them or not.
@@ -59,7 +59,7 @@ So the choices are:
   * avoids going over the CPU
   * in App::new the creation_context holds the wgpu device and queue that are also used by egui.
     I believe that its required to use these to use buffers etc without going over the CPU.
-    I could perhaps immediately stick these references into another object that then recieves gpu tasks.
+    I could perhaps immediately stick these references into another object that then receives gpu tasks.
     This object could dispatch that work from a background thread in native as a later optimization (with tests whether that actually does anything for perf).
 
 ### WebGPU Synchronization
@@ -93,7 +93,7 @@ Generally I should find a way to profile webgpu render. Currently I'm mostly gue
 Currently working:
 * with feature "profile"
   * we start puffin, which can measure scope duration and gives a generic flame-graph from the rust side (no GPU)
-  * there appears a "backend" button which was largely copied from the egui demo and offers frametimes as well as informations about GPU allocations etc.
+  * there appears a "backend" button which was largely copied from the egui demo and offers frametimes as well as information about GPU allocations etc.
 
 Future ideas:
 * implement tracing from rust side for wgpu actions, blocked by: https://github.com/gfx-rs/wgpu/issues/5974
@@ -105,7 +105,7 @@ Future ideas:
 Currently I only support batched execution, to quickly see results of different configurations.
 In the future I also want to support a substep execution such as in the [original inspiration](https://chi-feng.github.io/mcmc-demo/app.html?algorithm=RandomWalkMH&target=banana).
 With a history of past proposals etc.
-Maybe also with history navigation, if that actually fits the workflow (atm I dont thik so, since RNG is seeded once currently, and we should probably reset on changes to e.g. target distribution).
+Maybe also with history navigation, if that actually fits the workflow (atm I dont think so, since RNG is seeded once currently, and we should probably reset on changes to e.g. target distribution).
 
 ## Support more PRNG and low-discrepancy randomness
 
@@ -128,7 +128,7 @@ IDK how to transform that yet while retaining proper low-discrepancy. A normal t
   * disabling the file hashes makes the task of actually getting a newer version problematic, I looked into this but eventually gave up.
 * consider the experimental related_applications attribute https://developer.mozilla.org/en-US/docs/Web/Manifest/related_applications
 * not installable on main URLs
-  * issue is that manifest "speficies the wrong url". What happens (I think) is that the commit url from cloudflare ends up in the index.html/base element, the latest of which also gets served on the main url. This means that the relative URL in the manifest file doesn't specify the correct main url, and chrome doesnt like that.
+  * issue is that manifest "specifies the wrong url". What happens (I think) is that the commit url from cloudflare ends up in the index.html/base element, the latest of which also gets served on the main url. This means that the relative URL in the manifest file doesn't specify the correct main url, and chrome doesnt like that.
   * I tried if I can work around that by inlining the manifest with a data url, but that way it seems that relative urls don't get resolved at all, instead they all error
   * I could specify the "final" url in the manifest.json, but thats difficult as theres 2 of these right now, the baseline and the fat URL.
     * I could choose one of these

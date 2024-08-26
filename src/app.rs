@@ -353,7 +353,7 @@ impl eframe::App for McmcDemo {
                                         ui.temp_ui_state::<ElementSettingsOpened>().remove();
                                     };
                                     // a proxy for (the presence of) ElementSettings (required because of the api of window).
-                                    // has a defered close at the end of the scope.
+                                    // has a deferred close at the end of the scope.
                                     let mut opened = true;
                                     let gaussians = &mut self.target_distr.gaussians;
                                     egui::Window::new(format!("Settings for Gauss-Element {idx}"))
