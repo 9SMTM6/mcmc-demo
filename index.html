@@ -176,7 +176,7 @@
                             Enabling Vulkan can currently be rather involved if you don't use an Intel GPU (yes, AMD is also problematic).
                         </li>
                     </ul>
-            </p>
+                </p>
             </div>
             <div hidden id="panic_el">
                 <p> The app has crashed.</p>
@@ -193,11 +193,11 @@
                     Reload the page to try again.
                 </p>
             </div>
-            <p id="oob_text">
+            <div id="loading_el", style="text-align: center;">
+                <div class="lds-dual-ring" id="loading_animation"></div>
                 Loading...
-            </p>
+            </div>
             <!-- the loading spinner will be removed in main.rs (or not) -->
-            <div class="lds-dual-ring" id="loading_animation"></div>
     </div>
     </body>
 </html>

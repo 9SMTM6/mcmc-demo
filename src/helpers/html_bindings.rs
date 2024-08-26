@@ -18,20 +18,15 @@ pub fn get_egui_canvas() -> web_sys::HtmlCanvasElement {
         .expect("Root element is no canvas")
 }
 
-pub fn get_oob_text_el() -> Option<web_sys::HtmlElement> {
-    get_element_by_id("oob_text")
-        .and_then(|el| el.dyn_into::<web_sys::HtmlElement>().ok())
-}
-
 pub fn remove_el_if_present(id: &str) {
     get_element_by_id(id).as_ref().map(Element::remove);
 }
 
 pub fn remove_loading_state() {
-    if let Some(el) = get_oob_text_el().as_ref() {
-        el.set_inner_text("");
-    };
-    remove_el_if_present("loading_animation");
+    if let Some(el) = get_element_by_id("loading_el") {
+        el.set_inner_html("");
+        el.set_text_content(None);
+    }
 }
 
 pub(super) fn remove_canvas() {
@@ -40,10 +35,6 @@ pub(super) fn remove_canvas() {
 
 pub fn show_element_by_id(id: &str) {
     get_element_by_id(id).map(|el| el.remove_attribute("hidden")).unwrap().unwrap();
-}
-
-pub fn display_failing_wgpu_info() {
-    show_element_by_id("no_webgpu");
 }
 
 pub fn try_display_panic(panic_info: &std::panic::PanicHookInfo<'_>) {

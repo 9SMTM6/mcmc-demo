@@ -57,24 +57,23 @@ fn main() {
     let web_options = eframe::WebOptions::default();
     
     wasm_bindgen_futures::spawn_local(async {
-        match eframe::WebRunner::new()
-        .start(
-            get_egui_canvas(),
-            web_options,
-            Box::new(|cc| Ok(Box::new(mcmc_demo::McmcDemo::new(cc)))),
-        )
-        .await
-        {
-            Ok(_) => {}
-            Err(err) => {
+        eframe::WebRunner::new()
+            .start(
+                get_egui_canvas(),
+                web_options,
+                Box::new(|cc| Ok(Box::new(mcmc_demo::McmcDemo::new(cc)))),
+            )
+            .await
+            .or_else(|err| {
                 let fmt_err = format!("{err:?}");
                 if fmt_err.contains("wgpu") {
-                    display_failing_wgpu_info();
+                    // should've been handled in js
+                    Ok(())
                 } else {
-                    panic!("{fmt_err}")
+                    Err(err)
                 }
-            }
-        };
+            })
+            .unwrap()
     });
     remove_loading_state();
 }
