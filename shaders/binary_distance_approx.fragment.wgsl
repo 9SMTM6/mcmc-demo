@@ -1,8 +1,11 @@
 #import "canvas_ndc_conversion.wgsl";
 #import "fullscreen_quad.vertex.wgsl";
-#import "binary_distance_approx.bufferbinding.wgsl";
+#import "binary_distance_approx.buffer.wgsl";
 #import "multimodal_gaussian.wgsl";
 #import "helpers.wgsl";
+
+@group(1) @binding(40)
+var<storage, read> compute_output: array<f32>;
 
 @fragment
 fn fs_main(@builtin(position) canvas_coords: vec4<f32>) -> @location(0) vec4<f32> {

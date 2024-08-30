@@ -1,6 +1,9 @@
 #import "canvas_ndc_conversion.wgsl";
-#import "binary_distance_approx.bufferbinding.wgsl";
+#import "binary_distance_approx.buffer.wgsl";
 #import "binary_distance_approx.wgsl";
+
+@group(1) @binding(40)
+var<storage, read_write> compute_output: array<f32>;
 
 @compute
 @workgroup_size(1)

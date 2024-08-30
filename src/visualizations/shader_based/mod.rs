@@ -1,3 +1,4 @@
+pub mod bda_compute;
 pub mod diff_display;
 pub mod multimodal_gaussian;
 mod resolution_uniform;
@@ -24,6 +25,25 @@ macro_rules! create_shader_module {
                 $shader_name,
                 ".rs"
             ));
+            pub use bind_groups::*;
+        }
+    };
+    ($shader_name:expr, $module_name: ident; no redefine) => {
+        #[allow(
+            unused,
+            elided_lifetimes_in_paths,
+            clippy::approx_constant,
+            clippy::module_name_repetitions,
+            clippy::pattern_type_mismatch,
+            clippy::unreadable_literal
+        )]
+        pub mod $module_name {
+            include!(concat!(
+                env!("OUT_DIR"),
+                "/shaders_bindings/",
+                $shader_name,
+                ".rs"
+            ));
         }
     };
     ($shader_name:expr) => {
@@ -31,4 +51,4 @@ macro_rules! create_shader_module {
     };
 }
 
-create_shader_module!("fullscreen_quad.vertex", fullscreen_quad);
+create_shader_module!("fullscreen_quad.vertex", fullscreen_quad; no redefine);

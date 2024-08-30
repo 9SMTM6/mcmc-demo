@@ -19,8 +19,7 @@ use crate::{
     visualizations::{
         egui_based::point_display::PointDisplay,
         shader_based::{
-            diff_display::DiffDisplay,
-            multimodal_gaussian::{shader_bindings::NormalDistribution, MultiModalGaussianDisplay},
+            bda_compute::BDADisplay, diff_display::DiffDisplay, multimodal_gaussian::{shader_bindings::NormalDistribution, MultiModalGaussianDisplay}
         },
     },
 };
@@ -42,6 +41,8 @@ pub struct McmcDemo {
     target_distr_render: MultiModalGaussianDisplay,
     #[allow(dead_code)]
     diff_render: DiffDisplay,
+    #[allow(dead_code)]
+    compute_bda_render: BDADisplay,
     settings: settings::Settings,
     gaussian_distr_iter: RngIter<StandardNormal>,
     uniform_distr_iter: RngIter<Percentage>,
@@ -60,6 +61,7 @@ impl Default for McmcDemo {
             target_distr: Default::default(),
             target_distr_render: MultiModalGaussianDisplay {},
             diff_render: DiffDisplay { window_radius: 5.0 },
+            compute_bda_render: BDADisplay {},
             settings: Default::default(),
             gaussian_distr_iter: RngIter::new(
                 WrappedRngDiscriminants::Pcg32.seed_from_u64(42),
@@ -101,6 +103,7 @@ impl McmcDemo {
             .expect("Compiling with WGPU enabled");
         MultiModalGaussianDisplay::init_gaussian_pipeline(render_state);
         DiffDisplay::init_pipeline(render_state);
+        BDADisplay::init_pipeline(render_state);
         state
     }
 
@@ -135,7 +138,7 @@ impl eframe::App for McmcDemo {
         #[allow(unused_variables)] frame: &mut eframe::Frame,
     ) {
         // Put your widgets into a `SidePanel`, `TopBottomPanel`, `CentralPanel`, `Window` or `Area`.
-        // For inspiration and more examples, go to https://emilk.github.io/egui
+        // For inspiration and more examples, go to https://egui.rs
 
         egui::TopBottomPanel::bottom("footer").show(ctx, |ui| {
             #[allow(clippy::shadow_unrelated)]
@@ -284,17 +287,23 @@ impl eframe::App for McmcDemo {
                                 ui.allocate_exact_size(px_size, egui::Sense::hover());
                             // last painted element wins.
                             let painter = ui.painter();
-                            self.target_distr_render.paint(
-                                &self.target_distr,
-                                painter,
-                                rect * ctx.pixels_per_point(),
-                            );
+                            // self.target_distr_render.paint(
+                            //     &self.target_distr,
+                            //     painter,
+                            //     rect * ctx.pixels_per_point(),
+                            // );
                             // self.diff_render.paint(
                             //     painter,
                             //     rect * ctx.pixels_per_point(),
                             //     &self.algo,
                             //     &self.target_distr,
                             // );
+                            self.compute_bda_render.paint(
+                                painter, 
+                                rect * ctx.pixels_per_point(), 
+                                &self.algo, 
+                                &self.target_distr,
+                            );
 
                             #[derive(Clone, Copy)]
                             struct ElementSettingsOpened(usize);

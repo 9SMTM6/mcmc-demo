@@ -226,12 +226,6 @@ impl CallbackTrait for RenderCall {
         );
         // TODO: only reassign of required.
         // If that actually speeds things up, I dunno.
-        *bind_group_0 = BindGroup0::from_bindings(
-            device,
-            BindGroupEntries0 {
-                resolution_info: resolution_buffer.as_entire_buffer_binding(),
-            },
-        );
         *bind_group_1 = BindGroup1::from_bindings(
             device,
             BindGroupEntries1 {
