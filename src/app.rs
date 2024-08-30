@@ -10,7 +10,6 @@ use crate::{
         bg_task::{BgCommunicate, BgTaskHandle, Progress},
         temp_ui_state::TempStateExtDelegatedToDataMethods,
     },
-    settings::{self, Settings},
     simulation::{
         random_walk_metropolis_hastings::{ProgressMode, Rwmh},
         Percentage, RngIter, WrappedRng, WrappedRngDiscriminants,
@@ -43,7 +42,6 @@ pub struct McmcDemo {
     diff_render: DiffDisplay,
     #[allow(dead_code)]
     compute_bda_render: BDADisplay,
-    settings: settings::Settings,
     gaussian_distr_iter: RngIter<StandardNormal>,
     uniform_distr_iter: RngIter<Percentage>,
     /// This holds resource managers for the main thread.
@@ -62,7 +60,6 @@ impl Default for McmcDemo {
             target_distr_render: MultiModalGaussianDisplay {},
             diff_render: DiffDisplay { window_radius: 5.0 },
             compute_bda_render: BDADisplay {},
-            settings: Default::default(),
             gaussian_distr_iter: RngIter::new(
                 WrappedRngDiscriminants::Pcg32.seed_from_u64(42),
                 StandardNormal,
@@ -179,12 +176,19 @@ impl eframe::App for McmcDemo {
             backend.end_of_frame(ctx);
         }
 
+
+        #[derive(Clone, Copy, Default)]
+        enum DistrEdit {
+            #[default]
+            Editing,
+        }
+
         #[allow(clippy::collapsible_else_if)]
         egui::Window::new("Simulation").show(ctx, |ui| {
             WrappedRng::Pcg32(Pcg32::from_entropy()).settings_ui(ui);
-            if matches!(self.settings, Settings::EditDistribution(_)) {
+            if ui.temp_ui_state::<DistrEdit>().get().is_some() {
                 if ui.button("Stop Editing Distribution").clicked() {
-                    self.settings = Settings::Default;
+                    ui.temp_ui_state::<DistrEdit>().remove();
                 }
                 if ui.button("Add Element").clicked() {
                     self.target_distr.gaussians.push(NormalDistribution {
@@ -195,7 +199,7 @@ impl eframe::App for McmcDemo {
                 }
             } else {
                 if ui.button("Edit Distribution").clicked() {
-                    self.settings = Settings::EditDistribution(settings::DistrEditKind::Stateless);
+                    ui.temp_ui_state::<DistrEdit>().create_default();
                 };
             };
             let ProgressMode::Batched { ref mut size } = self.algo.params.progress_mode;
@@ -305,11 +309,12 @@ impl eframe::App for McmcDemo {
                                 &self.target_distr,
                             );
 
+                            self.drawer.paint(painter, rect, &self.algo);
+
                             #[derive(Clone, Copy)]
                             struct ElementSettingsOpened(usize);
 
-                            self.drawer.paint(painter, rect, &self.algo);
-                            if let Settings::EditDistribution(_) = self.settings {
+                            if let Some(DistrEdit::Editing) = ui.temp_ui_state::<DistrEdit>().get() {
                                 let res_id = response.id;
                                 // draw centers of gaussians, move them if dragged, open more settings if clicked
                                 for (idx, ele) in self.target_distr.gaussians.iter_mut().enumerate()

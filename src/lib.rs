@@ -1,7 +1,6 @@
 mod app;
 mod helpers;
 pub mod profile;
-mod settings;
 mod simulation;
 mod target_distributions;
 mod visualizations;
