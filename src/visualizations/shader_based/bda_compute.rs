@@ -9,11 +9,7 @@ create_shader_module!("binary_distance_approx.compute", compute_bindings);
 create_shader_module!("binary_distance_approx.fragment", fragment_bindings);
 
 pub fn get_compute_buffer_size(resolution: &[f32; 2]) -> u64 {
-    // TODO: doesnt work right for some reason.
-    // Currently only the very top behaves correctly.
-    // If I multiply this with 2, then that area is doubled.
-    // So clearly the area isn't covered by the buffer in its entirety, and apparently at least native wgpu will simply return 0 for accesses outside the buffer size.
-    (resolution[0] * resolution[1]) as u64
+    (resolution[0] * resolution[1]) as u64 * size_of::<f32>() as u64
 }
 
 pub(super) fn get_compute_output_buffer(
