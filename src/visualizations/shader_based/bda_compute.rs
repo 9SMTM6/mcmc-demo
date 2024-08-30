@@ -1,9 +1,23 @@
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
-use wgpu::{Buffer, BufferDescriptor, BufferUsages, ComputePassDescriptor, ComputePipeline, ComputePipelineDescriptor, RenderPipeline, RenderPipelineDescriptor};
+use wgpu::{
+    Buffer, BufferDescriptor, BufferUsages, ComputePassDescriptor, ComputePipeline,
+    ComputePipelineDescriptor, RenderPipeline, RenderPipelineDescriptor,
+};
 
-use crate::{create_shader_module, simulation::random_walk_metropolis_hastings::Rwmh, target_distributions::multimodal_gaussian::MultiModalGaussian};
+use crate::{
+    create_shader_module, simulation::random_walk_metropolis_hastings::Rwmh,
+    target_distributions::multimodal_gaussian::MultiModalGaussian,
+};
 
-use super::{diff_display::{get_approx_buffers, shader_bindings::RWMHCountInfo}, fullscreen_quad, multimodal_gaussian::{get_normaldistr_buffer, shader_bindings::ResolutionInfo, NormalDistribution}, resolution_uniform::get_resolution_buffer, INITIAL_RENDER_SIZE};
+use super::{
+    diff_display::{get_approx_buffers, shader_bindings::RWMHCountInfo},
+    fullscreen_quad,
+    multimodal_gaussian::{
+        get_normaldistr_buffer, shader_bindings::ResolutionInfo, NormalDistribution,
+    },
+    resolution_uniform::get_resolution_buffer,
+    INITIAL_RENDER_SIZE,
+};
 
 create_shader_module!("binary_distance_approx.compute", compute_bindings);
 create_shader_module!("binary_distance_approx.fragment", fragment_bindings);
@@ -30,7 +44,7 @@ pub(super) fn get_compute_output_buffer(
 }
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
-pub struct BDADisplay{}
+pub struct BDADisplay {}
 
 struct PipelineStateHolder {
     compute_pipeline: ComputePipeline,
@@ -189,7 +203,7 @@ impl CallbackTrait for RenderCall {
             ref mut compute_output_buffer,
             ref compute_group_0,
             ref mut compute_group_1,
-            ref mut  fragment_group_1,
+            ref mut fragment_group_1,
             ..
         } = callback_resources.get_mut().unwrap();
         let target = self.target_distr.as_slice();
@@ -237,11 +251,14 @@ impl CallbackTrait for RenderCall {
                 timestamp_writes: None,
             });
             compute_pass.set_pipeline(compute_pipeline);
-            *compute_group_1 = compute_bindings::BindGroup1::from_bindings(device, compute_bindings::BindGroupEntries1 { 
-                compute_output: compute_output_buffer.as_entire_buffer_binding(),
-                accepted: approx_accepted_buffer.as_entire_buffer_binding(),
-                count_info: approx_info_buffer.as_entire_buffer_binding(),
-            });
+            *compute_group_1 = compute_bindings::BindGroup1::from_bindings(
+                device,
+                compute_bindings::BindGroupEntries1 {
+                    compute_output: compute_output_buffer.as_entire_buffer_binding(),
+                    accepted: approx_accepted_buffer.as_entire_buffer_binding(),
+                    count_info: approx_info_buffer.as_entire_buffer_binding(),
+                },
+            );
             compute_group_0.set(&mut compute_pass);
             compute_group_1.set(&mut compute_pass);
             compute_pass.dispatch_workgroups(self.px_size[0] as u32, self.px_size[1] as u32, 1);

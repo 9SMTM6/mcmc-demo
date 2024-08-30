@@ -18,7 +18,9 @@ use crate::{
     visualizations::{
         egui_based::point_display::PointDisplay,
         shader_based::{
-            bda_compute::BDADisplay, diff_display::DiffDisplay, multimodal_gaussian::{shader_bindings::NormalDistribution, MultiModalGaussianDisplay}
+            bda_compute::BDADisplay,
+            diff_display::DiffDisplay,
+            multimodal_gaussian::{shader_bindings::NormalDistribution, MultiModalGaussianDisplay},
         },
     },
 };
@@ -176,7 +178,6 @@ impl eframe::App for McmcDemo {
             backend.end_of_frame(ctx);
         }
 
-
         #[derive(Clone, Copy, Default)]
         enum DistrEdit {
             #[default]
@@ -303,9 +304,9 @@ impl eframe::App for McmcDemo {
                             //     &self.target_distr,
                             // );
                             self.compute_bda_render.paint(
-                                painter, 
-                                rect * ctx.pixels_per_point(), 
-                                &self.algo, 
+                                painter,
+                                rect * ctx.pixels_per_point(),
+                                &self.algo,
                                 &self.target_distr,
                             );
 
@@ -314,7 +315,8 @@ impl eframe::App for McmcDemo {
                             #[derive(Clone, Copy)]
                             struct ElementSettingsOpened(usize);
 
-                            if let Some(DistrEdit::Editing) = ui.temp_ui_state::<DistrEdit>().get() {
+                            if let Some(DistrEdit::Editing) = ui.temp_ui_state::<DistrEdit>().get()
+                            {
                                 let res_id = response.id;
                                 // draw centers of gaussians, move them if dragged, open more settings if clicked
                                 for (idx, ele) in self.target_distr.gaussians.iter_mut().enumerate()
