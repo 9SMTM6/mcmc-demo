@@ -9,6 +9,10 @@ create_shader_module!("binary_distance_approx.compute", compute_bindings);
 create_shader_module!("binary_distance_approx.fragment", fragment_bindings);
 
 pub fn get_compute_buffer_size(resolution: &[f32; 2]) -> u64 {
+    // TODO: doesnt work right for some reason.
+    // Currently only the very top behaves correctly.
+    // If I multiply this with 2, then that area is doubled.
+    // So clearly the area isn't covered by the buffer in its entirety, and apparently at least native wgpu will simply return 0 for accesses outside the buffer size.
     (resolution[0] * resolution[1]) as u64
 }
 
@@ -192,18 +196,14 @@ impl CallbackTrait for RenderCall {
             ref mut  fragment_group_1,
             ..
         } = callback_resources.get_mut().unwrap();
-        let mut compute_pass = egui_encoder.begin_compute_pass(&ComputePassDescriptor {
-            label: Some(file!()),
-            timestamp_writes: None,
-        });
-        compute_pass.set_pipeline(compute_pipeline);
         let target = self.target_distr.as_slice();
         if target_buffer.size() as usize != size_of_val(target) {
             let normdistr_buffer = get_normaldistr_buffer(device, Some(target));
             *target_buffer = normdistr_buffer;
         }
         let approx_accepted = self.algo_state.history.as_slice();
-        if approx_accepted_buffer.size() as usize != size_of_val(approx_accepted) {
+        let approx_changed = approx_accepted_buffer.size() as usize != size_of_val(approx_accepted);
+        if approx_changed {
             let (accept_buffer, info_buffer) = get_approx_buffers(device, Some(approx_accepted));
             *approx_accepted_buffer = accept_buffer;
             *approx_info_buffer = info_buffer;
@@ -223,18 +223,33 @@ impl CallbackTrait for RenderCall {
                 }]),
             );
         }
-        if compute_output_buffer.size() != get_compute_buffer_size(&self.px_size) {
+        let res_changed = compute_output_buffer.size() != get_compute_buffer_size(&self.px_size);
+        if res_changed {
             *compute_output_buffer = get_compute_output_buffer(device, Some(&self.px_size));
+            queue.write_buffer(
+                resolution_buffer,
+                0,
+                bytemuck::cast_slice(&[ResolutionInfo {
+                    resolution: self.px_size,
+                    _pad: [0.0; 2],
+                }]),
+            );
         }
-        // TODO: only write these if they actually changed.
-        queue.write_buffer(
-            resolution_buffer,
-            0,
-            bytemuck::cast_slice(&[ResolutionInfo {
-                resolution: self.px_size,
-                _pad: [0.0; 2],
-            }]),
-        );
+        if res_changed || approx_changed {
+            let mut compute_pass = egui_encoder.begin_compute_pass(&ComputePassDescriptor {
+                label: Some(file!()),
+                timestamp_writes: None,
+            });
+            compute_pass.set_pipeline(compute_pipeline);
+            *compute_group_1 = compute_bindings::BindGroup1::from_bindings(device, compute_bindings::BindGroupEntries1 { 
+                compute_output: compute_output_buffer.as_entire_buffer_binding(),
+                accepted: approx_accepted_buffer.as_entire_buffer_binding(),
+                count_info: approx_info_buffer.as_entire_buffer_binding(),
+            });
+            compute_group_0.set(&mut compute_pass);
+            compute_group_1.set(&mut compute_pass);
+            compute_pass.dispatch_workgroups(self.px_size[0] as u32, self.px_size[1] as u32, 1);
+        }
         queue.write_buffer(
             target_buffer,
             0,
@@ -242,11 +257,6 @@ impl CallbackTrait for RenderCall {
         );
         // TODO: only reassign of required.
         // If that actually speeds things up, I dunno.
-        *compute_group_1 = compute_bindings::BindGroup1::from_bindings(device, compute_bindings::BindGroupEntries1 { 
-            compute_output: compute_output_buffer.as_entire_buffer_binding(),
-            accepted: approx_accepted_buffer.as_entire_buffer_binding(),
-            count_info: approx_info_buffer.as_entire_buffer_binding(),
-        });
         *fragment_group_1 = fragment_bindings::BindGroup1::from_bindings(
             device,
             fragment_bindings::BindGroupEntries1 {
@@ -254,9 +264,6 @@ impl CallbackTrait for RenderCall {
                 gauss_bases: target_buffer.as_entire_buffer_binding(),
             },
         );
-        compute_group_0.set(&mut compute_pass);
-        compute_group_1.set(&mut compute_pass);
-        compute_pass.dispatch_workgroups(self.px_size[0] as u32, self.px_size[1] as u32, 1);
         Vec::new()
     }
 
