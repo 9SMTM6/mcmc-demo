@@ -212,6 +212,7 @@ fn bindgen_generation(resolved_shaders_dir: &Path) -> Result<(), ErrReport> {
         "diff_display.fragment",
         "binary_distance_approx.compute",
         "binary_distance_approx.fragment",
+        // "max_norm.compute",
     ];
 
     let mut bindgen = WgslBindgenOptionBuilder::default();
@@ -242,6 +243,7 @@ fn wgsl_to_wgpu_generation(resolved_shaders: &HashMap<OsString, String>, binding
         "diff_display.fragment",
         "binary_distance_approx.compute",
         "binary_distance_approx.fragment",
+        // "max_norm.compute",
     ]
     .map(OsString::from);
 
