@@ -166,14 +166,14 @@ impl eframe::App for McmcDemo {
             };
             ui.separator();
             ui.label("Proposal Probability");
-            let resp = ui.separator();
+            let prop_id = ui.separator().id;
             let prop = &mut self.algo.params.proposal;
             ui.add(egui::Slider::new(&mut prop.sigma, 0.0..=1.0).text("Proposal sigma"));
-            prop.rng.rng.settings_ui(ui, resp.id);
+            prop.rng.rng.settings_ui(ui, prop_id);
             ui.separator();
             ui.label("Acceptance Probability");
-            let resp = ui.separator();
-            self.algo.params.accept.rng.settings_ui(ui, resp.id);
+            let accept_id = ui.separator().id;
+            self.algo.params.accept.rng.settings_ui(ui, accept_id);
             ui.separator();
             ui.label("Target Distribution");
             ui.separator();

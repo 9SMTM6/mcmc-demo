@@ -341,10 +341,14 @@ impl WrappedRng {
             seed: u64,
         }
 
-        let mut current_settings = ui.temp_ui_state::<Settings>().with_id(id).get().unwrap_or(Settings {
-            discr: WrappedRngDiscriminants::from(self.borrow()),
-            seed: 42,
-        });
+        let mut current_settings =
+            ui.temp_ui_state::<Settings>()
+                .with_id(id)
+                .get()
+                .unwrap_or(Settings {
+                    discr: WrappedRngDiscriminants::from(self.borrow()),
+                    seed: 42,
+                });
 
         current_settings.discr.selection_ui(ui);
         // If I set this to u64::MAX to provide all options, its not realistically possible to select many values.
@@ -354,7 +358,8 @@ impl WrappedRng {
             *self = current_settings.discr.seed_from_u64(current_settings.seed);
             ui.temp_ui_state::<Settings>().with_id(id).remove();
         } else {
-            ui.temp_ui_state::<Settings>().with_id(id)
+            ui.temp_ui_state::<Settings>()
+                .with_id(id)
                 .set_or_create(current_settings);
         }
     }
