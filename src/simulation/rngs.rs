@@ -334,15 +334,14 @@ impl WrappedRngDiscriminants {
 }
 
 impl WrappedRng {
-    pub fn settings_ui(&mut self, ui: &mut egui::Ui) {
+    pub fn settings_ui(&mut self, ui: &mut egui::Ui, id: egui::Id) {
         #[derive(Clone, Copy)]
         struct Settings {
             discr: WrappedRngDiscriminants,
             seed: u64,
         }
-        let temp_state = ui.temp_ui_state::<Settings>();
 
-        let mut current_settings = temp_state.get().unwrap_or(Settings {
+        let mut current_settings = ui.temp_ui_state::<Settings>().with_id(id).get().unwrap_or(Settings {
             discr: WrappedRngDiscriminants::from(self.borrow()),
             seed: 42,
         });
@@ -353,9 +352,9 @@ impl WrappedRng {
 
         if ui.button("apply").clicked() {
             *self = current_settings.discr.seed_from_u64(current_settings.seed);
-            ui.temp_ui_state::<Settings>().remove();
+            ui.temp_ui_state::<Settings>().with_id(id).remove();
         } else {
-            ui.temp_ui_state::<Settings>()
+            ui.temp_ui_state::<Settings>().with_id(id)
                 .set_or_create(current_settings);
         }
     }

@@ -161,12 +161,12 @@ impl eframe::App for McmcDemo {
             if new_bg != prev_bg {
                 self.background_display = new_bg.into();
             };
-            ui.separator();
+            let resp = ui.separator();
             let prop = &mut self.algo.params.proposal;
             ui.add(egui::Slider::new(&mut prop.sigma, 0.0..=1.0).text("Proposal sigma"));
-            prop.rng.rng.settings_ui(ui);
-            ui.separator();
-            self.algo.params.accept.rng.settings_ui(ui);
+            prop.rng.rng.settings_ui(ui, resp.id);
+            let resp = ui.separator();
+            self.algo.params.accept.rng.settings_ui(ui, resp.id);
             ui.separator();
             DistrEdit::settings_ui(&mut self.target_distr.gaussians, ui);
             ui.separator();
