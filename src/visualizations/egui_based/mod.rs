@@ -1,5 +1,5 @@
-pub mod point_display;
 pub mod distrib_settings;
+pub mod point_display;
 
 use egui::{
     epaint::{ColorMode, PathShape, PathStroke},

@@ -1,6 +1,10 @@
 use egui::Ui;
 
-use crate::{app::{canvas_coord_to_ndc, ndc_to_canvas_coord}, helpers::temp_ui_state::TempStateExtDelegatedToDataMethods, visualizations::shader_based::multimodal_gaussian::NormalDistribution};
+use crate::{
+    app::{canvas_coord_to_ndc, ndc_to_canvas_coord},
+    helpers::temp_ui_state::TempStateExtDelegatedToDataMethods,
+    visualizations::shader_based::multimodal_gaussian::NormalDistribution,
+};
 
 #[derive(Clone, Copy)]
 pub struct ElementSettings(usize);
@@ -110,7 +114,8 @@ impl DistrEdit {
             for (idx, ele) in gaussians.iter_mut().enumerate() {
                 let pos = ndc_to_canvas_coord(ele.position.into(), rect.size());
                 const CIRCLE_SIZE: f32 = 5.0;
-                let pos_sense_rect = egui::Rect::from_center_size(pos, egui::Vec2::splat(CIRCLE_SIZE));
+                let pos_sense_rect =
+                    egui::Rect::from_center_size(pos, egui::Vec2::splat(CIRCLE_SIZE));
                 let mut pos_resp = ui
                     .interact(
                         pos_sense_rect,

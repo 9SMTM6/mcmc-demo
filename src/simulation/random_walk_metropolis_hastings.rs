@@ -13,7 +13,7 @@ pub struct GaussianProposal {
 
 impl Default for GaussianProposal {
     fn default() -> Self {
-        Self { 
+        Self {
             sigma: 0.2,
             rng: Default::default(),
         }
@@ -69,7 +69,10 @@ pub type AlgoVec = nalgebra::Vector2<f32>;
 
 impl AlgoParams {
     fn propose(&mut self, start_loc: AlgoVec) -> AlgoVec {
-        let GaussianProposal { sigma, rng: ref mut prop_rng } = self.proposal;
+        let GaussianProposal {
+            sigma,
+            rng: ref mut prop_rng,
+        } = self.proposal;
 
         let normal_x = start_loc.x + prop_rng.unwrapped_next() * sigma;
         let normal_y = start_loc.y + prop_rng.unwrapped_next() * sigma;
@@ -127,10 +130,7 @@ impl Default for Rwmh {
 }
 
 impl Rwmh {
-    pub fn step(
-        &mut self,
-        target_distr: &MultiModalGaussian,
-    ) {
+    pub fn step(&mut self, target_distr: &MultiModalGaussian) {
         let current = &mut self.current_loc;
         let proposal = self.params.propose(current.position.into());
         let acceptance_ratio = target_distr.acceptance_ratio(proposal, current.position.into());
