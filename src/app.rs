@@ -14,7 +14,8 @@ use crate::{
         shader_based::{
             bda_compute::BDAComputeDiffDisplay, diff_display::BDADiffDisplay,
             multimodal_gaussian::MultiModalGaussianDisplay,
-        }, BackgroundDisplay, BackgroundDisplayDiscr,
+        },
+        BackgroundDisplay, BackgroundDisplayDiscr,
     },
 };
 

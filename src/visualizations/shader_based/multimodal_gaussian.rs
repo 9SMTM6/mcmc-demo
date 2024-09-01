@@ -4,7 +4,10 @@ use wgpu::{
     Buffer, BufferDescriptor, BufferUsages, RenderPipeline, RenderPipelineDescriptor,
 };
 
-use crate::{simulation::random_walk_metropolis_hastings::Rwmh, target_distributions::multimodal_gaussian::MultiModalGaussian};
+use crate::{
+    simulation::random_walk_metropolis_hastings::Rwmh,
+    target_distributions::multimodal_gaussian::MultiModalGaussian,
+};
 
 use super::{fullscreen_quad, resolution_uniform::get_resolution_buffer};
 
@@ -34,7 +37,7 @@ pub struct MultiModalGaussianDisplay {
 }
 
 impl MultiModalGaussianDisplay {
-    pub fn paint(       
+    pub fn paint(
         &self,
         painter: &egui::Painter,
         rect: egui::Rect,

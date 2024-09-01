@@ -3,9 +3,15 @@ pub use egui_based::{Arrow, PredictionVariance, SamplingPoint};
 pub mod egui_based;
 pub mod shader_based;
 
-pub use shader_based::{INITIAL_RENDER_SIZE, diff_display::BDADiffDisplay, bda_compute::BDAComputeDiffDisplay, multimodal_gaussian::MultiModalGaussianDisplay};
+pub use shader_based::{
+    bda_compute::BDAComputeDiffDisplay, diff_display::BDADiffDisplay,
+    multimodal_gaussian::MultiModalGaussianDisplay, INITIAL_RENDER_SIZE,
+};
 
-use crate::{simulation::random_walk_metropolis_hastings::Rwmh, target_distributions::multimodal_gaussian::MultiModalGaussian};
+use crate::{
+    simulation::random_walk_metropolis_hastings::Rwmh,
+    target_distributions::multimodal_gaussian::MultiModalGaussian,
+};
 
 pub trait CanvasPainter {
     fn paint(&self, painter: &egui::Painter, rect: egui::Rect);
@@ -17,8 +23,8 @@ macro_rules! bg_display {
         pub enum BackgroundDisplay {
             $($struct_name($struct_name),)+
         }
-        
-        
+
+
         #[derive(PartialEq, Clone, Copy)]
         #[repr(u8)]
         pub enum BackgroundDisplayDiscr {
@@ -27,14 +33,14 @@ macro_rules! bg_display {
 
         impl BackgroundDisplayDiscr {
             pub const VARIANTS: &'static [Self] = &[$(Self::$struct_name),+,];
-            
+
             pub fn display_name(&self) -> &str {
                 match self {
                     $(Self::$struct_name => stringify!($struct_name),)+
                 }
             }
         }
-        
+
         impl BackgroundDisplay {
             pub fn paint(
                 &self,
