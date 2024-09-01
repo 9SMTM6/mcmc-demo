@@ -32,11 +32,11 @@ struct MultiModalGaussPipeline {
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Default)]
-pub struct MultiModalGaussian {
+pub struct TargetDistribution {
     // pub color: Color32,
 }
 
-impl MultiModalGaussian {
+impl TargetDistribution {
     pub fn paint(
         &self,
         painter: &egui::Painter,
@@ -77,7 +77,7 @@ pub(super) fn get_normaldistr_buffer(
     }
 }
 
-impl MultiModalGaussian {
+impl TargetDistribution {
     pub fn init_gaussian_pipeline(render_state: &RenderState) {
         let device = &render_state.device;
 

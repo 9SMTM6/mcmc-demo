@@ -3,7 +3,7 @@ use egui::Ui;
 use crate::{
     app::{canvas_coord_to_ndc, ndc_to_canvas_coord},
     helpers::temp_ui_state::TempStateExtDelegatedToDataMethods,
-    visualizations::shader_based::multimodal_gaussian::NormalDistribution,
+    visualizations::shader_based::target_distr::NormalDistribution,
 };
 
 #[derive(Clone, Copy)]

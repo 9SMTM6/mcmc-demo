@@ -13,7 +13,7 @@ use crate::{
         },
         shader_based::{
             bda_compute::BDAComputeDiff, diff_display::BDADiff,
-            multimodal_gaussian::MultiModalGaussian,
+            target_distr::TargetDistribution,
         },
         BackgroundDisplay, BackgroundDisplayDiscr,
     },
@@ -77,7 +77,7 @@ impl McmcDemo {
             .wgpu_render_state
             .as_ref()
             .expect("Compiling with WGPU enabled");
-        MultiModalGaussian::init_gaussian_pipeline(render_state);
+        TargetDistribution::init_gaussian_pipeline(render_state);
         BDADiff::init_pipeline(render_state);
         BDAComputeDiff::init_pipeline(render_state);
         state

@@ -4,7 +4,7 @@ pub mod egui_based;
 pub mod shader_based;
 
 pub use shader_based::{
-    bda_compute::BDAComputeDiff, diff_display::BDADiff, multimodal_gaussian::MultiModalGaussian,
+    bda_compute::BDAComputeDiff, diff_display::BDADiff, target_distr::TargetDistribution,
     INITIAL_RENDER_SIZE,
 };
 
@@ -85,11 +85,11 @@ macro_rules! bg_display {
     }
 }
 
-bg_display!(MultiModalGaussian, BDAComputeDiff, BDADiff,);
+bg_display!(TargetDistribution, BDAComputeDiff, BDADiff,);
 
 impl Default for BackgroundDisplay {
     fn default() -> Self {
-        BackgroundDisplay::MultiModalGaussian(Default::default())
+        BackgroundDisplay::TargetDistribution(Default::default())
     }
 }
 

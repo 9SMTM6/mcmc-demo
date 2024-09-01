@@ -12,7 +12,7 @@ use crate::{
 use super::{
     diff_display::{get_approx_buffers, shader_bindings::RWMHCountInfo},
     fullscreen_quad,
-    multimodal_gaussian::{
+    target_distr::{
         get_normaldistr_buffer, shader_bindings::ResolutionInfo, NormalDistribution,
     },
     resolution_uniform::get_resolution_buffer,
