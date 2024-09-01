@@ -44,8 +44,6 @@ pub struct McmcDemo {
     diff_render: DiffDisplay,
     #[allow(dead_code)]
     compute_bda_render: BDADisplay,
-    gaussian_distr_iter: RngIter<StandardNormal>,
-    uniform_distr_iter: RngIter<Percentage>,
     /// This holds resource managers for the main thread.
     ///
     /// If you want to hold copyable temporary ui state, use [`TempStateExtDelegatedToDataMethods`] instead.
@@ -62,14 +60,6 @@ impl Default for McmcDemo {
             target_distr_render: MultiModalGaussianDisplay {},
             diff_render: DiffDisplay { window_radius: 5.0 },
             compute_bda_render: BDADisplay {},
-            gaussian_distr_iter: RngIter::new(
-                WrappedRngDiscriminants::Pcg32.seed_from_u64(42),
-                StandardNormal,
-            ),
-            uniform_distr_iter: RngIter::new(
-                WrappedRngDiscriminants::Pcg32.seed_from_u64(42),
-                Percentage,
-            ),
             local_resources: TypeMap::new(),
         }
     }
@@ -227,19 +217,15 @@ impl eframe::App for McmcDemo {
                 ctx.request_repaint_after(Duration::from_millis(16));
             } else if ui.button("Batch step").clicked() {
                 let existing = self.local_resources.insert(BatchJob({
-                    let mut algo = self.algo.clone();
-                    let target_distr = self.target_distr.clone();
                     // TODO: HIGHLY problematic!
                     // This means that the random state doesnt progress
-                    let mut gaussian_distr_iter = self.gaussian_distr_iter.clone();
-                    let mut uniform_distr_iter = self.uniform_distr_iter.clone();
+                    let mut algo = self.algo.clone();
+                    let target_distr = self.target_distr.clone();
                     BgTaskHandle::new(
                         move |mut communicate: BgCommunicate| {
                             for curr_step in 0..size {
                                 algo.step(
-                                    &target_distr,
-                                    &mut gaussian_distr_iter,
-                                    &mut uniform_distr_iter,
+                                    &target_distr
                                 );
                                 if communicate.checkup_bg(curr_step) {
                                     break;

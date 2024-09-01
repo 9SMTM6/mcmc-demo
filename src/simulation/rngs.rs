@@ -272,6 +272,15 @@ pub struct RngIter<Distr: Distribution<f32>> {
     distr: Distr,
 }
 
+impl<T: Default + Distribution<f32>> Default for RngIter<T> {
+    fn default() -> Self {
+        Self {
+            rng: WrappedRngDiscriminants::Pcg32.seed_from_u64(42),
+            distr: Default::default(),
+        }
+    }
+}
+
 impl<Distr: Distribution<f32>> Iterator for RngIter<Distr> {
     type Item = f32;
     #[inline(always)]
@@ -295,12 +304,23 @@ impl<Distr: Distribution<f32>> RngIter<Distr> {
 }
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct Percentage;
 
 impl Distribution<f32> for Percentage {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f32 {
         rng.sample(Uniform::new_inclusive(0.0, 1.0))
+    }
+}
+
+/// Recreated just to implement default
+#[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
+#[derive(Clone, Default)]
+pub struct StandardNormal;
+
+impl Distribution<f32> for StandardNormal {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f32 {
+        rng.sample(rand_distr::StandardNormal)
     }
 }
 

@@ -1,20 +1,22 @@
-use rand_distr::StandardNormal;
-
 use crate::target_distributions::multimodal_gaussian::MultiModalGaussian;
 
 use crate::visualizations::shader_based::diff_display::shader_bindings::RWMHAcceptRecord;
 
-use super::{Percentage, RngIter};
+use super::{Percentage, RngIter, StandardNormal};
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Clone)]
 pub struct GaussianProposal {
     sigma: f32,
+    rng: RngIter<StandardNormal>,
 }
 
 impl Default for GaussianProposal {
     fn default() -> Self {
-        Self { sigma: 0.2 }
+        Self { 
+            sigma: 0.2,
+            rng: Default::default(),
+        }
     }
 }
 
@@ -58,6 +60,7 @@ impl Default for ProgressMode {
 #[derive(Default, Clone)]
 pub struct AlgoParams {
     pub proposal: GaussianProposal,
+    pub accept: RngIter<Percentage>,
     pub progress_mode: ProgressMode,
 }
 
@@ -65,11 +68,11 @@ pub struct AlgoParams {
 pub type AlgoVec = nalgebra::Vector2<f32>;
 
 impl AlgoParams {
-    fn propose(&self, start_loc: AlgoVec, gaussian_rng: &mut RngIter<StandardNormal>) -> AlgoVec {
-        let GaussianProposal { sigma } = self.proposal;
+    fn propose(&mut self, start_loc: AlgoVec) -> AlgoVec {
+        let GaussianProposal { sigma, rng: ref mut prop_rng } = self.proposal;
 
-        let normal_x = start_loc.x + gaussian_rng.unwrapped_next() * sigma;
-        let normal_y = start_loc.y + gaussian_rng.unwrapped_next() * sigma;
+        let normal_x = start_loc.x + prop_rng.unwrapped_next() * sigma;
+        let normal_y = start_loc.y + prop_rng.unwrapped_next() * sigma;
         AlgoVec::new(normal_x, normal_y)
     }
 }
@@ -127,13 +130,11 @@ impl Rwmh {
     pub fn step(
         &mut self,
         target_distr: &MultiModalGaussian,
-        proposal_rng: &mut RngIter<StandardNormal>,
-        accept_rng: &mut RngIter<Percentage>,
     ) {
         let current = &mut self.current_loc;
-        let proposal = self.params.propose(current.position.into(), proposal_rng);
+        let proposal = self.params.propose(current.position.into());
         let acceptance_ratio = target_distr.acceptance_ratio(proposal, current.position.into());
-        let accept = accept_rng.unwrapped_next() <= acceptance_ratio;
+        let accept = self.params.accept.unwrapped_next() <= acceptance_ratio;
         // self.current_loc = if accept { proposal } else { current };
         if accept {
             self.total_point_count += self.current_loc.remain_count + 1;
