@@ -4,13 +4,13 @@ pub mod egui_based;
 pub mod shader_based;
 
 pub use shader_based::{
-    bda_compute::BDAComputeDiffDisplay, diff_display::BDADiffDisplay,
-    multimodal_gaussian::MultiModalGaussianDisplay, INITIAL_RENDER_SIZE,
+    bda_compute::BDAComputeDiff, diff_display::BDADiff, multimodal_gaussian::MultiModalGaussian,
+    INITIAL_RENDER_SIZE,
 };
 
 use crate::{
     simulation::random_walk_metropolis_hastings::Rwmh,
-    target_distributions::multimodal_gaussian::MultiModalGaussian,
+    target_distributions::multimodal_gaussian::GaussianTargetDistr,
 };
 
 pub trait CanvasPainter {
@@ -34,8 +34,8 @@ macro_rules! bg_display {
         impl BackgroundDisplayDiscr {
             pub const VARIANTS: &'static [Self] = &[$(Self::$struct_name),+,];
 
-            pub fn display_name(&self) -> &str {
-                match self {
+            pub const fn display_name(&self) -> &str {
+                match *self {
                     $(Self::$struct_name => stringify!($struct_name),)+
                 }
             }
@@ -47,10 +47,10 @@ macro_rules! bg_display {
                 painter: &egui::Painter,
                 rect: egui::Rect,
                 algo: &Rwmh,
-                target: &MultiModalGaussian,
+                target: &GaussianTargetDistr,
             ) {
                 match self {
-                    $(Self::$struct_name(inner) => {
+                    $(&Self::$struct_name(ref inner) => {
                         //  * ctx.pixels_per_point()
                         inner.paint(
                             painter,
@@ -85,15 +85,11 @@ macro_rules! bg_display {
     }
 }
 
-bg_display!(
-    MultiModalGaussianDisplay,
-    BDAComputeDiffDisplay,
-    BDADiffDisplay,
-);
+bg_display!(MultiModalGaussian, BDAComputeDiff, BDADiff,);
 
 impl Default for BackgroundDisplay {
     fn default() -> Self {
-        BackgroundDisplay::MultiModalGaussianDisplay(Default::default())
+        BackgroundDisplay::MultiModalGaussian(Default::default())
     }
 }
 

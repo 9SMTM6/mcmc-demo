@@ -25,6 +25,7 @@ impl ElementSettings {
         ctx: &egui::Context,
     ) {
         if let Some(Self(idx)) = ui.temp_ui_state().get() {
+            #[allow(clippy::shadow_unrelated)]
             let close_planel = |ui: &egui::Ui| {
                 Self::remove(ui);
             };
@@ -42,19 +43,23 @@ impl ElementSettings {
                     rect.size(),
                 ))
                 .collapsible(false)
-                .show(ctx, |ui| {
-                    let el = gaussians.get_mut(idx).unwrap();
-                    ui.add(egui::Slider::new(&mut el.scale, f32::EPSILON..=1.0).text("Scale"));
-                    ui.add(
-                        egui::Slider::new(&mut el.variance, f32::EPSILON..=4.0)
-                            .logarithmic(true)
-                            .text("Variance"),
-                    );
-                    if ui.button("delete").clicked() {
-                        gaussians.remove(idx);
-                        close_planel(ui);
-                    }
-                });
+                .show(
+                    ctx,
+                    #[allow(clippy::shadow_unrelated)]
+                    |ui| {
+                        let el = gaussians.get_mut(idx).unwrap();
+                        ui.add(egui::Slider::new(&mut el.scale, f32::EPSILON..=1.0).text("Scale"));
+                        ui.add(
+                            egui::Slider::new(&mut el.variance, f32::EPSILON..=4.0)
+                                .logarithmic(true)
+                                .text("Variance"),
+                        );
+                        if ui.button("delete").clicked() {
+                            gaussians.remove(idx);
+                            close_planel(ui);
+                        }
+                    },
+                );
             if !opened_proxy {
                 close_planel(ui);
             }
@@ -81,10 +86,8 @@ impl DistrEdit {
                     variance: 0.2,
                 });
             }
-        } else {
-            if ui.button("Edit Distribution").clicked() {
-                DistrEdit::open(ui);
-            };
+        } else if ui.button("Edit Distribution").clicked() {
+            DistrEdit::open(ui);
         };
     }
 
@@ -102,9 +105,9 @@ impl DistrEdit {
     }
 
     pub fn show_if_open(
-        gaussians: &mut Vec<NormalDistribution>,
+        gaussians: &mut [NormalDistribution],
         ui: &Ui,
-        response: egui::Response,
+        response: &egui::Response,
         rect: egui::Rect,
         painter: &egui::Painter,
     ) {

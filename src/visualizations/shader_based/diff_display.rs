@@ -8,7 +8,7 @@ use wgpu::{
 use crate::{
     create_shader_module, profile_scope,
     simulation::random_walk_metropolis_hastings::Rwmh,
-    target_distributions::multimodal_gaussian::MultiModalGaussian,
+    target_distributions::multimodal_gaussian::GaussianTargetDistr,
     visualizations::shader_based::{
         multimodal_gaussian::{get_normaldistr_buffer, shader_bindings::NormalDistribution},
         resolution_uniform::get_resolution_buffer,
@@ -26,7 +26,7 @@ use shader_bindings::{
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Default)]
-pub struct BDADiffDisplay {
+pub struct BDADiff {
     // pub window_radius: f32,
 }
 
@@ -72,13 +72,13 @@ struct PipelineStateHolder {
     approx_info_buffer: Buffer,
 }
 
-impl BDADiffDisplay {
+impl BDADiff {
     pub fn paint(
         &self,
         painter: &egui::Painter,
         rect: egui::Rect,
         algo: &Rwmh,
-        target: &MultiModalGaussian,
+        target: &GaussianTargetDistr,
     ) {
         painter.add(eframe::egui_wgpu::Callback::new_paint_callback(
             rect,

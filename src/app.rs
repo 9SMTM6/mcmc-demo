@@ -5,15 +5,15 @@ use type_map::TypeMap;
 use crate::{
     helpers::bg_task::{BgCommunicate, BgTaskHandle, Progress},
     simulation::random_walk_metropolis_hastings::{ProgressMode, Rwmh},
-    target_distributions::multimodal_gaussian::MultiModalGaussian,
+    target_distributions::multimodal_gaussian::GaussianTargetDistr,
     visualizations::{
         egui_based::{
             distrib_settings::{DistrEdit, ElementSettings},
             point_display::PointDisplay,
         },
         shader_based::{
-            bda_compute::BDAComputeDiffDisplay, diff_display::BDADiffDisplay,
-            multimodal_gaussian::MultiModalGaussianDisplay,
+            bda_compute::BDAComputeDiff, diff_display::BDADiff,
+            multimodal_gaussian::MultiModalGaussian,
         },
         BackgroundDisplay, BackgroundDisplayDiscr,
     },
@@ -31,7 +31,7 @@ pub struct McmcDemo {
     // It'll then implement legal transitions, e.g. changing the target distribution will lead to data reset etc.
     algo: Rwmh,
     point_display: PointDisplay,
-    target_distr: MultiModalGaussian,
+    target_distr: GaussianTargetDistr,
     background_display: BackgroundDisplay,
     /// This holds resource managers for the main thread.
     ///
@@ -77,9 +77,9 @@ impl McmcDemo {
             .wgpu_render_state
             .as_ref()
             .expect("Compiling with WGPU enabled");
-        MultiModalGaussianDisplay::init_gaussian_pipeline(render_state);
-        BDADiffDisplay::init_pipeline(render_state);
-        BDAComputeDiffDisplay::init_pipeline(render_state);
+        MultiModalGaussian::init_gaussian_pipeline(render_state);
+        BDADiff::init_pipeline(render_state);
+        BDAComputeDiff::init_pipeline(render_state);
         state
     }
 
@@ -155,10 +155,9 @@ impl eframe::App for McmcDemo {
             backend.end_of_frame(ctx);
         }
 
-        #[allow(clippy::collapsible_else_if)]
         egui::Window::new("Simulation").show(ctx, |ui| {
             let prev_bg = BackgroundDisplayDiscr::from(&self.background_display);
-            let new_bg = prev_bg.clone().selection_ui(ui);
+            let new_bg = prev_bg.selection_ui(ui);
             if new_bg != prev_bg {
                 self.background_display = new_bg.into();
             };
@@ -268,7 +267,7 @@ impl eframe::App for McmcDemo {
 
                             let gaussians = &mut self.target_distr.gaussians;
 
-                            DistrEdit::show_if_open(gaussians, ui, response, rect, painter);
+                            DistrEdit::show_if_open(gaussians, ui, &response, rect, painter);
 
                             ElementSettings::show_if_open(gaussians, ui, rect, ctx);
                         },

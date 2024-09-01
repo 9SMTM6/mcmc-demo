@@ -6,7 +6,7 @@ use wgpu::{
 
 use crate::{
     simulation::random_walk_metropolis_hastings::Rwmh,
-    target_distributions::multimodal_gaussian::MultiModalGaussian,
+    target_distributions::multimodal_gaussian::GaussianTargetDistr,
 };
 
 use super::{fullscreen_quad, resolution_uniform::get_resolution_buffer};
@@ -32,17 +32,17 @@ struct MultiModalGaussPipeline {
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Default)]
-pub struct MultiModalGaussianDisplay {
+pub struct MultiModalGaussian {
     // pub color: Color32,
 }
 
-impl MultiModalGaussianDisplay {
+impl MultiModalGaussian {
     pub fn paint(
         &self,
         painter: &egui::Painter,
         rect: egui::Rect,
         _algo: &Rwmh,
-        target: &MultiModalGaussian,
+        target: &GaussianTargetDistr,
     ) {
         painter.add(eframe::egui_wgpu::Callback::new_paint_callback(
             rect,
@@ -77,7 +77,7 @@ pub(super) fn get_normaldistr_buffer(
     }
 }
 
-impl MultiModalGaussianDisplay {
+impl MultiModalGaussian {
     pub fn init_gaussian_pipeline(render_state: &RenderState) {
         let device = &render_state.device;
 
@@ -90,7 +90,7 @@ impl MultiModalGaussianDisplay {
         // yup, its different.
         // log::warn!("{0:?}", render_state.target_format);
 
-        let pipeline = device.create_render_pipeline(&RenderPipelineDescriptor {
+        let pipeline: RenderPipeline = device.create_render_pipeline(&RenderPipelineDescriptor {
             vertex: fullscreen_quad::vertex_state(
                 &fullscreen_quad::create_shader_module(device),
                 &fullscreen_quad::fullscreen_quad_entry(),

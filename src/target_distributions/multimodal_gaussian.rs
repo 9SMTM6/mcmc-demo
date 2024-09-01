@@ -6,11 +6,11 @@ use crate::visualizations::shader_based::multimodal_gaussian::NormalDistribution
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Clone, Debug)]
-pub struct MultiModalGaussian {
+pub struct GaussianTargetDistr {
     pub gaussians: Vec<NormalDistribution>,
 }
 
-impl Default for MultiModalGaussian {
+impl Default for GaussianTargetDistr {
     fn default() -> Self {
         Self {
             gaussians: [
@@ -45,7 +45,7 @@ impl Default for MultiModalGaussian {
     }
 }
 
-impl MultiModalGaussian {
+impl GaussianTargetDistr {
     pub fn probability(&self, position: AlgoVec) -> f32 {
         let mut combined_prob_density = 0.0;
 

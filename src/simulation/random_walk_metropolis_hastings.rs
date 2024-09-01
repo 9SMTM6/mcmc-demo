@@ -1,4 +1,4 @@
-use crate::target_distributions::multimodal_gaussian::MultiModalGaussian;
+use crate::target_distributions::multimodal_gaussian::GaussianTargetDistr;
 
 use crate::visualizations::shader_based::diff_display::shader_bindings::RWMHAcceptRecord;
 
@@ -130,7 +130,7 @@ impl Default for Rwmh {
 }
 
 impl Rwmh {
-    pub fn step(&mut self, target_distr: &MultiModalGaussian) {
+    pub fn step(&mut self, target_distr: &GaussianTargetDistr) {
         let current = &mut self.current_loc;
         let proposal = self.params.propose(current.position.into());
         let acceptance_ratio = target_distr.acceptance_ratio(proposal, current.position.into());

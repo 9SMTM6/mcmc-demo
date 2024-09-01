@@ -6,7 +6,7 @@ use wgpu::{
 
 use crate::{
     create_shader_module, simulation::random_walk_metropolis_hastings::Rwmh,
-    target_distributions::multimodal_gaussian::MultiModalGaussian,
+    target_distributions::multimodal_gaussian::GaussianTargetDistr,
 };
 
 use super::{
@@ -45,7 +45,7 @@ pub(super) fn get_compute_output_buffer(
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Default)]
-pub struct BDAComputeDiffDisplay {}
+pub struct BDAComputeDiff {}
 
 struct PipelineStateHolder {
     compute_pipeline: ComputePipeline,
@@ -61,13 +61,13 @@ struct PipelineStateHolder {
     approx_info_buffer: Buffer,
 }
 
-impl BDAComputeDiffDisplay {
+impl BDAComputeDiff {
     pub fn paint(
         &self,
         painter: &egui::Painter,
         rect: egui::Rect,
         algo: &Rwmh,
-        target: &MultiModalGaussian,
+        target: &GaussianTargetDistr,
     ) {
         painter.add(eframe::egui_wgpu::Callback::new_paint_callback(
             rect,
