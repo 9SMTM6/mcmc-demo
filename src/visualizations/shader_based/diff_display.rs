@@ -9,8 +9,8 @@ use crate::{
     simulation::random_walk_metropolis_hastings::Rwmh,
     target_distributions::multimodal_gaussian::GaussianTargetDistr,
     visualizations::shader_based::{
-        target_distr::{get_normaldistr_buffer, shader_bindings::NormalDistribution},
         resolution_uniform::get_resolution_buffer,
+        target_distr::{get_normaldistr_buffer, shader_bindings::NormalDistribution},
     },
 };
 

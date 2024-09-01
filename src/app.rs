@@ -12,8 +12,7 @@ use crate::{
             point_display::PointDisplay,
         },
         shader_based::{
-            bda_compute::BDAComputeDiff, diff_display::BDADiff,
-            target_distr::TargetDistribution,
+            bda_compute::BDAComputeDiff, diff_display::BDADiff, target_distr::TargetDistribution,
         },
         BackgroundDisplay, BackgroundDisplayDiscr,
     },
@@ -233,9 +232,11 @@ impl eframe::App for McmcDemo {
                         self.background_display = new_bg.into();
                     };
                 });
-                egui::CollapsingHeader::new("Target Distribution").default_open(true).show(ui, |ui| {
-                    DistrEdit::settings_ui(&mut self.target_distr.gaussians, ui);
-                });
+                egui::CollapsingHeader::new("Target Distribution")
+                    .default_open(true)
+                    .show(ui, |ui| {
+                        DistrEdit::settings_ui(&mut self.target_distr.gaussians, ui);
+                    });
                 ui.collapsing("Proposal Probability", |ui| {
                     let prop = &mut self.algo.params.proposal;
                     ui.add(egui::Slider::new(&mut prop.sigma, 0.0..=1.0).text("Proposal sigma"));

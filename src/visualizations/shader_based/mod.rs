@@ -1,7 +1,7 @@
 pub mod bda_compute;
 pub mod diff_display;
-pub mod target_distr;
 mod resolution_uniform;
+pub mod target_distr;
 
 pub use resolution_uniform::INITIAL_RENDER_SIZE;
 
