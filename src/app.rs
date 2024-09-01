@@ -233,6 +233,9 @@ impl eframe::App for McmcDemo {
                         self.background_display = new_bg.into();
                     };
                 });
+                egui::CollapsingHeader::new("Target Distribution").default_open(true).show(ui, |ui| {
+                    DistrEdit::settings_ui(&mut self.target_distr.gaussians, ui);
+                });
                 ui.collapsing("Proposal Probability", |ui| {
                     let prop = &mut self.algo.params.proposal;
                     ui.add(egui::Slider::new(&mut prop.sigma, 0.0..=1.0).text("Proposal sigma"));
@@ -240,9 +243,6 @@ impl eframe::App for McmcDemo {
                 });
                 ui.collapsing("Acceptance Probability", |ui| {
                     self.algo.params.accept.rng.settings_ui(ui, ui.id());
-                });
-                ui.collapsing("Target Distribution", |ui| {
-                    DistrEdit::settings_ui(&mut self.target_distr.gaussians, ui);
                 });
             },
         );
