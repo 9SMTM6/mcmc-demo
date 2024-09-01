@@ -156,19 +156,30 @@ impl eframe::App for McmcDemo {
         }
 
         egui::Window::new("Simulation").show(ctx, |ui| {
+            ui.separator();
+            ui.label("Background Display");
+            ui.separator();
             let prev_bg = BackgroundDisplayDiscr::from(&self.background_display);
             let new_bg = prev_bg.selection_ui(ui);
             if new_bg != prev_bg {
                 self.background_display = new_bg.into();
             };
+            ui.separator();
+            ui.label("Proposal Probability");
             let resp = ui.separator();
             let prop = &mut self.algo.params.proposal;
             ui.add(egui::Slider::new(&mut prop.sigma, 0.0..=1.0).text("Proposal sigma"));
             prop.rng.rng.settings_ui(ui, resp.id);
+            ui.separator();
+            ui.label("Acceptance Probability");
             let resp = ui.separator();
             self.algo.params.accept.rng.settings_ui(ui, resp.id);
             ui.separator();
+            ui.label("Target Distribution");
+            ui.separator();
             DistrEdit::settings_ui(&mut self.target_distr.gaussians, ui);
+            ui.separator();
+            ui.label("Simulation");
             ui.separator();
             let ProgressMode::Batched { ref mut size } = self.algo.params.progress_mode;
             ui.add(
