@@ -76,17 +76,18 @@ pub enum DistrEdit {
 impl DistrEdit {
     pub fn settings_ui(gaussians: &mut Vec<NormalDistribution>, ui: &mut Ui) {
         if DistrEdit::is_present(ui) {
-            if ui.button("Stop Editing Distribution").clicked() {
-                DistrEdit::remove(ui);
-            }
-            if ui.button("Add Element").clicked() {
+            ui.label("Move Gaussians by dragging their visible (red circle) centers.\nEdit their remaining properties and delete them by clicking that center.");
+            if ui.button("Add Gaussian Element").clicked() {
                 gaussians.push(NormalDistribution {
                     position: [0.0, 0.0],
                     scale: 0.5,
                     variance: 0.2,
                 });
             }
-        } else if ui.button("Edit Distribution").clicked() {
+            if ui.button("Stop Editing").clicked() {
+                DistrEdit::remove(ui);
+            }
+        } else if ui.button("Edit").clicked() {
             DistrEdit::open(ui);
         };
     }

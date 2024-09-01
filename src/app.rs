@@ -155,100 +155,97 @@ impl eframe::App for McmcDemo {
             backend.end_of_frame(ctx);
         }
 
-        egui::Window::new("Simulation").show(ctx, |ui| {
-            ui.separator();
-            ui.label("Background Display");
-            ui.separator();
-            let prev_bg = BackgroundDisplayDiscr::from(&self.background_display);
-            let new_bg = prev_bg.selection_ui(ui);
-            if new_bg != prev_bg {
-                self.background_display = new_bg.into();
-            };
-            ui.separator();
-            ui.label("Proposal Probability");
-            let prop_id = ui.separator().id;
-            let prop = &mut self.algo.params.proposal;
-            ui.add(egui::Slider::new(&mut prop.sigma, 0.0..=1.0).text("Proposal sigma"));
-            prop.rng.rng.settings_ui(ui, prop_id);
-            ui.separator();
-            ui.label("Acceptance Probability");
-            let accept_id = ui.separator().id;
-            self.algo.params.accept.rng.settings_ui(ui, accept_id);
-            ui.separator();
-            ui.label("Target Distribution");
-            ui.separator();
-            DistrEdit::settings_ui(&mut self.target_distr.gaussians, ui);
-            ui.separator();
-            ui.label("Simulation");
-            ui.separator();
-            let ProgressMode::Batched { ref mut size } = self.algo.params.progress_mode;
-            ui.add(
-                // Safety: the slider begins at 1.
-                unsafe {
-                    egui::Slider::new(
-                        size.get_inner_mut(),
-                        // TODO: use default webgpu maximum size here to determine slider maximum, by determining how much space is left, roughly.
-                        1..=(usize::MAX / usize::MAX.ilog2() as usize),
-                    )
-                }
-                .logarithmic(true)
-                .text("batchsize"),
-            );
-            let size = size.get_inner();
-            struct BatchJob(BgTaskHandle<Rwmh>);
-
-            let bg_task = self.local_resources.get::<BatchJob>();
-            if let Some(&BatchJob(ref bg_task)) = bg_task {
+        egui::Window::new("Simulation").show(
+            ctx,
+            #[allow(clippy::shadow_unrelated)]
+            |ui| {
+                let ProgressMode::Batched { ref mut size } = self.algo.params.progress_mode;
                 ui.add(
-                    ProgressBar::new(match bg_task.get_progress() {
-                        Progress::Pending(progress) => progress,
-                        Progress::Finished => {
-                            self.algo = self
-                                .local_resources
-                                .remove::<BatchJob>()
-                                .unwrap()
-                                .0
-                                .get_value();
-                            // process is finished, but because of the control flow I can't show the button for the next batchstep yet.
-                            // So this will have to do.
-                            // Alternative would be moving the batch step UI put of this gigantic function and using this here,
-                            // moving the ProgressBar rendering back into the Pending branch.
-                            // But thats too much work for something still in the flow.
-                            1.0
-                        }
-                    })
-                    // this "fixes" the layout when displaying the progress bar.
-                    // Without adding this, it will take up more horizontal space then the settings element took up originally,
-                    // which looks very glitchy.
-                    // There is probably a less hacky way that also works on other aspect ratios etc, but for now it'll have to do.
-                    .desired_width(200.0),
+                    // Safety: the slider begins at 1.
+                    unsafe {
+                        egui::Slider::new(
+                            size.get_inner_mut(),
+                            // TODO: use default webgpu maximum size here to determine slider maximum, by determining how much space is left, roughly.
+                            1..=(usize::MAX / usize::MAX.ilog2() as usize),
+                        )
+                    }
+                    .logarithmic(true)
+                    .text("batchsize"),
                 );
-                ctx.request_repaint_after(Duration::from_millis(16));
-            } else if ui.button("Batch step").clicked() {
-                let existing = self.local_resources.insert(BatchJob({
-                    // TODO: HIGHLY problematic!
-                    // This means that the random state doesnt progress
-                    let mut algo = self.algo.clone();
-                    let target_distr = self.target_distr.clone();
-                    BgTaskHandle::new(
-                        move |mut communicate: BgCommunicate| {
-                            for curr_step in 0..size {
-                                algo.step(&target_distr);
-                                if communicate.checkup_bg(curr_step) {
-                                    break;
-                                }
+                let size = size.get_inner();
+                struct BatchJob(BgTaskHandle<Rwmh>);
+
+                let bg_task = self.local_resources.get::<BatchJob>();
+                if let Some(&BatchJob(ref bg_task)) = bg_task {
+                    ui.add(
+                        ProgressBar::new(match bg_task.get_progress() {
+                            Progress::Pending(progress) => progress,
+                            Progress::Finished => {
+                                self.algo = self
+                                    .local_resources
+                                    .remove::<BatchJob>()
+                                    .unwrap()
+                                    .0
+                                    .get_value();
+                                // process is finished, but because of the control flow I can't show the button for the next batchstep yet.
+                                // So this will have to do.
+                                // Alternative would be moving the batch step UI put of this gigantic function and using this here,
+                                // moving the ProgressBar rendering back into the Pending branch.
+                                // But thats too much work for something still in the flow.
+                                1.0
                             }
-                            algo
-                        },
-                        size,
-                    )
-                }));
-                assert!(
-                    existing.is_none(),
-                    "ought to be prevented from overriding this by UI logic"
-                );
-            }
-        });
+                        })
+                        // this "fixes" the layout when displaying the progress bar.
+                        // Without adding this, it will take up more horizontal space then the settings element took up originally,
+                        // which looks very glitchy.
+                        // There is probably a less hacky way that also works on other aspect ratios etc, but for now it'll have to do.
+                        .desired_width(200.0),
+                    );
+                    ctx.request_repaint_after(Duration::from_millis(16));
+                } else if ui.button("Batch step").clicked() {
+                    let existing = self.local_resources.insert(BatchJob({
+                        // TODO: HIGHLY problematic!
+                        // This means that the random state doesnt progress
+                        let mut algo = self.algo.clone();
+                        let target_distr = self.target_distr.clone();
+                        BgTaskHandle::new(
+                            move |mut communicate: BgCommunicate| {
+                                for curr_step in 0..size {
+                                    algo.step(&target_distr);
+                                    if communicate.checkup_bg(curr_step) {
+                                        break;
+                                    }
+                                }
+                                algo
+                            },
+                            size,
+                        )
+                    }));
+                    assert!(
+                        existing.is_none(),
+                        "ought to be prevented from overriding this by UI logic"
+                    );
+                }
+                ui.collapsing("Background Display", |ui| {
+                    let prev_bg = BackgroundDisplayDiscr::from(&self.background_display);
+                    let new_bg = prev_bg.selection_ui(ui);
+                    if new_bg != prev_bg {
+                        self.background_display = new_bg.into();
+                    };
+                });
+                ui.collapsing("Proposal Probability", |ui| {
+                    let prop = &mut self.algo.params.proposal;
+                    ui.add(egui::Slider::new(&mut prop.sigma, 0.0..=1.0).text("Proposal sigma"));
+                    prop.rng.rng.settings_ui(ui, ui.id());
+                });
+                ui.collapsing("Acceptance Probability", |ui| {
+                    self.algo.params.accept.rng.settings_ui(ui, ui.id());
+                });
+                ui.collapsing("Target Distribution", |ui| {
+                    DistrEdit::settings_ui(&mut self.target_distr.gaussians, ui);
+                });
+            },
+        );
 
         egui::CentralPanel::default()
             // remove margins
