@@ -203,7 +203,7 @@ macro_rules! declare_rng_wrappers {
     }
 }
 
-// IDK why rust thinks all these variants are never constructed if theyre all selectable.
+// IDK why rust thinks all these variants are never constructed if they're all selectable.
 // But thats the reason for the dead_code.
 // Module is only here to create a scope for that dead_code allow.
 #[allow(dead_code)]
