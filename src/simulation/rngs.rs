@@ -127,7 +127,7 @@ macro_rules! declare_rng_wrappers {
         }
 
         impl WrappedRngDiscriminants {
-            pub const VARIANTS: &'static [WrappedRngDiscriminants] = &[
+            pub const VARIANTS: &'static [Self] = &[
             $(
                 #[cfg(feature = "rng_pcg")]
                 Self::$pcg_rng

@@ -4,7 +4,7 @@ use wgpu::{
     Buffer, BufferDescriptor, BufferUsages, RenderPipeline, RenderPipelineDescriptor,
 };
 
-use crate::target_distributions::multimodal_gaussian::MultiModalGaussian;
+use crate::{simulation::random_walk_metropolis_hastings::Rwmh, target_distributions::multimodal_gaussian::MultiModalGaussian};
 
 use super::{fullscreen_quad, resolution_uniform::get_resolution_buffer};
 
@@ -28,17 +28,24 @@ struct MultiModalGaussPipeline {
 }
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
+#[derive(Default)]
 pub struct MultiModalGaussianDisplay {
     // pub color: Color32,
 }
 
 impl MultiModalGaussianDisplay {
-    pub fn paint(&self, distr: &MultiModalGaussian, painter: &egui::Painter, rect: egui::Rect) {
+    pub fn paint(       
+        &self,
+        painter: &egui::Painter,
+        rect: egui::Rect,
+        _algo: &Rwmh,
+        target: &MultiModalGaussian,
+    ) {
         painter.add(eframe::egui_wgpu::Callback::new_paint_callback(
             rect,
             RenderCall {
                 px_size: rect.size().into(),
-                elements: distr.gaussians.clone(),
+                elements: target.gaussians.clone(),
             },
         ));
     }

@@ -44,7 +44,8 @@ pub(super) fn get_compute_output_buffer(
 }
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
-pub struct BDADisplay {}
+#[derive(Default)]
+pub struct BDAComputeDiffDisplay {}
 
 struct PipelineStateHolder {
     compute_pipeline: ComputePipeline,
@@ -60,7 +61,7 @@ struct PipelineStateHolder {
     approx_info_buffer: Buffer,
 }
 
-impl BDADisplay {
+impl BDAComputeDiffDisplay {
     pub fn paint(
         &self,
         painter: &egui::Painter,

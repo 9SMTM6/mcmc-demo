@@ -12,9 +12,9 @@ use crate::{
             point_display::PointDisplay,
         },
         shader_based::{
-            bda_compute::BDADisplay, diff_display::DiffDisplay,
+            bda_compute::BDAComputeDiffDisplay, diff_display::BDADiffDisplay,
             multimodal_gaussian::MultiModalGaussianDisplay,
-        },
+        }, BackgroundDisplay, BackgroundDisplayDiscr,
     },
 };
 
@@ -31,12 +31,7 @@ pub struct McmcDemo {
     algo: Rwmh,
     point_display: PointDisplay,
     target_distr: MultiModalGaussian,
-    #[allow(dead_code)]
-    target_distr_render: MultiModalGaussianDisplay,
-    #[allow(dead_code)]
-    diff_render: DiffDisplay,
-    #[allow(dead_code)]
-    compute_bda_render: BDADisplay,
+    background_display: BackgroundDisplay,
     /// This holds resource managers for the main thread.
     ///
     /// If you want to hold copyable temporary ui state, use [`TempStateExtDelegatedToDataMethods`] instead.
@@ -50,9 +45,7 @@ impl Default for McmcDemo {
             algo: Default::default(),
             point_display: Default::default(),
             target_distr: Default::default(),
-            target_distr_render: MultiModalGaussianDisplay {},
-            diff_render: DiffDisplay { window_radius: 5.0 },
-            compute_bda_render: BDADisplay {},
+            background_display: Default::default(),
             local_resources: TypeMap::new(),
         }
     }
@@ -84,8 +77,8 @@ impl McmcDemo {
             .as_ref()
             .expect("Compiling with WGPU enabled");
         MultiModalGaussianDisplay::init_gaussian_pipeline(render_state);
-        DiffDisplay::init_pipeline(render_state);
-        BDADisplay::init_pipeline(render_state);
+        BDADiffDisplay::init_pipeline(render_state);
+        BDAComputeDiffDisplay::init_pipeline(render_state);
         state
     }
 
@@ -163,6 +156,12 @@ impl eframe::App for McmcDemo {
 
         #[allow(clippy::collapsible_else_if)]
         egui::Window::new("Simulation").show(ctx, |ui| {
+            let prev_bg = BackgroundDisplayDiscr::from(&self.background_display);
+            let new_bg = prev_bg.clone().selection_ui(ui);
+            if new_bg != prev_bg {
+                self.background_display = new_bg.into();
+            };
+            ui.separator();
             let prop = &mut self.algo.params.proposal;
             ui.add(egui::Slider::new(&mut prop.sigma, 0.0..=1.0).text("Proposal sigma"));
             prop.rng.rng.settings_ui(ui);
@@ -257,18 +256,7 @@ impl eframe::App for McmcDemo {
                                 ui.allocate_exact_size(px_size, egui::Sense::hover());
                             // last painted element wins.
                             let painter = ui.painter();
-                            // self.target_distr_render.paint(
-                            //     &self.target_distr,
-                            //     painter,
-                            //     rect * ctx.pixels_per_point(),
-                            // );
-                            // self.diff_render.paint(
-                            //     painter,
-                            //     rect * ctx.pixels_per_point(),
-                            //     &self.algo,
-                            //     &self.target_distr,
-                            // );
-                            self.compute_bda_render.paint(
+                            self.background_display.paint(
                                 painter,
                                 rect * ctx.pixels_per_point(),
                                 &self.algo,

@@ -25,9 +25,9 @@ use shader_bindings::{
 };
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
-pub struct DiffDisplay {
-    #[allow(dead_code)]
-    pub window_radius: f32,
+#[derive(Default)]
+pub struct BDADiffDisplay {
+    // pub window_radius: f32,
 }
 
 pub fn get_approx_buffers(
@@ -72,7 +72,7 @@ struct PipelineStateHolder {
     approx_info_buffer: Buffer,
 }
 
-impl DiffDisplay {
+impl BDADiffDisplay {
     pub fn paint(
         &self,
         painter: &egui::Painter,
