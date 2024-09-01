@@ -1,11 +1,10 @@
-#![allow(unused)]
 use std::borrow::Borrow;
 
-use egui::{Id, Slider};
-use rand::{Rng, RngCore, SeedableRng};
+use egui::Slider;
+use rand::Rng;
 use rand_distr::{Distribution, Uniform};
 
-use crate::helpers::temp_ui_state::{TempStateExtDelegatedToDataMethods, TempUiState};
+use crate::helpers::temp_ui_state::TempStateExtDelegatedToDataMethods;
 
 macro_rules! declare_rng_wrapper_macro {
     ($macro_name: ident, mod $path: tt) => {
@@ -77,7 +76,7 @@ macro_rules! declare_rng_wrappers {
 
         const RNG_CORE_UNIMPLEMENTED: &'static str = "I'm too lazy to do this properly without need, and unwilling to use the provided less efficient methods";
 
-        impl RngCore for WrappedRng {
+        impl rand::RngCore for WrappedRng {
             fn next_u32(&mut self) -> u32 {
                 use WrappedRng as T;
                 #[allow(clippy::pattern_type_mismatch)]
@@ -125,6 +124,8 @@ macro_rules! declare_rng_wrappers {
                 unimplemented!("{RNG_CORE_UNIMPLEMENTED}")
             }
         }
+
+        use rand::SeedableRng;
 
         impl WrappedRngDiscriminants {
             pub const VARIANTS: &'static [Self] = &[
@@ -202,36 +203,32 @@ macro_rules! declare_rng_wrappers {
     }
 }
 
-declare_rng_wrappers! {
-    pcg:
-    Pcg32,
-    Pcg64,
-    Pcg64Mcg,
-    ;
-    xoshiro:
-    Xoshiro256Plus,
-    Xoshiro128Plus,
-    Xoroshiro128Plus,
-    Xoroshiro128StarStar,
-    Xoroshiro64Star,
-    Xoroshiro64StarStar,
-    ;
-    xorshift:
-    XorShiftRng,
-    ;
+// IDK why rust thinks all these variants are never constructed if theyre all selectable.
+// But thats the reason for the dead_code.
+// Module is only here to create a scope for that dead_code allow.
+#[allow(dead_code)]
+mod rng_wrappers {
+    declare_rng_wrappers! {
+        pcg:
+            Pcg32,
+            Pcg64,
+            Pcg64Mcg,
+        ;
+        xoshiro:
+            Xoshiro256Plus,
+            Xoshiro128Plus,
+            Xoroshiro128Plus,
+            Xoroshiro128StarStar,
+            Xoroshiro64Star,
+            Xoroshiro64StarStar,
+        ;
+        xorshift:
+            XorShiftRng,
+        ;
+    }
 }
 
-// macro_rules! cfg_feature_items {
-//     (
-//         items: $($item: item)+;
-//         feature = $feature: literal
-//     ) => {
-//         $(
-//             #[cfg(feature = $feature)]
-//             $item
-//         )+
-//     };
-// }
+use rng_wrappers::*;
 
 impl WrappedRngDiscriminants {
     pub const fn explanation(&self) -> &'static str {
@@ -294,9 +291,9 @@ impl<Distr: Distribution<f32>> Iterator for RngIter<Distr> {
 }
 
 impl<Distr: Distribution<f32>> RngIter<Distr> {
-    pub const fn new(rng: WrappedRng, distr: Distr) -> Self {
-        Self { rng, distr }
-    }
+    // pub const fn new(rng: WrappedRng, distr: Distr) -> Self {
+    //     Self { rng, distr }
+    // }
 
     pub fn unwrapped_next(&mut self) -> f32 {
         self.next().expect("infinite iterator")

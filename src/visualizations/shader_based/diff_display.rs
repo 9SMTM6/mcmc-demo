@@ -1,4 +1,3 @@
-#![allow(unused)]
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
@@ -180,7 +179,6 @@ impl CallbackTrait for RenderCall {
             ref mut target_buffer,
             ref mut approx_accepted_buffer,
             ref mut approx_info_buffer,
-            ref mut bind_group_0,
             ref mut bind_group_1,
             ..
         } = callback_resources.get_mut().unwrap();

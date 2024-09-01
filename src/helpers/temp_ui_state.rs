@@ -55,7 +55,6 @@ impl<'a, T: Copy + Clone + Send + Sync + 'static, Del: TempStateExtDelegatedToDa
         });
     }
 
-    #[allow(unused)]
     pub fn create_default(&self)
     where
         T: Default,
