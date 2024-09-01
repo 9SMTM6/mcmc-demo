@@ -7,7 +7,7 @@ patch_fat_html:
 
 # Generate new patch file from matched `index.html` and `index.fat.html`
 diff_fat_html:
-    diff -u index.html index.fat.html > index.fat.html.patch
+    diff -u index.html index.fat.html > index.fat.html.patch || 0
 
 ci_fmt:
     cargo +stable fmt --all -- --check

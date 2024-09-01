@@ -1,5 +1,5 @@
---- index.html	2024-08-26 22:56:22.153516982 +0200
-+++ index.fat.html	2024-08-26 22:56:17.890202388 +0200
+--- index.html	2024-09-01 15:01:07.394591432 +0200
++++ index.fat.html	2024-09-01 15:00:55.027766489 +0200
 @@ -7,7 +7,7 @@
  
  <head>
@@ -8,15 +8,15 @@
 +    <title>MCMC demo (debug with all features and unoptimized)</title>
  
      <!-- config for our rust wasm binary. go to https://trunkrs.dev/assets/#rust for more customization -->
-     <!-- TODO: missing --fast-math flag to wasm-opt, which may make a difference. -->
-@@ -19,8 +19,8 @@
-     <!-- TODO: remove rng_pcg once features are fixed -->
+     <!-- disabling webgl_compat makes a huge difference in size -->
+@@ -17,8 +17,8 @@
+             data-keep-debug -->
  
      <!-- THIS WILL BE CHANGED IN A PATCH TO CREATE A FAT WEBPAGE -->
 -    <link data-trunk rel="rust" data-wasm-opt="2" data-reference-types data-weak-refs data-cargo-no-default-features
 -        data-cargo-features="rng_pcg" data-bindgen-target="web" />
 +    <link data-trunk rel="rust" data-wasm-opt="0" data-keep-debug data-reference-types data-weak-refs
-+        data-bindgen-target="web" />
++        data-cargo-all-features data-bindgen-target="web" />
      <!-- THIS WILL BE CHANGED IN A PATCH TO CREATE A FAT WEBPAGE -->
  
      <!-- this is the base url relative to which other urls will be constructed. trunk will insert this from the public-url option -->
