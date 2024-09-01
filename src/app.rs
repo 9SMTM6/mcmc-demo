@@ -1,15 +1,10 @@
 use egui::{self, ProgressBar, Shadow, Vec2};
-use rand::SeedableRng;
-use rand_pcg::Pcg32;
 use std::time::Duration;
 use type_map::TypeMap;
 
 use crate::{
     helpers::bg_task::{BgCommunicate, BgTaskHandle, Progress},
-    simulation::{
-        random_walk_metropolis_hastings::{ProgressMode, Rwmh},
-        WrappedRng,
-    },
+    simulation::random_walk_metropolis_hastings::{ProgressMode, Rwmh},
     target_distributions::multimodal_gaussian::MultiModalGaussian,
     visualizations::{
         egui_based::{
@@ -168,8 +163,14 @@ impl eframe::App for McmcDemo {
 
         #[allow(clippy::collapsible_else_if)]
         egui::Window::new("Simulation").show(ctx, |ui| {
-            WrappedRng::Pcg32(Pcg32::from_entropy()).settings_ui(ui);
+            let prop = &mut self.algo.params.proposal;
+            ui.add(egui::Slider::new(&mut prop.sigma, 0.0..=1.0).text("Proposal sigma"));
+            prop.rng.rng.settings_ui(ui);
+            ui.separator();
+            self.algo.params.accept.rng.settings_ui(ui);
+            ui.separator();
             DistrEdit::settings_ui(&mut self.target_distr.gaussians, ui);
+            ui.separator();
             let ProgressMode::Batched { ref mut size } = self.algo.params.progress_mode;
             ui.add(
                 // Safety: the slider begins at 1.

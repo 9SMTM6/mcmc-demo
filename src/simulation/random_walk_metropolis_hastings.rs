@@ -7,8 +7,8 @@ use super::{Percentage, RngIter, StandardNormal};
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Clone)]
 pub struct GaussianProposal {
-    sigma: f32,
-    rng: RngIter<StandardNormal>,
+    pub sigma: f32,
+    pub rng: RngIter<StandardNormal>,
 }
 
 impl Default for GaussianProposal {

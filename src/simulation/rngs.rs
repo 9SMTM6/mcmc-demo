@@ -268,7 +268,7 @@ impl WrappedRngDiscriminants {
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Clone)]
 pub struct RngIter<Distr: Distribution<f32>> {
-    rng: WrappedRng,
+    pub rng: WrappedRng,
     distr: Distr,
 }
 
