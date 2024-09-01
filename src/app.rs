@@ -29,7 +29,7 @@ pub struct McmcDemo {
     // That struct will hold the algo, the data, the rngs and maybe the display (or an vector of displays, pointdisplay, targetdistr display, diff display).
     // It'll then implement legal transitions, e.g. changing the target distribution will lead to data reset etc.
     algo: Rwmh,
-    point_display: PointDisplay,
+    point_display: Option<PointDisplay>,
     target_distr: GaussianTargetDistr,
     background_display: BackgroundDisplay,
     /// This holds resource managers for the main thread.
@@ -165,11 +165,11 @@ impl eframe::App for McmcDemo {
                         egui::Slider::new(
                             size.get_inner_mut(),
                             // TODO: use default webgpu maximum size here to determine slider maximum, by determining how much space is left, roughly.
-                            1..=(usize::MAX / usize::MAX.ilog2() as usize),
+                            1..=100_000,
                         )
                     }
                     .logarithmic(true)
-                    .text("batchsize"),
+                    .text("batch size"),
                 );
                 let size = size.get_inner();
                 struct BatchJob(BgTaskHandle<Rwmh>);
@@ -201,7 +201,7 @@ impl eframe::App for McmcDemo {
                         .desired_width(200.0),
                     );
                     ctx.request_repaint_after(Duration::from_millis(16));
-                } else if ui.button("Batch step").clicked() {
+                } else if ui.button("batch step").clicked() {
                     let existing = self.local_resources.insert(BatchJob({
                         // TODO: HIGHLY problematic!
                         // This means that the random state doesnt progress
@@ -225,24 +225,67 @@ impl eframe::App for McmcDemo {
                         "ought to be prevented from overriding this by UI logic"
                     );
                 }
-                ui.collapsing("Background Display", |ui| {
+                ui.collapsing("background display", |ui| {
                     let prev_bg = BackgroundDisplayDiscr::from(&self.background_display);
                     let new_bg = prev_bg.selection_ui(ui);
                     if new_bg != prev_bg {
                         self.background_display = new_bg.into();
                     };
                 });
-                egui::CollapsingHeader::new("Target Distribution")
+                ui.collapsing("approximation point-display", |ui| {
+                    if let Some(ref mut point_display) = self.point_display {
+                        if let Some(ref mut reject_color) = point_display.reject_display {
+                            let mut reject_color_fullspace =
+                                egui::Rgba::from(*reject_color).to_array();
+                            ui.label("set rejection color");
+                            ui.color_edit_button_rgba_unmultiplied(&mut reject_color_fullspace);
+                            *reject_color = egui::Rgba::from_rgba_unmultiplied(
+                                reject_color_fullspace[0],
+                                reject_color_fullspace[1],
+                                reject_color_fullspace[2],
+                                reject_color_fullspace[3],
+                            )
+                            .into();
+                            if ui.button("don't display rejections").clicked() {
+                                point_display.reject_display = None;
+                            }
+                        } else if ui.button("display rejections").clicked() {
+                            point_display.reject_display = PointDisplay::default().reject_display;
+                        };
+                        let mut accept_color_fullspace =
+                            egui::Rgba::from(point_display.accept_color).to_array();
+                        ui.label("set acceptance color");
+                        ui.color_edit_button_rgba_unmultiplied(&mut accept_color_fullspace);
+                        point_display.accept_color = egui::Rgba::from_rgba_unmultiplied(
+                            accept_color_fullspace[0],
+                            accept_color_fullspace[1],
+                            accept_color_fullspace[2],
+                            accept_color_fullspace[3],
+                        )
+                        .into();
+                        ui.add(
+                            egui::Slider::new(&mut point_display.radius, 0.5..=5.0)
+                                .text("point radius"),
+                        );
+                        ui.add(
+                            egui::Slider::new(&mut point_display.lowest_alpha, 0.1..=0.9)
+                                .text("minimum point alpha"),
+                        );
+                    } else if ui.button("Show Point Display").clicked() {
+                        self.point_display = Some(Default::default());
+                    }
+                });
+                egui::CollapsingHeader::new("target distribution")
                     .default_open(true)
                     .show(ui, |ui| {
                         DistrEdit::settings_ui(&mut self.target_distr.gaussians, ui);
                     });
-                ui.collapsing("Proposal Probability", |ui| {
+                ui.collapsing("proposal probability", |ui| {
                     let prop = &mut self.algo.params.proposal;
                     ui.add(egui::Slider::new(&mut prop.sigma, 0.0..=1.0).text("Proposal sigma"));
                     prop.rng.rng.settings_ui(ui, ui.id());
                 });
-                ui.collapsing("Acceptance Probability", |ui| {
+                ui.collapsing("acceptance probability", |ui| {
                     self.algo.params.accept.rng.settings_ui(ui, ui.id());
                 });
             },
@@ -272,7 +315,9 @@ impl eframe::App for McmcDemo {
                                 &self.target_distr,
                             );
 
-                            self.point_display.paint(painter, rect, &self.algo);
+                            if let Some(ref point_display) = self.point_display {
+                                point_display.paint(painter, rect, &self.algo);
+                            }
 
                             let gaussians = &mut self.target_distr.gaussians;
 

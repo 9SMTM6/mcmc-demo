@@ -24,4 +24,11 @@ ci_cargo_deny:
 ci_test:
     cargo +stable test --locked --target x86_64-unknown-linux-gnu --lib
 
-ci: patch_fat_html ci_fmt ci_clippy ci_clippy_wasm ci_cargo_deny ci_test
+ci_required_for_deploy: patch_fat_html ci_clippy ci_clippy_wasm ci_test
+
+ci_typo:
+    typos
+
+ci_qa: ci_fmt ci_cargo_deny ci_typo
+
+ci: ci_qa ci_required_for_deploy

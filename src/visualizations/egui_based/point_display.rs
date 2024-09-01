@@ -8,10 +8,10 @@ use crate::{
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 pub struct PointDisplay {
-    lowest_alpha: f32,
-    radius: f32,
-    accept_color: Color32,
-    reject_display: Option<Color32>,
+    pub lowest_alpha: f32,
+    pub radius: f32,
+    pub accept_color: Color32,
+    pub reject_display: Option<Color32>,
 }
 
 impl Default for PointDisplay {

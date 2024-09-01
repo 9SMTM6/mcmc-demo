@@ -51,7 +51,7 @@ pub enum ProgressMode {
 impl Default for ProgressMode {
     fn default() -> Self {
         Self::Batched {
-            size: const { IPromiseThisIsNonZeroUsize::new(2000) },
+            size: const { IPromiseThisIsNonZeroUsize::new(500) },
         }
     }
 }
