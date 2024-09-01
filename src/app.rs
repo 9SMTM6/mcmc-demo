@@ -43,7 +43,7 @@ impl Default for McmcDemo {
     fn default() -> Self {
         Self {
             algo: Default::default(),
-            point_display: Default::default(),
+            point_display: Some(Default::default()),
             target_distr: Default::default(),
             background_display: Default::default(),
             local_resources: TypeMap::new(),
@@ -271,7 +271,10 @@ impl eframe::App for McmcDemo {
                             egui::Slider::new(&mut point_display.lowest_alpha, 0.1..=0.9)
                                 .text("minimum point alpha"),
                         );
-                    } else if ui.button("Show Point Display").clicked() {
+                        if ui.button("remove point display").clicked() {
+                            self.point_display = None;
+                        }
+                    } else if ui.button("show point display").clicked() {
                         self.point_display = Some(Default::default());
                     }
                 });
