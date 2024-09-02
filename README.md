@@ -38,7 +38,20 @@ I currently envison this approach (lets see how much of this I'll get):
 7. with that I could also consider decoupling calculation resolution and render resolution, but I think for now I'll keep them coupled
 8. In order to avoid numerical stability issues I'll probably add some normalization after N steps. I have to decide on a proper strategy for that. Perhaps I can actually do it based on current maximum instead. Most of these strategies will lead to systemctic errors in the precision, since rounding might happen in different situations, but I'm fine with that.
 
-### Webgpu in a background thread
+### Webgpu background compute
+
+#### Current Plan:
+
+1. test whether its possible to use webgpu in a background thread in chrome linux
+2. if thats possible create 2 features, where exactly ONE of these must be selected (well, if both are selected fallback to... one of them, probably promise stuff, and add an error if no feature was selected, see [reference](https://doc.rust-lang.org/cargo/reference/features.html#mutually-exclusive-features)):
+  * do the stuff in next step
+  * create a background thread that receives tasks from the main thread and runs them in a single compute queue.
+    * perhaps I can make that stuff cancelable, IDK, would be good.
+3. regardless of the above doe this in any case:
+  * create a promise for each task (I think it needs to be one for each) that builds a device and queue from the adapter and then uses that to submit the work.
+4. after the task is done, get the resulting buffer, probably with `wgpu::util::DownloadBuffer::read_buffer`, and sends it over the cpu back to the main thread/gets it somehow out of the promise, where it gets copied to a buffer from its device + queue.
+
+#### Original considerations
 
 Also see [semi-official explainer](https://github.com/gpuweb/gpuweb/wiki/The-Multi-Explainer#multi-threading-javascript).
 This concerns and links to official issues about accessing webgpu from multiple wasm threads, as well as having GPU work on multiple queues.
