@@ -44,12 +44,12 @@ I currently envison this approach (lets see how much of this I'll get):
 
 1. test whether its possible to use webgpu in a background thread in chrome linux
 2. if thats possible create 2 features, where exactly ONE of these must be selected (well, if both are selected fallback to... one of them, probably promise stuff, and add an error if no feature was selected, see [reference](https://doc.rust-lang.org/cargo/reference/features.html#mutually-exclusive-features)):
-  * do the stuff in next step
-  * create a background thread that receives tasks from the main thread and runs them in a single compute queue.
+  * For web: create a promise for each task (I think it needs to be one for each) that builds a device and queue from the adapter and then uses that to submit the work. It'll have to use future_to_promise to avoid blocking the main thread. Hopefully communication is going to be possible over channels or similar.
+  * for native, behind flag for web: create a background thread that receives tasks from the main thread and runs them in a single compute queue.
     * perhaps I can make that stuff cancelable, IDK, would be good.
-3. regardless of the above doe this in any case:
-  * create a promise for each task (I think it needs to be one for each) that builds a device and queue from the adapter and then uses that to submit the work.
-4. after the task is done, get the resulting buffer, probably with `wgpu::util::DownloadBuffer::read_buffer`, and sends it over the cpu back to the main thread/gets it somehow out of the promise, where it gets copied to a buffer from its device + queue.
+3. after the task is done, get the resulting buffer, probably with `wgpu::util::DownloadBuffer::read_buffer`, and sends it over the cpu back to the main thread/gets it somehow out of the promise, where it gets copied to a buffer from its device + queue.
+
+The reason for the 2 pronged approach is the issue of the webgpu access for webworkers. Even if this works for chromium on linux, it probably won't in firefox even after their initial release of webgpu.
 
 #### Original considerations
 
