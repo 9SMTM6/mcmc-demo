@@ -1,7 +1,6 @@
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
 use wgpu::{
-    Buffer, BufferDescriptor, BufferUsages, ComputePassDescriptor, ComputePipeline,
-    ComputePipelineDescriptor, RenderPipeline, RenderPipelineDescriptor,
+    Buffer, BufferDescriptor, BufferUsages, CommandEncoderDescriptor, ComputePassDescriptor, ComputePipeline, ComputePipelineDescriptor, RenderPipeline, RenderPipelineDescriptor
 };
 
 use crate::{
@@ -190,9 +189,11 @@ impl CallbackTrait for RenderCall {
         queue: &wgpu::Queue,
         // doesn't hold the viewport size
         _screen_descriptor: &eframe::egui_wgpu::ScreenDescriptor,
-        egui_encoder: &mut wgpu::CommandEncoder,
+        _egui_encoder: &mut wgpu::CommandEncoder,
         callback_resources: &mut eframe::egui_wgpu::CallbackResources,
     ) -> Vec<wgpu::CommandBuffer> {
+        // I don't reserve with capacity on purpose, as that means every render will do an allocation here.
+        let mut command_buffers = Vec::new();
         let &mut PipelineStateHolder {
             ref compute_pipeline,
             ref resolution_buffer,
@@ -245,7 +246,12 @@ impl CallbackTrait for RenderCall {
             );
         }
         if res_changed || approx_changed {
-            let mut compute_pass = egui_encoder.begin_compute_pass(&ComputePassDescriptor {
+            // TODO: we need to remove the compute from the render queue.
+            // Unsure how to achieve this. I was hoping having a separate commandencoder would siffice, but evidently not.
+            // AFAIK sharing buffers isnt gonna work with separate queues, as the way to get a queue is bundled with the device creation. Both are created from the adapter.
+            // Aside that, its also annoying, since I either need to coordinate things, or I need to smuggle the new device and queue in here.
+            let mut compute_encoder = device.create_command_encoder(&CommandEncoderDescriptor { label: Some(file!()) });
+            let mut compute_pass = compute_encoder.begin_compute_pass(&ComputePassDescriptor {
                 label: Some(file!()),
                 timestamp_writes: None,
             });
@@ -261,6 +267,10 @@ impl CallbackTrait for RenderCall {
             compute_group_0.set(&mut compute_pass);
             compute_group_1.set(&mut compute_pass);
             compute_pass.dispatch_workgroups(self.px_size[0] as u32, self.px_size[1] as u32, 1);
+            // I dont understand precisely why, but this is required.
+            // It must do some management in the drop impl.
+            drop(compute_pass);
+            command_buffers.push(compute_encoder.finish())
         }
         queue.write_buffer(
             target_buffer,
@@ -276,7 +286,7 @@ impl CallbackTrait for RenderCall {
                 gauss_bases: target_buffer.as_entire_buffer_binding(),
             },
         );
-        Vec::new()
+        command_buffers
     }
 
     fn paint<'a>(
