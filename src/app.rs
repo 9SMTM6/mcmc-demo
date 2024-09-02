@@ -76,6 +76,9 @@ impl McmcDemo {
             .wgpu_render_state
             .as_ref()
             .expect("Compiling with WGPU enabled");
+        // I need an abstraction over `pollster::block_on` (native) and `wasm_bindgen_futures::spawn_local` (web).
+        // eframe on web is just async to the top, where I use the latter, on native its using pollster to resolve the future we get from `request_device`.
+        // let laaa = render_state.adapter.request_device(&DeviceDescriptor { label: Some(file!()), required_features: Default::default(), required_limits: Default::default(), memory_hints: Default::default() }, None);
         TargetDistribution::init_gaussian_pipeline(render_state);
         BDADiff::init_pipeline(render_state);
         BDAComputeDiff::init_pipeline(render_state);

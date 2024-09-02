@@ -40,6 +40,19 @@ I currently envison this approach (lets see how much of this I'll get):
 
 ### Webgpu in a background thread
 
+Also see [semi-official explainer](https://github.com/gpuweb/gpuweb/wiki/The-Multi-Explainer#multi-threading-javascript).
+This concerns and links to official issues about accessing webgpu from multiple wasm threads, as well as having GPU work on multiple queues.
+Also consider this note:
+
+> Note: Queues do not directly provide GPU parallelism or concurrency. All programmable GPU work is structured to be parallelizable across GPU cores, and it is already possible for independent work on a single queue to be interleaved or run out-of-order at the discretion of the hardware/driver schedulers, within the constraints of ordering guarantees (which, in native APIs, are implicit or provided by the application via barriers). Multi-queue only improves the occupancy of available hardware on the GPU when the two tasks at the front of two queues can better occupy hardware resources than just one of the tasks would.
+
+My observation was that compute tasks scheduled from a separate command_encoder did block egui rendering.
+
+My understanding from the quote is that:
+1. some tasks might be parallelizable even with a single queue
+2. they might currently be sequential because either the compute task overloads the gpu or 
+3. there is some implicit synchronization between these tasks (very possible since the render does render the buffer written from compute)
+
 I might be able to create some abstraction that might or might not start the a gpu compute task from a background thread
 
 Consider that moving any (? certainly CommandEncoder, Device, Buffer etc) between threads is forbidden on the web:
