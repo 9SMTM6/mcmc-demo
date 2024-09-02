@@ -20,7 +20,7 @@ impl Default for PointDisplay {
             accept_color: Color32::RED,
             lowest_alpha: 0.3,
             radius: 3.0,
-            reject_display: Some(Color32::YELLOW),
+            reject_display: None,
         }
     }
 }

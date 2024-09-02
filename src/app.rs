@@ -250,7 +250,7 @@ impl eframe::App for McmcDemo {
                                 point_display.reject_display = None;
                             }
                         } else if ui.button("display rejections").clicked() {
-                            point_display.reject_display = PointDisplay::default().reject_display;
+                            point_display.reject_display = Some(egui::Color32::YELLOW);
                         };
                         let mut accept_color_fullspace =
                             egui::Rgba::from(point_display.accept_color).to_array();
