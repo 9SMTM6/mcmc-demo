@@ -12,11 +12,15 @@ const STATIC_FILES_REGEX = [
 // Fetch event: Serve cached files, and cache new ones with hashes
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
-
+    console.log(`intercepting fetch ${url}`);
+    console.log(url.origin)
+    console.log(location.origin)
+    
     if (url.origin === location.origin) {
         const matchingRegex = STATIC_FILES_REGEX.find(regex => regex.test(url.pathname));
 
         if (matchingRegex) {
+            console.log("serving cached resource");
             event.respondWith(
                 caches.match(event.request).then((cachedResponse) => {
                     // If cached, return it
@@ -33,6 +37,7 @@ self.addEventListener('fetch', (event) => {
                 })
             );
         } else {
+            console.log("caching new resource");
             // Handle other requests normally (or apply different caching strategy)
             event.respondWith(fetch(event.request));
         }
