@@ -91,7 +91,9 @@ tracing-subscriber = { version = "0.3.18", optional = true, features = [
     "time",
 ] }
 type-map = "0.5.0"
-wasm_thread = "0.3.0"
+wasm_thread = { version = "0.3.0", default-features = false, features = [
+    "es_modules",
+] }
 wgpu = { version = "22.1", features = ["webgpu"] }
 
 # native:
@@ -136,6 +138,7 @@ eframe = { git = "https://github.com/9smtm6/egui", branch = "patched" }
 egui = { git = "https://github.com/9smtm6/egui", branch = "patched" }
 
 wgsl_to_wgpu = { git = "https://github.com/9SMTM6/wgsl_to_wgpu", branch = "clean_patched" }
+wasm_thread = { git = "https://github.com/9SMTM6/wasm_thread", branch = "configurable_polyfill" }
 # wgsl_to_wgpu = { path = "../wgsl_to_wgpu/wgsl_to_wgpu" }
 # wgpu = { git = "https://github.com/9smtm6/wgpu", branch = "patched" }
 

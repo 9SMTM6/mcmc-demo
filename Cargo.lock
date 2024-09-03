@@ -3265,8 +3265,7 @@ checksum = "c62a0a307cb4a311d3a07867860911ca130c3494e8c2719593806c08bc5d0484"
 [[package]]
 name = "wasm_thread"
 version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "22bc95de7e96023c115820c1b87504cdd316ed958d2dfb97dca502cc6e5772a1"
+source = "git+https://github.com/9SMTM6/wasm_thread?branch=configurable_polyfill#ed5127711cff37beb74df5e3336d9bf451ce5b60"
 dependencies = [
  "futures",
  "js-sys",
