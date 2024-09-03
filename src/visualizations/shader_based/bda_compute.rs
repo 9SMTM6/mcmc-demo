@@ -1,6 +1,7 @@
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
 use wgpu::{
-    Buffer, BufferDescriptor, BufferUsages, CommandEncoderDescriptor, ComputePassDescriptor, ComputePipeline, ComputePipelineDescriptor, RenderPipeline, RenderPipelineDescriptor
+    Buffer, BufferDescriptor, BufferUsages, CommandEncoderDescriptor, ComputePassDescriptor,
+    ComputePipeline, ComputePipelineDescriptor, RenderPipeline, RenderPipelineDescriptor,
 };
 
 use crate::{
@@ -250,7 +251,9 @@ impl CallbackTrait for RenderCall {
             // Unsure how to achieve this. I was hoping having a separate commandencoder would siffice, but evidently not.
             // AFAIK sharing buffers isnt gonna work with separate queues, as the way to get a queue is bundled with the device creation. Both are created from the adapter.
             // Aside that, its also annoying, since I either need to coordinate things, or I need to smuggle the new device and queue in here.
-            let mut compute_encoder = device.create_command_encoder(&CommandEncoderDescriptor { label: Some(file!()) });
+            let mut compute_encoder = device.create_command_encoder(&CommandEncoderDescriptor {
+                label: Some(file!()),
+            });
             let mut compute_pass = compute_encoder.begin_compute_pass(&ComputePassDescriptor {
                 label: Some(file!()),
                 timestamp_writes: None,
@@ -270,7 +273,7 @@ impl CallbackTrait for RenderCall {
             // I dont understand precisely why, but this is required.
             // It must do some management in the drop impl.
             drop(compute_pass);
-            command_buffers.push(compute_encoder.finish())
+            command_buffers.push(compute_encoder.finish());
         }
         queue.write_buffer(
             target_buffer,
