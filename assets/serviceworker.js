@@ -20,9 +20,10 @@ self.addEventListener('fetch', (event) => {
     
     if (url.origin === location.origin) {
         const matchingFilename = UNHASHED_FILES.find(filename => url.pathname === filename);
-        const matchingRegexOrFilename = matchingFilename ?? HASHED_FILES.find(regex => regex.test(url.pathname));
+        const matchingRegexOrFilename = matchingFilename || HASHED_FILES.find(regex => regex.test(url.pathname));
         
         if (matchingRegexOrFilename) {
+            // "async block" via IIFE
             const resolvedPromise = (async () => {
                 const cachedResponse = await caches.match(event.request);
                 if (cachedResponse) {
@@ -35,17 +36,20 @@ self.addEventListener('fetch', (event) => {
                     if (!networkResponse.ok) {
                         return cachedResponse;
                     }
+                    // we leave the cache update dangling, no need to wait for that.
                     caches.open(CACHE_NAME).then((cache) => {
-                        cache.put(event.request, networkResponse.clone());
+                        // I don't clone here as, from my undersanding, this should reliably be executed after the return of the function.
+                        // So after the original request was already cloned sucessfully.
+                        cache.put(event.request, networkResponse);
                     });
-                    return networkResponse;
+                    return networkResponse.clone();
                 }
-                const [cache, networkResponse] = await Promise.all([
-                    caches.open(CACHE_NAME),
-                    fetch(event.request),
-                ]);
-                cache.put(event.request, networkResponse.clone());
-                return networkResponse;
+                const networkResponse = await fetch(event.request);
+                // we leave the cache update dangling, no need to wait for that.
+                caches.open(CACHE_NAME).then((cache) => {
+                    cache.put(event.request, networkResponse);
+                });
+                return networkResponse.clone();
             })();
             event.respondWith(resolvedPromise);
         } else {
