@@ -139,9 +139,7 @@
         // Register Service Worker. this will cache the wasm / js scripts for offline use (for PWA functionality).
         // Force refresh (Ctrl + F5) to load the latest files instead of cached files 
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('serviceworker.js').then((registration) => registration.update());
-            });
+            navigator.serviceWorker.register('serviceworker.js').then((registration) => registration.update());
         }
     </script>
 </head>
