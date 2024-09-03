@@ -1,5 +1,6 @@
 const CACHE_NAME = 'mmcmc-demo-v1';
 const STATIC_FILES_REGEX = [
+    /^\/$/,
     /^\/(index\.html)$/,
     /^\/mcmc-demo-[a-f0-9]{16}_bg\.wasm$/,
     /^\/mcmc-demo-[a-f0-9]{16}\.js$/,
