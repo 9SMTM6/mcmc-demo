@@ -9,13 +9,17 @@ const STATIC_FILES_REGEX = [
     /^\/manifest.json$/,
 ];
 
+self.addEventListener('install', function (event) {
+    console.log('Installing new service worker', event)
+})
+
 // Fetch event: Serve cached files, and cache new ones with hashes
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
     console.log(`intercepting fetch ${url}`);
     console.log(url.origin)
     console.log(location.origin)
-    
+
     if (url.origin === location.origin) {
         const matchingRegex = STATIC_FILES_REGEX.find(regex => regex.test(url.pathname));
 
@@ -49,6 +53,7 @@ self.addEventListener('fetch', (event) => {
 
 // Activate event: Clean up old caches
 self.addEventListener('activate', (event) => {
+    self.clients.claim();
     event.waitUntil(
         caches.keys().then((cacheNames) => {
             return Promise.all(
