@@ -45,9 +45,11 @@ self.addEventListener('fetch', (event) => {
                 }
                 const networkResponse = await fetch(event.request);
                 // we leave the cache update dangling, no need to wait for that.
-                caches.open(CACHE_NAME).then((cache) => {
-                    cache.put(event.request, networkResponse);
-                });
+                if (networkResponse.ok) {
+                    caches.open(CACHE_NAME).then((cache) => {
+                        cache.put(event.request, networkResponse);
+                    });    
+                } 
                 return networkResponse.clone();
             })());
         }
