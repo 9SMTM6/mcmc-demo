@@ -32,3 +32,9 @@ ci_typo:
 ci_qa: ci_fmt ci_cargo_deny ci_typo
 
 ci: ci_qa ci_required_for_deploy
+
+trunk_fat: patch_fat_html
+    trunk serve --config Trunk.fat.toml
+
+trunk_slim:
+    trunk serve
