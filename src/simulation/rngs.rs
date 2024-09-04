@@ -1,4 +1,4 @@
-use std::borrow::Borrow;
+use std::{borrow::Borrow, fmt::Display};
 
 use egui::Slider;
 use rand::Rng;
@@ -260,6 +260,12 @@ impl WrappedRngDiscriminants {
     }
 }
 
+impl Display for WrappedRngDiscriminants {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.display_name())
+    }
+}
+
 // TODO: actually remove the enum in here and use the raw RNG. Should be possible.
 // But I've spend enough time on this for now, so I'll get to it whenever I do.
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
@@ -341,26 +347,30 @@ impl WrappedRng {
             seed: u64,
         }
 
-        let mut current_settings =
-            ui.temp_ui_state::<Settings>()
-                .with_id(id)
-                .get()
-                .unwrap_or(Settings {
+        let current_settings = ui.temp_ui_state::<Settings>().with_id(id).get();
+
+        if let Some(mut current_settings) = current_settings {
+            current_settings.discr.selection_ui(ui);
+            // If I set this to u64::MAX to provide all options, its not realistically possible to select many values.
+            ui.add(Slider::new(&mut current_settings.seed, 0..=300).text("Seed"));
+
+            if ui.button("apply").clicked() {
+                *self = current_settings.discr.seed_from_u64(current_settings.seed);
+                ui.temp_ui_state::<Settings>().with_id(id).remove();
+            } else {
+                ui.temp_ui_state::<Settings>()
+                    .with_id(id)
+                    .set_or_create(current_settings);
+            }
+        } else {
+            let current_rng_setting = WrappedRngDiscriminants::from(self.borrow());
+            ui.label("Current RNG:");
+            if ui.button(format!("{current_rng_setting}")).clicked() {
+                ui.temp_ui_state::<Settings>().with_id(id).create(Settings {
                     discr: WrappedRngDiscriminants::from(self.borrow()),
                     seed: 42,
                 });
-
-        current_settings.discr.selection_ui(ui);
-        // If I set this to u64::MAX to provide all options, its not realistically possible to select many values.
-        ui.add(Slider::new(&mut current_settings.seed, 0..=300).text("Seed"));
-
-        if ui.button("apply").clicked() {
-            *self = current_settings.discr.seed_from_u64(current_settings.seed);
-            ui.temp_ui_state::<Settings>().with_id(id).remove();
-        } else {
-            ui.temp_ui_state::<Settings>()
-                .with_id(id)
-                .set_or_create(current_settings);
+            }
         }
     }
 }
