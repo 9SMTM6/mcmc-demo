@@ -23,8 +23,7 @@ self.addEventListener('fetch', (event) => {
         const matchingRegexOrFilename = matchingFilename || HASHED_FILES.find(regex => regex.test(url.pathname));
         
         if (matchingRegexOrFilename) {
-            // "async block" via IIFE
-            const resolvedPromise = (async () => {
+            event.respondWith((async () => {
                 const cachedResponse = await caches.match(event.request);
                 if (cachedResponse) {
                     // if its a hashed file, returning it is (pretty much, exclusing hash conflicts which I'll ignore) save to just serve the cached file.
@@ -50,15 +49,9 @@ self.addEventListener('fetch', (event) => {
                     cache.put(event.request, networkResponse);
                 });
                 return networkResponse.clone();
-            })();
-            event.respondWith(resolvedPromise);
-        } else {
-            // Handle other requests normally (or apply different caching strategy)
-            event.respondWith(fetch(event.request));
+            })());
         }
-    } else {
-        // Handle third-party requests normally
-        event.respondWith(fetch(event.request));
+        // If we don't invoke `event.respondWith` then the original fetch goes ahead unperturbed. 
     }
 });
 
