@@ -123,6 +123,7 @@ impl eframe::App for McmcDemo {
             ui.horizontal(|ui| {
                 if ui.button("Reset State").clicked() {
                     *self = Default::default();
+                    ui.data_mut(|type_map| type_map.clear());
                 }
                 #[cfg(feature = "profile")]
                 {
@@ -227,6 +228,10 @@ impl eframe::App for McmcDemo {
                         existing.is_none(),
                         "ought to be prevented from overriding this by UI logic"
                     );
+                }
+                if ui.button("reset simulation").clicked() {
+                    self.local_resources.remove::<BatchJob>();
+                    self.algo.history = Rwmh::default().history;
                 }
                 ui.collapsing("background display", |ui| {
                     let prev_bg = BackgroundDisplayDiscr::from(&self.background_display);
