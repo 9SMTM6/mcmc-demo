@@ -1,7 +1,19 @@
+//! Entrypoint for native application and also web (wasm32).
+//! This initializes things like the logging infrastructure and some permanent resources such as executors and wires up custom panic handlers - to show panics on the website.
+//! 
+//! While I give my best to keep things unified between web and native, there are a few significant differences between the execution that show in here:
+//! 
+//! 1. WebGPU isnt thread safe on the web, and using it from a background thread is even far less well supported then webgpu itself is.
+//! 2. eframe Initialization APIs differ significantly on web and native. 
+//!    On the web it requires async and doesn't block (the main function exits, having spawned an eframe event loop that will keep going),
+//!    on native eframe requires a blocking call that runs the event loop in place.
+//! 3. This, combined with the cooperative multitasking from embassy-rs, 
+//!    means that I need to have embassy in a background thread on native (unless I manage to integrate embassy and eframex event loops, unlikely),
+//!    while on the web it can't be in a background thread for compatibility reasons.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
 use embassy_time::Timer;
-use embassy_executor::{Executor, Spawner};
+use embassy_executor::Executor;
 
 #[embassy_executor::task]
 pub async fn ticker() {
@@ -17,10 +29,27 @@ pub async fn ticker() {
 #[cfg(feature = "tracing")]
 const DEFAULT_TRACE_LEVEL: Option<&'static str> = Some("wgpu_core=warn,wgpu_hal=warn,info");
 
+#[cfg(target_arch = "wasm32")]
+// If I use:
+// #[embassy_executor::main]
+// on the web I get compilation issues due to multiple instances of main being around.
+// This is caused by that attribute being written for the 'usual' case of a library entrypoint, which isn't how trunk does things.
+// I could move things into lib.rs, but then I get larger differences between native and web.
+// Thus this loader function instead, which loads a 'main' task.
+fn main() {
+    // Need &'static mut, this is the easiest way. If that gets to be an issue theres the alternative static_cell, or unsafe with a mut static.
+    let executor = Box::leak(Box::new(Executor::new()));
+    // Don't ask me why they're are named differently. They do the same AFAICT.
+    executor.start(|spawner| {
+        spawner.spawn(wasm_main_task(spawner)).unwrap();
+    });
+}
+
 // When compiling to web using trunk:
 #[cfg(target_arch = "wasm32")]
+// If I use 
 #[embassy_executor::task]
-async fn main_task(spawner: Spawner) {
+async fn wasm_main_task(spawner: embassy_executor::Spawner) {
     // let mut executor = embassy_executor::Executor::new();
     // executor.start(|spawner: Spawner| {
     //     spawner.spawn(ticker()).unwrap();        
@@ -67,8 +96,7 @@ async fn main_task(spawner: Spawner) {
 
 // When compiling natively:
 #[cfg(not(target_arch = "wasm32"))]
-#[embassy_executor::task]
-pub async fn main_task(spawner: Spawner) {
+pub fn main() {
     use egui::IconData;
     use mcmc_demo::INITIAL_RENDER_SIZE;
     
@@ -78,14 +106,15 @@ pub async fn main_task(spawner: Spawner) {
     mcmc_demo::set_default_and_redirect_log(mcmc_demo::define_subscriber(DEFAULT_TRACE_LEVEL));
     #[cfg(not(feature = "tracing"))]
     env_logger::init();
+
+    wasm_thread::spawn(|| {
+        // Need &'static mut, this is the easiest way. If that gets to be an issue theres the alternative static_cell, or unsafe with a mut static.
+        let executor = Box::leak(Box::new(Executor::new()));
+        executor.run(|spawner| {
+            spawner.spawn(ticker()).unwrap();
+        });
+    });
     
-    spawner.spawn(ticker()).unwrap();
-    
-    // TODO: this is the cause of the execution failure of the executor.
-    // It blocks the executor from starting, since `run_native` never returns.
-    // Moving this to another thread doesn't work, since I can't start a UI application from that.
-    // So likely I will have to move the executor spawn to another thread, though I'm somewhat unwilling to do so right now,
-    // as that means I can't use async during initialization of the application.
     let native_options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
         .with_min_inner_size(INITIAL_RENDER_SIZE)
@@ -103,18 +132,4 @@ pub async fn main_task(spawner: Spawner) {
         native_options,
         Box::new(|cc| Ok(Box::new(mcmc_demo::McmcDemo::new(cc)))),
     ).unwrap();
-}
-
-fn main() {
-    // was using static-cell, but I want to avoid that dependency.
-    let executor = Box::leak(Box::new(Executor::new()));
-    // Don't ask me why they're are named differently. They do the same AFAICT.
-    #[cfg(target_arch = "wasm32")]
-    executor.start(|spawner| {
-        spawner.spawn(main_task(spawner)).unwrap();
-    });
-    #[cfg(not(target_arch = "wasm32"))]
-    executor.run(|spawner| {
-        spawner.spawn(main_task(spawner)).unwrap();
-    });
 }
