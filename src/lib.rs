@@ -18,18 +18,9 @@ use embassy_time::Timer;
 use embassy_executor::Spawner;
 
 #[embassy_executor::task]
-async fn ticker() {
-    let window = web_sys::window().expect("no global `window` exists");
-
+pub async fn ticker() {
     let mut counter = 0;
     loop {
-        let document = window.document().expect("should have a document on window");
-        let list = document.get_element_by_id("log").expect("should have a log element");
-
-        let li = document.create_element("li").expect("error creating list item element");
-        li.set_text_content(Some(&format!("tick {}", counter)));
-
-        list.append_child(&li).expect("error appending list item");
         log::info!("tick {}", counter);
         counter += 1;
 
@@ -41,6 +32,7 @@ async fn ticker() {
 const DEFAULT_TRACE_LEVEL: Option<&'static str> = Some("wgpu_core=warn,wgpu_hal=warn,info");
 
 // When compiling to web using trunk:
+#[cfg(target_arch = "wasm32")]
 #[embassy_executor::main]
 async fn main(spawner: Spawner) {
     // let mut executor = embassy_executor::Executor::new();
@@ -87,4 +79,38 @@ async fn main(spawner: Spawner) {
             .unwrap();
     });
     remove_loading_state();
+}
+
+// When compiling natively:
+#[cfg(not(target_arch = "wasm32"))]
+pub async fn main(spawner: Spawner) {
+    use egui::IconData;
+    use crate::INITIAL_RENDER_SIZE;
+
+    // Log or trace to stderr (if you run with `RUST_LOG=debug`).
+    // tracing has more and precise scope information, and works well with multithreading, where regular logging as a single threaded approach breaks.
+    #[cfg(feature = "tracing")]
+    crate::set_default_and_redirect_log(crate::define_subscriber(DEFAULT_TRACE_LEVEL));
+    #[cfg(not(feature = "tracing"))]
+    env_logger::init();
+
+    spawner.spawn(ticker()).unwrap();
+
+    let native_options = eframe::NativeOptions {
+        viewport: egui::ViewportBuilder::default()
+            .with_min_inner_size(INITIAL_RENDER_SIZE)
+            .with_icon(
+                // Not keen on converting the svg to a png on top.
+                // Not as if this currently works under wayland anyways.
+                IconData::default(), // NOTE: Adding an icon is optional
+                                     // eframe::icon_data::from_png_bytes(&include_bytes!("../assets/icon-256.png")[..])
+                                     //     .expect("Failed to load icon"),
+            ),
+        ..Default::default()
+    };
+    eframe::run_native(
+        "mcmc-demo",
+        native_options,
+        Box::new(|cc| Ok(Box::new(crate::McmcDemo::new(cc)))),
+    ).unwrap();
 }
