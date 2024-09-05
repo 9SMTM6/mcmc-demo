@@ -29,6 +29,46 @@ pub async fn ticker() {
 #[cfg(feature = "tracing")]
 const DEFAULT_TRACE_LEVEL: Option<&'static str> = Some("wgpu_core=warn,wgpu_hal=warn,info");
 
+// When compiling natively:
+#[cfg(not(target_arch = "wasm32"))]
+pub fn main() {
+    use egui::IconData;
+    use mcmc_demo::INITIAL_RENDER_SIZE;
+    
+    // Log or trace to stderr (if you run with `RUST_LOG=debug`).
+    // tracing has more and precise scope information, and works well with multithreading, where regular logging as a single threaded approach breaks.
+    #[cfg(feature = "tracing")]
+    mcmc_demo::set_default_and_redirect_log(mcmc_demo::define_subscriber(DEFAULT_TRACE_LEVEL));
+    #[cfg(not(feature = "tracing"))]
+    env_logger::init();
+
+    wasm_thread::spawn(|| {
+        // Need &'static mut, this is the easiest way. If that gets to be an issue theres the alternative static_cell, or unsafe with a mut static.
+        let executor = Box::leak(Box::new(Executor::new()));
+        executor.run(|spawner| {
+            spawner.spawn(ticker()).unwrap();
+        });
+    });
+    
+    let native_options = eframe::NativeOptions {
+        viewport: egui::ViewportBuilder::default()
+        .with_min_inner_size(INITIAL_RENDER_SIZE)
+        .with_icon(
+            // Not keen on converting the svg to a png on top.
+            // Not as if this currently works under wayland anyways.
+            IconData::default(), // NOTE: Adding an icon is optional
+            // eframe::icon_data::from_png_bytes(&include_bytes!("../assets/icon-256.png")[..])
+            //     .expect("Failed to load icon"),
+        ),
+        ..Default::default()
+    };
+    eframe::run_native(
+        "mcmc-demo",
+        native_options,
+        Box::new(|cc| Ok(Box::new(mcmc_demo::McmcDemo::new(cc)))),
+    ).unwrap();
+}
+
 #[cfg(target_arch = "wasm32")]
 // If I use:
 // #[embassy_executor::main]
@@ -92,44 +132,4 @@ async fn wasm_main_task(spawner: embassy_executor::Spawner) {
     })
     .unwrap();
     remove_loading_state();
-}
-
-// When compiling natively:
-#[cfg(not(target_arch = "wasm32"))]
-pub fn main() {
-    use egui::IconData;
-    use mcmc_demo::INITIAL_RENDER_SIZE;
-    
-    // Log or trace to stderr (if you run with `RUST_LOG=debug`).
-    // tracing has more and precise scope information, and works well with multithreading, where regular logging as a single threaded approach breaks.
-    #[cfg(feature = "tracing")]
-    mcmc_demo::set_default_and_redirect_log(mcmc_demo::define_subscriber(DEFAULT_TRACE_LEVEL));
-    #[cfg(not(feature = "tracing"))]
-    env_logger::init();
-
-    wasm_thread::spawn(|| {
-        // Need &'static mut, this is the easiest way. If that gets to be an issue theres the alternative static_cell, or unsafe with a mut static.
-        let executor = Box::leak(Box::new(Executor::new()));
-        executor.run(|spawner| {
-            spawner.spawn(ticker()).unwrap();
-        });
-    });
-    
-    let native_options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default()
-        .with_min_inner_size(INITIAL_RENDER_SIZE)
-        .with_icon(
-            // Not keen on converting the svg to a png on top.
-            // Not as if this currently works under wayland anyways.
-            IconData::default(), // NOTE: Adding an icon is optional
-            // eframe::icon_data::from_png_bytes(&include_bytes!("../assets/icon-256.png")[..])
-            //     .expect("Failed to load icon"),
-        ),
-        ..Default::default()
-    };
-    eframe::run_native(
-        "mcmc-demo",
-        native_options,
-        Box::new(|cc| Ok(Box::new(mcmc_demo::McmcDemo::new(cc)))),
-    ).unwrap();
 }
