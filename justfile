@@ -36,5 +36,9 @@ ci: ci_qa ci_required_for_deploy
 trunk_fat: patch_fat_html
     trunk serve --config Trunk.fat.toml
 
+alias tf := trunk_fat
+
 trunk_slim:
     trunk serve
+
+alias ts := trunk_slim
