@@ -19,7 +19,8 @@ use super::fullscreen_quad;
 create_shader_module!("diff_display.fragment");
 
 use shader_bindings::{
-    bind_groups::{BindGroup0, BindGroup1, }, BindGroupLayout0, BindGroupLayout1, RWMHAcceptRecord, RWMHCountInfo, ResolutionInfo
+    bind_groups::{BindGroup0, BindGroup1},
+    BindGroupLayout0, BindGroupLayout1, RWMHAcceptRecord, RWMHCountInfo, ResolutionInfo,
 };
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]

@@ -16,7 +16,8 @@ use crate::create_shader_module;
 create_shader_module!("multimodal_gaussian.fragment");
 
 use shader_bindings::{
-    bind_groups::{BindGroup0, BindGroup1}, BindGroupLayout0, BindGroupLayout1, ResolutionInfo
+    bind_groups::{BindGroup0, BindGroup1},
+    BindGroupLayout0, BindGroupLayout1, ResolutionInfo,
 };
 
 pub use shader_bindings::NormalDistribution;
