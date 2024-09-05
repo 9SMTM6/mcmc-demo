@@ -16,8 +16,7 @@ use crate::create_shader_module;
 create_shader_module!("multimodal_gaussian.fragment");
 
 use shader_bindings::{
-    bind_groups::{BindGroup0, BindGroup1, BindGroupEntries0, BindGroupEntries1},
-    ResolutionInfo,
+    bind_groups::{BindGroup0, BindGroup1}, BindGroupLayout0, BindGroupLayout1, ResolutionInfo
 };
 
 pub use shader_bindings::NormalDistribution;
@@ -114,14 +113,14 @@ impl TargetDistribution {
 
         let bind_group_0 = BindGroup0::from_bindings(
             device,
-            BindGroupEntries0 {
+            BindGroupLayout0 {
                 resolution_info: resolution_buffer.as_entire_buffer_binding(),
             },
         );
 
         let bind_group_1 = BindGroup1::from_bindings(
             device,
-            BindGroupEntries1 {
+            BindGroupLayout1 {
                 gauss_bases: normdistr_buffer.as_entire_buffer_binding(),
             },
         );
@@ -213,7 +212,7 @@ impl CallbackTrait for RenderCall {
         // > Avoid creating new bind groups during rendering if possible for best performance.
         *bind_group_1 = BindGroup1::from_bindings(
             device,
-            BindGroupEntries1 {
+            BindGroupLayout1 {
                 gauss_bases: target_buffer.as_entire_buffer_binding(),
             },
         );

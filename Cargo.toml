@@ -66,8 +66,9 @@ rng_xorshift = ["dep:rand_xorshift"]
 [dependencies]
 bytemuck = { version = "1.16.0" }
 # fixes linking issue https://github.com/rust-embedded/critical-section/issues/41
-# caused by embassy-executor.
-# Only observed on execution of wasm-bindgen generated JS.
+# Upstream fix PR: https://github.com/embassy-rs/embassy/pull/3312
+# can be removed after that is released.
+# Can't do this with a patch on embassy-executor, since that would require all embassy-* crates to be patched, and this is easier to follow.s
 critical-section = { version = "1.1.3", features = ["std"] }
 eframe = { version = "0.28.1", default-features = false, features = [
     "wgpu",
@@ -124,7 +125,7 @@ embassy-executor = { version = "0.6.0", features = ["arch-wasm", "executor-threa
 miette = { version = "7.2.0", features = ["fancy"] }
 regex = "1.10.6"
 wgsl_bindgen = "0.15"
-wgsl_to_wgpu = "0.9.0"
+wgsl_to_wgpu = "0.10.1"
 
 [profile.release]
 opt-level = 2 # fast and small wasm
@@ -149,7 +150,8 @@ opt-level = 2
 eframe = { git = "https://github.com/9smtm6/egui", branch = "patched" }
 egui = { git = "https://github.com/9smtm6/egui", branch = "patched" }
 
-wgsl_to_wgpu = { git = "https://github.com/9SMTM6/wgsl_to_wgpu", branch = "clean_patched" }
+# Patches out a polyfill, since I need way more modern browsers anyways.
+# Upstream PR: https://github.com/chemicstry/wasm_thread/pull/26
 wasm_thread = { git = "https://github.com/9SMTM6/wasm_thread", branch = "configurable_polyfill" }
 # wgsl_to_wgpu = { path = "../wgsl_to_wgpu/wgsl_to_wgpu" }
 # wgpu = { git = "https://github.com/9smtm6/wgpu", branch = "patched" }

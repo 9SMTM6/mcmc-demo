@@ -122,14 +122,14 @@ impl BDAComputeDiff {
 
         let compute_group_0 = compute_bindings::BindGroup0::from_bindings(
             device,
-            compute_bindings::BindGroupEntries0 {
+            compute_bindings::BindGroupLayout0 {
                 resolution_info: resolution_buffer.as_entire_buffer_binding(),
             },
         );
 
         let compute_group_1 = compute_bindings::bind_groups::BindGroup1::from_bindings(
             device,
-            compute_bindings::BindGroupEntries1 {
+            compute_bindings::BindGroupLayout1 {
                 accepted: approx_accepted_buffer.as_entire_buffer_binding(),
                 count_info: approx_info_buffer.as_entire_buffer_binding(),
                 compute_output: compute_output_buffer.as_entire_buffer_binding(),
@@ -138,14 +138,14 @@ impl BDAComputeDiff {
 
         let fragment_group_0 = fragment_bindings::BindGroup0::from_bindings(
             device,
-            fragment_bindings::bind_groups::BindGroupEntries0 {
+            fragment_bindings::bind_groups::BindGroupLayout0 {
                 resolution_info: resolution_buffer.as_entire_buffer_binding(),
             },
         );
 
         let fragment_group_1 = fragment_bindings::BindGroup1::from_bindings(
             device,
-            fragment_bindings::BindGroupEntries1 {
+            fragment_bindings::BindGroupLayout1 {
                 gauss_bases: target_buffer.as_entire_buffer_binding(),
                 compute_output: compute_output_buffer.as_entire_buffer_binding(),
             },
@@ -261,7 +261,7 @@ impl CallbackTrait for RenderCall {
             compute_pass.set_pipeline(compute_pipeline);
             *compute_group_1 = compute_bindings::BindGroup1::from_bindings(
                 device,
-                compute_bindings::BindGroupEntries1 {
+                compute_bindings::BindGroupLayout1 {
                     compute_output: compute_output_buffer.as_entire_buffer_binding(),
                     accepted: approx_accepted_buffer.as_entire_buffer_binding(),
                     count_info: approx_info_buffer.as_entire_buffer_binding(),
@@ -284,7 +284,7 @@ impl CallbackTrait for RenderCall {
         // If that actually speeds things up, I dunno.
         *fragment_group_1 = fragment_bindings::BindGroup1::from_bindings(
             device,
-            fragment_bindings::BindGroupEntries1 {
+            fragment_bindings::BindGroupLayout1 {
                 compute_output: compute_output_buffer.as_entire_buffer_binding(),
                 gauss_bases: target_buffer.as_entire_buffer_binding(),
             },

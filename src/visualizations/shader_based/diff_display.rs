@@ -19,8 +19,7 @@ use super::fullscreen_quad;
 create_shader_module!("diff_display.fragment");
 
 use shader_bindings::{
-    bind_groups::{BindGroup0, BindGroup1, BindGroupEntries0, BindGroupEntries1},
-    RWMHAcceptRecord, RWMHCountInfo, ResolutionInfo,
+    bind_groups::{BindGroup0, BindGroup1, }, BindGroupLayout0, BindGroupLayout1, RWMHAcceptRecord, RWMHCountInfo, ResolutionInfo
 };
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
@@ -122,14 +121,14 @@ impl BDADiff {
 
         let bind_group_0 = BindGroup0::from_bindings(
             device,
-            BindGroupEntries0 {
+            BindGroupLayout0 {
                 resolution_info: resolution_buffer.as_entire_buffer_binding(),
             },
         );
 
         let bind_group_1 = BindGroup1::from_bindings(
             device,
-            BindGroupEntries1 {
+            BindGroupLayout1 {
                 accepted: approx_accepted_buffer.as_entire_buffer_binding(),
                 count_info: approx_info_buffer.as_entire_buffer_binding(),
                 gauss_bases: normdistr_buffer.as_entire_buffer_binding(),
@@ -226,7 +225,7 @@ impl CallbackTrait for RenderCall {
         // If that actually speeds things up, I dunno.
         *bind_group_1 = BindGroup1::from_bindings(
             device,
-            BindGroupEntries1 {
+            BindGroupLayout1 {
                 accepted: approx_accepted_buffer.as_entire_buffer_binding(),
                 count_info: approx_info_buffer.as_entire_buffer_binding(),
                 gauss_bases: target_buffer.as_entire_buffer_binding(),
