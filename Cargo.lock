@@ -1798,7 +1798,6 @@ dependencies = [
  "tracing-web",
  "type-map",
  "wasm-bindgen",
- "wasm-bindgen-futures",
  "wasm_thread",
  "web-sys",
  "wgpu",
