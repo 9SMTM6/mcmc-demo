@@ -2,7 +2,7 @@
 
 ## Current progress blockers:
 
-* [Fixedish, still needs search-replace code] wgpu pipeline-overridable constants are not supported on glsl-out
+* [Fixedish, still needs search-replace code] ~~wgpu pipeline-overridable constants are not supported on glsl-out~~
   * but that is required via https://github.com/gfx-rs/wgpu/blob/7b4cbc26192d6d56a31f8e67769e656a6627b222/wgpu/Cargo.toml#L148C1-L151C20 (maybe removable via patch?)
   * issue: https://github.com/gfx-rs/wgpu/issues/3514
   * this is what I considered for the compute shader to set the compute_group dimensions.
@@ -12,7 +12,7 @@
     * actually, from my understanding, fixing this for naga wont fix the issue for naga_oil, since naga_oil wants to use naga as a preprocessor.
   * [wgsl-bindgen issue](https://github.com/Swoorup/wgsl-bindgen/issues/39)
   * [naga_oil issue](https://github.com/bevyengine/naga_oil/issues/102)
-* [Fixedish] using shared memory multithreading on the web is blocked by https://github.com/emilk/egui/issues/4914
+* [Fixedish] ~~using shared memory multithreading on the web is blocked by https://github.com/emilk/egui/issues/4914~~
   * currently using a patched version
   * reverts relevant changes from: https://github.com/emilk/egui/pull/3595/commits/c5746dbd37a31d9a90c8987449b4089eb910ad8c
 
@@ -42,14 +42,14 @@ I currently envison this approach (lets see how much of this I'll get):
 
 #### Current Plan:
 
-1. test whether its possible to use webgpu in a background thread in chrome linux
+1. ~~test whether its possible to use webgpu in a background thread in chrome linux~~ (embassy-rs, my currently chosen executor - it has synchronization primitives over wasm-bindgen-futures - currently doesnt work on webworkers. [Issue](https://github.com/embassy-rs/embassy/issues/3313)).
 2. if thats possible create 2 features, where exactly ONE of these must be selected (well, if both are selected fallback to... one of them, probably promise stuff, and add an error if no feature was selected, see [reference](https://doc.rust-lang.org/cargo/reference/features.html#mutually-exclusive-features)):
   * For web: create a promise for each task (I think it needs to be one for each) that builds a device and queue from the adapter and then uses that to submit the work. It'll have to use future_to_promise to avoid blocking the main thread. Hopefully communication is going to be possible over channels or similar.
-  * for native, behind flag for web: create a background thread that receives tasks from the main thread and runs them in a single compute queue.
-    * perhaps I can make that stuff cancelable, IDK, would be good.
+  * ~~for native, behind flag for web: create a background thread that receives tasks from the main thread and runs them in a single compute queue.~~
+    * ~~perhaps I can make that stuff cancelable, IDK, would be good.~~ With the synchronization primitives from embassy I can make a persistent background task (web) / thread (native) that sleeps if theres no work.
 3. after the task is done, get the resulting buffer, probably with `wgpu::util::DownloadBuffer::read_buffer`, and sends it over the cpu back to the main thread/gets it somehow out of the promise, where it gets copied to a buffer from its device + queue.
 
-The reason for the 2 pronged approach is the issue of the webgpu access for webworkers. Even if this works for chromium on linux, it probably won't in firefox even after their initial release of webgpu.
+~~The reason for the 2 pronged approach is the issue of the webgpu access for webworkers. Even if this works for chromium on linux, it probably won't in firefox even after their initial release of webgpu.~~
 
 #### Original considerations
 

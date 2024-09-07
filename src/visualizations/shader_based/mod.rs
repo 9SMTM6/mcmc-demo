@@ -3,6 +3,7 @@ pub mod diff_display;
 mod resolution_uniform;
 pub mod target_distr;
 
+pub use bda_compute::ComputeTask as BdaComputeTask;
 pub use resolution_uniform::INITIAL_RENDER_SIZE;
 
 #[macro_export]

@@ -18,6 +18,7 @@ impl ElementSettings {
         ui.temp_ui_state::<Self>().remove();
     }
 
+    #[allow(clippy::missing_panics_doc)]
     pub fn show_if_open(
         gaussians: &mut Vec<NormalDistribution>,
         ui: &egui::Ui,

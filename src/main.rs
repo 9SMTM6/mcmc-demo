@@ -13,18 +13,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
 use embassy_executor::Executor;
-use embassy_time::Timer;
-
-#[embassy_executor::task]
-pub async fn ticker() {
-    let mut counter = 0;
-    loop {
-        log::info!("tick {}", counter);
-        counter += 1;
-
-        Timer::after_secs(1).await;
-    }
-}
 
 #[cfg(feature = "tracing")]
 const DEFAULT_TRACE_LEVEL: Option<&'static str> = Some("wgpu_core=warn,wgpu_hal=warn,info");
@@ -47,7 +35,9 @@ pub fn main() {
         // Need &'static mut, this is the easiest way. If that gets to be an issue theres the alternative static_cell, or unsafe with a mut static.
         let executor = Box::leak(Box::new(Executor::new()));
         executor.run(|spawner| {
-            spawner.spawn(ticker()).unwrap();
+            spawner
+                .spawn(mcmc_demo::gpu_task::gpu_scheduler(spawner))
+                .unwrap();
         });
     });
 
@@ -92,10 +82,6 @@ fn main() {
 // If I use
 #[embassy_executor::task]
 async fn wasm_main_task(spawner: embassy_executor::Spawner) {
-    // let mut executor = embassy_executor::Executor::new();
-    // executor.start(|spawner: Spawner| {
-    //     spawner.spawn(ticker()).unwrap();
-    // });
     use mcmc_demo::html_bindings::*;
 
     // Log or trace to stderr (if you run with `RUST_LOG=debug`).
@@ -112,7 +98,17 @@ async fn wasm_main_task(spawner: embassy_executor::Spawner) {
         console_error_panic_hook::hook(panic_info);
     }));
 
-    spawner.spawn(ticker()).unwrap();
+    // TODO: sending data to that gpu task is proving difficult...
+    // For starters on native this will require layered channels, one Channel to the thread (which will impose Send + Sync!) and one from that thread to the task,
+    // And then theres the issue of the lifetimes of the channel.
+    // Considering how embassy is implemented, its probably not as if it will work with smaller than static lifetimes for any executor related stuff anyways,
+    // So perhaps I will just stick these into globals, which allows me to be static anywhere.
+    // TODO: if this makes sense (I can make the gpu task blocking), consider matching this size to the maximum task in the executor
+    // let _channel = embassy_sync::channel::Channel::<NoopRawMutex, GpuTaskEnum, 4>::new();
+
+    spawner
+        .spawn(mcmc_demo::gpu_task::gpu_scheduler(spawner))
+        .unwrap();
 
     let web_options = eframe::WebOptions::default();
 

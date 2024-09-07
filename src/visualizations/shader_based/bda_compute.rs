@@ -5,7 +5,7 @@ use wgpu::{
 };
 
 use crate::{
-    create_shader_module, simulation::random_walk_metropolis_hastings::Rwmh,
+    create_shader_module, gpu_task::GpuTask, simulation::random_walk_metropolis_hastings::Rwmh,
     target_distributions::multimodal_gaussian::GaussianTargetDistr,
 };
 
@@ -308,5 +308,16 @@ impl CallbackTrait for RenderCall {
         fragment_group_0.set(render_pass);
         fragment_group_1.set(render_pass);
         render_pass.draw(0..fullscreen_quad::NUM_VERTICES, 0..1);
+    }
+}
+
+pub struct ComputeTask;
+
+impl GpuTask for ComputeTask {
+    async fn run(
+        &self,
+        _compute_device: std::rc::Rc<wgpu::Device>,
+        _compute_queue: std::rc::Rc<wgpu::Queue>,
+    ) {
     }
 }

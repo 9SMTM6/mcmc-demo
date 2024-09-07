@@ -5,7 +5,7 @@ pub mod shader_based;
 
 pub use shader_based::{
     bda_compute::BDAComputeDiff, diff_display::BDADiff, target_distr::TargetDistribution,
-    INITIAL_RENDER_SIZE,
+    BdaComputeTask, INITIAL_RENDER_SIZE,
 };
 
 use crate::{
