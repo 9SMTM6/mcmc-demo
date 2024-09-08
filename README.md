@@ -40,6 +40,16 @@ I currently envison this approach (lets see how much of this I'll get):
 
 ### Webgpu background compute
 
+Huh, Just saw this:
+https://docs.rs/tokio/latest/tokio/#wasm-support
+
+That about matches the support from embassy-rs on wasm.
+And tokio is more battle tested and easier to do on native, and has more tooling.
+It will likely be easier in multithreaded environment(?).
+Though it will likely also be heavier, and it looks very unlikely they will ever support properly sleeping in tasks, which MIGHT happen with other RTs.
+
+smol-rs and async-std also have so so support, but I decided to not use these after seeing specific issues, IIRC smol will panic on web workers.
+
 #### Current Plan:
 
 1. ~~test whether its possible to use webgpu in a background thread in chrome linux~~ (embassy-rs, my currently chosen executor - it has synchronization primitives over wasm-bindgen-futures - currently doesnt work on webworkers. [Issue](https://github.com/embassy-rs/embassy/issues/3313)).

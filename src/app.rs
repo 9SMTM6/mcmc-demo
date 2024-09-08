@@ -28,6 +28,9 @@ pub struct McmcDemo {
     // TODO: to make things more modular, switch to a composite struct for the simulation.
     // That struct will hold the algo, the data, the rngs and maybe the display (or an vector of displays, pointdisplay, targetdistr display, diff display).
     // It'll then implement legal transitions, e.g. changing the target distribution will lead to data reset etc.
+    // TODO: I need to figure out how to manage this without excessive copies everywhere.
+    // Perhaps stick it in a Cow wrapper...
+    // Or Arc with make_mut. Then I'd maybe want to stick data elsewhere with weak refs...
     algo: Rwmh,
     point_display: Option<PointDisplay>,
     target_distr: GaussianTargetDistr,

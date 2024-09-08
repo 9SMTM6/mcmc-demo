@@ -52,6 +52,7 @@ impl<Final: Send + 'static> BgTaskHandle<Final> {
     /// Panics if task is not finished or panicked
     #[must_use]
     pub fn get_value(self) -> Final {
+        // Not the reason for the breakdown after a panic in thread on web.
         assert!(matches!(self.get_progress(), Progress::Finished));
         self.background_thread.join().expect(
             "

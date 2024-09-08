@@ -93,7 +93,7 @@ async fn wasm_main_task(spawner: embassy_executor::Spawner) {
     eframe::WebLogger::init(log::LevelFilter::Info).ok();
 
     std::panic::set_hook(Box::new(move |panic_info| {
-        try_display_panic(panic_info);
+        try_display_panic_str(&panic_info.to_string());
 
         console_error_panic_hook::hook(panic_info);
     }));

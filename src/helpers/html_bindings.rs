@@ -43,10 +43,6 @@ pub fn show_element_by_id(id: &str) {
         .unwrap();
 }
 
-pub fn try_display_panic(panic_info: &std::panic::PanicHookInfo<'_>) {
-    try_display_panic_str(&panic_info.to_string());
-}
-
 #[allow(clippy::missing_panics_doc)]
 pub fn try_display_panic_str(panic_info: &str) {
     if let Some(el) = get_element_by_id("panic_message") {

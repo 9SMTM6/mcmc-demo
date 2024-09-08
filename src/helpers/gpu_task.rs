@@ -29,15 +29,6 @@ use crate::{visualizations::shader_based::BdaComputeTask, GPU_TASK_CHANNEL};
 register_gpu_tasks!(BdaComputeTask);
 
 #[embassy_executor::task]
-pub async fn run_gpu_task(
-    val: impl GpuTask + 'static,
-    compute_device: Rc<wgpu::Device>,
-    compute_queue: Rc<wgpu::Queue>,
-) {
-    val.run(compute_device, compute_queue).await;
-}
-
-#[embassy_executor::task]
 pub async fn ticker_task() {
     let mut counter = 0;
     loop {
@@ -78,6 +69,7 @@ pub async fn gpu_scheduler(_spawner: embassy_executor::Spawner) {
 
     loop {
         let task = GPU_TASK_CHANNEL.receive().await;
+        log::info!("Recieved GPU task");
         // IDK whether it'd be better to spawn a number of worker tasks that can submit parallel work, or handle parallelism in here.
         // worker tasks with await might be better for backpressure.
         task.run(compute_device.clone(), compute_queue.clone())
