@@ -1,5 +1,5 @@
 use egui::{self, ProgressBar, Shadow, Vec2};
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
 use type_map::TypeMap;
 
 use crate::{
@@ -28,10 +28,7 @@ pub struct McmcDemo {
     // TODO: to make things more modular, switch to a composite struct for the simulation.
     // That struct will hold the algo, the data, the rngs and maybe the display (or an vector of displays, pointdisplay, targetdistr display, diff display).
     // It'll then implement legal transitions, e.g. changing the target distribution will lead to data reset etc.
-    // TODO: I need to figure out how to manage this without excessive copies everywhere.
-    // Perhaps stick it in a Cow wrapper...
-    // Or Arc with make_mut. Then I'd maybe want to stick data elsewhere with weak refs...
-    algo: Rwmh,
+    algo: Arc<Rwmh>,
     point_display: Option<PointDisplay>,
     target_distr: GaussianTargetDistr,
     background_display: BackgroundDisplay,
@@ -165,7 +162,7 @@ impl eframe::App for McmcDemo {
             ctx,
             #[allow(clippy::shadow_unrelated)]
             |ui| {
-                let ProgressMode::Batched { ref mut size } = self.algo.params.progress_mode;
+                let ProgressMode::Batched { ref mut size } = Arc::make_mut(&mut self.algo).params.progress_mode;
                 ui.add(
                     // Safety: the slider begins at 1.
                     unsafe {
@@ -179,7 +176,7 @@ impl eframe::App for McmcDemo {
                     .text("batch size"),
                 );
                 let size = size.get_inner();
-                struct BatchJob(BgTaskHandle<Rwmh>);
+                struct BatchJob(BgTaskHandle<Arc<Rwmh>>);
 
                 let bg_task = self.local_resources.get::<BatchJob>();
                 if let Some(&BatchJob(ref bg_task)) = bg_task {
@@ -187,12 +184,15 @@ impl eframe::App for McmcDemo {
                         ProgressBar::new(match bg_task.get_progress() {
                             Progress::Pending(progress) => progress,
                             Progress::Finished => {
-                                self.algo = self
+                                let params = self.algo.params.clone();
+                                let mut thread_result = self
                                     .local_resources
                                     .remove::<BatchJob>()
                                     .unwrap()
                                     .0
                                     .get_value();
+                                Arc::make_mut(&mut thread_result).params = params;
+                                self.algo = thread_result;
                                 // process is finished, but because of the control flow I can't show the button for the next batchstep yet.
                                 // So this will have to do.
                                 // Alternative would be moving the batch step UI put of this gigantic function and using this here,
@@ -216,8 +216,9 @@ impl eframe::App for McmcDemo {
                         let target_distr = self.target_distr.clone();
                         BgTaskHandle::new(
                             move |mut communicate: BgCommunicate| {
+                                let algo_ref = Arc::make_mut(&mut algo);
                                 for curr_step in 0..size {
-                                    algo.step(&target_distr);
+                                    algo_ref.step(&target_distr);
                                     if communicate.checkup_bg(curr_step) {
                                         break;
                                     }
@@ -234,7 +235,11 @@ impl eframe::App for McmcDemo {
                 }
                 if ui.button("reset simulation").clicked() {
                     self.local_resources.remove::<BatchJob>();
-                    self.algo.history = Rwmh::default().history;
+                    let params = self.algo.params.clone();
+                    *Arc::make_mut(&mut self.algo) = Rwmh{
+                        params,
+                        ..Default::default()
+                    };
                 }
                 ui.collapsing("background display", |ui| {
                     let prev_bg = BackgroundDisplayDiscr::from(&self.background_display);
@@ -295,12 +300,12 @@ impl eframe::App for McmcDemo {
                         DistrEdit::settings_ui(&mut self.target_distr.gaussians, ui);
                     });
                 ui.collapsing("proposal probability", |ui| {
-                    let prop = &mut self.algo.params.proposal;
+                    let prop = &mut Arc::make_mut(&mut self.algo).params.proposal;
                     ui.add(egui::Slider::new(&mut prop.sigma, 0.0..=1.0).text("Proposal sigma"));
                     prop.rng.rng.settings_ui(ui, ui.id());
                 });
                 ui.collapsing("acceptance probability", |ui| {
-                    self.algo.params.accept.rng.settings_ui(ui, ui.id());
+                    Arc::make_mut(&mut self.algo).params.accept.rng.settings_ui(ui, ui.id());
                 });
             },
         );
