@@ -16,9 +16,14 @@
         };
         navigator.gpu?.requestAdapter().catch(show_warning) ?? show_warning()
         // Register Service Worker. this will cache the wasm / js scripts for offline use (for PWA functionality).
-        // Force refresh (Ctrl + F5) to load the latest files instead of cached files 
+        // It should always get the most up to date files (if connected to the server), but you can Force refresh (Ctrl + F5) to enforce that. 
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('serviceworker.js').then((registration) => registration.update());
+            navigator.serviceWorker
+                .register('serviceworker.js')
+                // update service worker
+                .then((registration) => registration.update())
+                // don't log errors in console when there's no network connection.
+                .catch(() => {});
         }
     </script>
 

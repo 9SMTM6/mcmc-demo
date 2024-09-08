@@ -14,7 +14,7 @@ const UNHASHED_FILES = [
     "/manifest.json",
 ]
 
-// Fetch event: Serve cached files, and cache new ones with hashes
+// Fetch event: Serve cached files, and update old ones / cache new ones
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
     
