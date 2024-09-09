@@ -162,7 +162,8 @@ impl eframe::App for McmcDemo {
             ctx,
             #[allow(clippy::shadow_unrelated)]
             |ui| {
-                let ProgressMode::Batched { ref mut size } = Arc::make_mut(&mut self.algo).params.progress_mode;
+                let ProgressMode::Batched { ref mut size } =
+                    Arc::make_mut(&mut self.algo).params.progress_mode;
                 ui.add(
                     // Safety: the slider begins at 1.
                     unsafe {
@@ -236,7 +237,7 @@ impl eframe::App for McmcDemo {
                 if ui.button("reset simulation").clicked() {
                     self.local_resources.remove::<BatchJob>();
                     let params = self.algo.params.clone();
-                    *Arc::make_mut(&mut self.algo) = Rwmh{
+                    *Arc::make_mut(&mut self.algo) = Rwmh {
                         params,
                         ..Default::default()
                     };
@@ -305,7 +306,11 @@ impl eframe::App for McmcDemo {
                     prop.rng.rng.settings_ui(ui, ui.id());
                 });
                 ui.collapsing("acceptance probability", |ui| {
-                    Arc::make_mut(&mut self.algo).params.accept.rng.settings_ui(ui, ui.id());
+                    Arc::make_mut(&mut self.algo)
+                        .params
+                        .accept
+                        .rng
+                        .settings_ui(ui, ui.id());
                 });
             },
         );

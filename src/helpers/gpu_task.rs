@@ -69,7 +69,7 @@ pub async fn gpu_scheduler(_spawner: embassy_executor::Spawner) {
 
     loop {
         let task = GPU_TASK_CHANNEL.receive().await;
-        log::info!("Recieved GPU task");
+        log::info!("Received GPU task");
         // IDK whether it'd be better to spawn a number of worker tasks that can submit parallel work, or handle parallelism in here.
         // worker tasks with await might be better for backpressure.
         task.run(compute_device.clone(), compute_queue.clone())
