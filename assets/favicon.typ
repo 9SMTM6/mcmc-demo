@@ -49,10 +49,9 @@
   import cetz: plot, draw
   import finite: automaton, layout
   // manually extracted from resulting svg. Target (16pt)^2
-  // x: 16.0pt / 131.60874982452165pt = 0.1215724639990376
-  // y: 16.0pt / 141.73249997918526pt = 0.1128887164365953
-  // Disabled for now since content doesn't scale, and the alternative element functions cause compilation errors even using the examples...
-  // draw.scale(x: 0.1215724639990376, y: 0.1128887164365953)
+  // x: 16.0 pt / 132.489075874974 pt = 0.120764673573
+  // y: 16.0 pt / 141.73249997918526 pt = 0.112888716437
+  draw.scale(x: 0.120764673573, y: 0.112888716437)
   plot.plot(
     size: (5, 5),
     name: "plot",
@@ -71,27 +70,31 @@
         bar-width: 0.9 / half_num_bins,
         (..hist_points, (1.0, 0.0)),
       )
-      plot.add-anchor("automata", (-0.2, (norm_max + norm_min)/2.0 - 0.02))
+      // plot.add-anchor("automata", (-0.2, (norm_max + norm_min)/2.0 - 0.02))
     }
   )
 
-  draw.content(
-    "plot.automata", 
-    [#automaton(
-      style:(
-        state: (fill: black, stroke: none, radius: 0.40),
-        transition: (stroke: (paint: black)),
-        q1: (label: none),
-        q2: (label: none, fill: black.transparentize(50%)),
-        q1-q1: (anchor:top, curve: 0.3),
-        q1-q2: (curve: 0),
-      ),
-      final: none,
-      initial: none,
-      (
-        q1: (q1: none, q2: none),
-        q2: (),
-      )
-    )]
-  )
+  // removed due to it 
+  // * not being visible in most representations anyways
+  // * transparency breaks svgcleaner
+  // * it breaks draw.scale
+  // draw.content(
+  //   "plot.automata", 
+  //   [#automaton(
+  //     style:(
+  //       state: (fill: black, stroke: none, radius: 0.40),
+  //       transition: (stroke: (paint: black)),
+  //       q1: (label: none),
+  //       q2: (label: none, fill: black.transparentize(50%)),
+  //       q1-q1: (anchor:top, curve: 0.3),
+  //       q1-q2: (curve: 0),
+  //     ),
+  //     final: none,
+  //     initial: none,
+  //     (
+  //       q1: (q1: none, q2: none),
+  //       q2: (),
+  //     )
+  //   )]
+  // )
 })

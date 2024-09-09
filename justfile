@@ -1,5 +1,6 @@
 generate_favicon:
-    typst compile assets/favicon.typ --format svg
+    typst compile assets/favicon.typ assets/favicon.intermediate.svg
+    svgcleaner assets/favicon.intermediate.svg assets/favicon.svg
 
 # Generate new matching `index.fat.html` from `index.html` and `index.fat.html.patch`
 patch_fat_html:
