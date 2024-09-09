@@ -1,6 +1,10 @@
-# TODO:
+# <img src="./assets/favicon.svg" alt="MCMC-Demo-icon" width="50"/> MCMC-Demo
 
-## Current progress blockers:
+This application is still work in progress.
+
+## TODO:
+
+### Current progress blockers:
 
 * [Fixedish, still needs search-replace code] ~~wgpu pipeline-overridable constants are not supported on glsl-out~~
   * but that is required via https://github.com/gfx-rs/wgpu/blob/7b4cbc26192d6d56a31f8e67769e656a6627b222/wgpu/Cargo.toml#L148C1-L151C20 (maybe removable via patch?)
@@ -17,7 +21,7 @@
   * reverts relevant changes from: https://github.com/emilk/egui/pull/3595/commits/c5746dbd37a31d9a90c8987449b4089eb910ad8c
 
 
-## Compute shader
+### Compute shader
 
 I dont know if any of the below ideas for speeding up the diff rendering would work out. And in the end, dont think I'll get much use out of knowing how to do that (meaning I'll forget it anyways).
 
@@ -38,7 +42,7 @@ I currently envison this approach (lets see how much of this I'll get):
 7. with that I could also consider decoupling calculation resolution and render resolution, but I think for now I'll keep them coupled
 8. In order to avoid numerical stability issues I'll probably add some normalization after N steps. I have to decide on a proper strategy for that. Perhaps I can actually do it based on current maximum instead. Most of these strategies will lead to systemctic errors in the precision, since rounding might happen in different situations, but I'm fine with that.
 
-### Webgpu background compute
+#### Webgpu background compute
 
 Huh, Just saw this:
 https://docs.rs/tokio/latest/tokio/#wasm-support
@@ -107,7 +111,7 @@ So the choices are:
     I could perhaps immediately stick these references into another object that then receives gpu tasks.
     This object could dispatch that work from a background thread in native as a later optimization (with tests whether that actually does anything for perf).
 
-### WebGPU Synchronization
+#### WebGPU Synchronization
 
 Originally I was under the impression that global synchronization on the GPU was impossible, from some article that I might look for again in the future.
 
@@ -118,20 +122,20 @@ That is at least whats done [here](https://webgpufundamentals.org/webgpu/lessons
 
 Look that up in the future.
 
-## Scaling of distributions and approximations
+### Scaling of distributions and approximations
 
 For the approximation, distribution scaling doesn't work currently, since we've got difficulties scaling it. For distribution scaling we would have to integrate it for normalization. For every change, currently every render.
 Alternatives: Max-Scaling. Still problematic for approximation, but perhaps doable if we scan all values with some "lower resolution" compute shader. But that would excascerbate the current scaling issue, since then this would have to happen before render and for every subsequent one.
 
 Alternatively we could use the render shader as a compute shader of sorts, and use it for normalization with 1 frame delay. IDK if thats gonna go well with eguis energy saving render approach, and it also leads to artifacts/flickering, which may be an accessibility issue (this application is already not accessible, but this would hurt another groups than so far).
 
-## Problematic approach to diff rendering
+### Problematic approach to diff rendering
 
 The approach I took to rendering/calculating the approximation doesn't scale at all.
 The issue is (probably) that EVERY fragment shader (every pixel) will read every approximation point. That won't do.
 We would need to split this up, but thats not really easy, and probably goes kind of deep into game development adjacent topics, which I dont really want to do.
 
-## Find a way to Profile performance issues
+### Find a way to Profile performance issues
 
 Generally I should find a way to profile webgpu render. Currently I'm mostly guessing from past reference points, and while I'm decently certain in my conclusions, it would be nice to have confirmation, and some foresight into upcoming issues ("will solving this just lead to another very close bottleneck", which is currently stopping me from some experimentations).
 
@@ -145,14 +149,14 @@ Future ideas:
 * implement the stuff from https://webgpufundamentals.org/webgpu/lessons/webgpu-timing.html
   * actually, perhaps instead use https://github.com/Wumpf/wgpu-profiler
 
-## Non-Batched execution
+### Non-Batched execution
 
 Currently I only support batched execution, to quickly see results of different configurations.
 In the future I also want to support a substep execution such as in the [original inspiration](https://chi-feng.github.io/mcmc-demo/app.html?algorithm=RandomWalkMH&target=banana).
 With a history of past proposals etc.
 Maybe also with history navigation, if that actually fits the workflow (atm I dont think so, since RNG is seeded once currently, and we should probably reset on changes to e.g. target distribution).
 
-## Support more PRNG and low-discrepancy randomness
+### Support more PRNG and low-discrepancy randomness
 
 Note that theres a fundamental difference in low-discrepancy RNGs compared to `normal` RNGs.
 They have to be aware of the output distribution they're supposed to resemble. 
@@ -166,7 +170,7 @@ IDK how to transform that yet while retaining proper low-discrepancy. A normal t
 * https://crates.io/crates/halton
 * https://crates.io/crates/quasirandom
 
-## PWA
+### PWA
 
 * currently not offline capable. I removed the serviceworker:
   * did not work with the autogenerated file hashes
@@ -214,23 +218,6 @@ We use [Trunk](https://trunkrs.dev/) to build for web target.
 
 > (DISABLED) `assets/sw.js` script will try to cache our app, and loads the cached version when it cannot connect to server allowing your app to work offline (like PWA).
 > appending `#dev` to `index.html` will skip this caching, allowing us to load the latest builds during development.
-
-### Web Deploy
-1. Just run `trunk build --release`.
-2. It will generate a `dist` directory as a "static html" website
-3. Upload the `dist` directory to any of the numerous free hosting websites including [GitHub Pages](https://docs.github.com/en/free-pro-team@latest/github/working-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site).
-4. we already provide a workflow that auto-deploys our app to GitHub pages if you enable it.
-> To enable Github Pages, you need to go to Repository -> Settings -> Pages -> Source -> set to `gh-pages` branch and `/` (root).
->
-> If `gh-pages` is not available in `Source`, just create and push a branch called `gh-pages` and it should be available.
->
-> If you renamed the `main` branch to something else (say you re-initialized the repository with `master` as the initial branch), be sure to edit the github workflows `.github/workflows/pages.yml` file to reflect the change
-> ```yml
-> on:
->   push:
->     branches:
->       - <branch name>
-> ```
 
 You can test the template app at <https://emilk.github.io/eframe_template/>.
 
