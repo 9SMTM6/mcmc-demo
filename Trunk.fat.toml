@@ -1,6 +1,8 @@
 [build]
 target = "index.fat.html"
 dist = "dist/fat"
+# don't update dependencies
+locked = true
 
 [serve.headers]
 # see ./assets/_headers for more documentation

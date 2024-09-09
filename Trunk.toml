@@ -1,6 +1,8 @@
 [build]
 minify = "on_release"
 dist = "dist/slim"
+# don't update dependencies
+locked = true
 
 [serve.headers]
 # see ./assets/_headers for more documentation
