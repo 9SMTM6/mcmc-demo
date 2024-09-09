@@ -11,7 +11,7 @@ allow-git = [
 [advisories]
 
 [bans]
-# Is a dulicate of rustc::multiple_crate_versions
+# Is a duplicate of rustc::multiple_crate_versions
 # But this provides a nice graph output.
 # However there doesnt seem to be a way to ignore duplicates.
 # Thus make it present but not failing with warn
