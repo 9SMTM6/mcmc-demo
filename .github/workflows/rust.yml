@@ -17,7 +17,7 @@ jobs:
           toolchain: stable
           components: clippy
       - uses: Swatinem/rust-cache@v2
-      - run: cargo +stable clippy --workspace --target x86_64-unknown-linux-gnu --all-features --all-targets -- -D warnings
+      - run: cargo +stable --locked clippy --workspace --target x86_64-unknown-linux-gnu --all-features --all-targets -- -D warnings
 
   clippy-web:
     name: Clippy + Check wasm
@@ -28,7 +28,7 @@ jobs:
         with:
           toolchain: ${{env.RUST_NIGHTLY_TOOLCHAIN_VERSION}}
       - uses: Swatinem/rust-cache@v2
-      - run: cargo clippy --workspace --target wasm32-unknown-unknown --all-features --all-targets -- -D warnings
+      - run: cargo clippy --locked --workspace --target wasm32-unknown-unknown --all-features --all-targets -- -D warnings
 
   test:
     runs-on: ubuntu-latest
@@ -38,7 +38,7 @@ jobs:
         with:
           toolchain: stable
       - uses: Swatinem/rust-cache@v2
-      - run: cargo +stable test --locked --target x86_64-unknown-linux-gnu --lib
+      - run: cargo +stable --locked test --target x86_64-unknown-linux-gnu --lib
 
   build-webpage:
     runs-on: ubuntu-latest
@@ -130,7 +130,7 @@ jobs:
         # Ref: https://github.com/cross-rs/cross/issues/1510
         if: matrix.cross
         run: |
-          cargo +stable install cross --git https://github.com/cross-rs/cross --rev 1b8cf50d20180c1a394099e608141480f934b7f7
+          cargo +stable --locked install cross --git https://github.com/cross-rs/cross --rev 1b8cf50d20180c1a394099e608141480f934b7f7
 
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@master
@@ -148,7 +148,7 @@ jobs:
 
       - if: ${{ !matrix.cross }}
         name: Cargo Build
-        run: cargo +stable build  --locked --verbose --release --target=${{ matrix.TARGET }}
+        run: cargo +stable --locked build  --locked --verbose --release --target=${{ matrix.TARGET }}
 
       - if: matrix.cross
         name: Cross Build
