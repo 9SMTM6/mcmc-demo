@@ -43,7 +43,8 @@ pub async fn ticker_task() {
 /// embassy API doenst really allow this to be handled in a struct with drop etc.
 ///
 /// Oh well.
-#[expect(clippy::used_underscore_binding)]
+// That lint seems problematic on nightly right now
+#[allow(clippy::used_underscore_binding)]
 pub async fn gpu_scheduler(_spawner: embassy_executor::Spawner) {
     let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
         #[cfg(target_arch = "wasm32")]
