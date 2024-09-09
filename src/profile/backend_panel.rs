@@ -69,7 +69,7 @@ impl BackendPanel {
         egui::SidePanel::left("backend_panel")
             .resizable(false)
             .show(ctx, |ui| {
-                #[expect(clippy::shadow_unrelated)]
+                #[expect(clippy::shadow_unrelated, reason = "false positive, is related.")]
                 ui.vertical_centered(|ui| {
                     ui.heading("💻 Backend");
                 });
@@ -84,7 +84,7 @@ impl BackendPanel {
 
         ui.separator();
 
-        #[expect(clippy::shadow_unrelated)]
+        #[expect(clippy::shadow_unrelated, reason = "false positive, is related.")]
         ui.horizontal(|ui| {
             if ui
                 .button("Reset egui")

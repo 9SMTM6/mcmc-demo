@@ -18,7 +18,10 @@ impl ElementSettings {
         ui.temp_ui_state::<Self>().remove();
     }
 
-    #[expect(clippy::missing_panics_doc)]
+    #[expect(
+        clippy::missing_panics_doc,
+        reason = "Ought not to actually panic (only panics assert UI logic)"
+    )]
     pub fn show_if_open(
         gaussians: &mut Vec<NormalDistribution>,
         ui: &egui::Ui,
@@ -26,7 +29,7 @@ impl ElementSettings {
         ctx: &egui::Context,
     ) {
         if let Some(Self(idx)) = ui.temp_ui_state().get() {
-            #[expect(clippy::shadow_unrelated)]
+            #[expect(clippy::shadow_unrelated, reason = "false positive, is related.")]
             let close_planel = |ui: &egui::Ui| {
                 Self::remove(ui);
             };
@@ -46,7 +49,7 @@ impl ElementSettings {
                 .collapsible(false)
                 .show(
                     ctx,
-                    #[expect(clippy::shadow_unrelated)]
+                    #[expect(clippy::shadow_unrelated, reason = "false positive")]
                     |ui| {
                         let el = gaussians.get_mut(idx).unwrap();
                         ui.add(egui::Slider::new(&mut el.scale, f32::EPSILON..=1.0).text("Scale"));

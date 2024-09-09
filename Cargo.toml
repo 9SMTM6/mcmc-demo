@@ -170,8 +170,7 @@ rust_2018_idioms = { level = "warn", priority = -1 }
 
 [lints.clippy]
 all = { level = "warn", priority = -1 }
-# this isnt actually a thing outside of nightly
-allow_attributes_without_reason = "allow"
+allow_attributes_without_reason = "warn"
 branches_sharing_code = "warn"
 checked_conversions = "warn"
 cognitive_complexity = "warn"

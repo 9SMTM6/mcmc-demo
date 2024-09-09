@@ -19,7 +19,10 @@ const DEFAULT_TRACE_LEVEL: Option<&'static str> = Some("wgpu_core=warn,wgpu_hal=
 
 // When compiling natively:
 #[cfg(not(target_arch = "wasm32"))]
-#[allow(clippy::missing_panics_doc)]
+#[allow(
+    clippy::missing_panics_doc,
+    reason = "This is the entry point, noone else calls this."
+)]
 pub fn main() {
     use egui::IconData;
     use mcmc_demo::INITIAL_RENDER_SIZE;

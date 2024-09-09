@@ -170,7 +170,7 @@ impl eframe::App for McmcDemo {
 
         egui::Window::new("Simulation").show(
             ctx,
-            #[expect(clippy::shadow_unrelated)]
+            #[expect(clippy::shadow_unrelated, reason = "false positive, is related.")]
             |ui| {
                 let ProgressMode::Batched { ref mut size } =
                     Arc::make_mut(&mut self.algo).params.progress_mode;

@@ -7,8 +7,11 @@ pub mod tracing;
 
 #[macro_export]
 #[expect(clippy::module_name_repetitions, reason = "makes autoimport nicer")]
-#[allow(unknown_lints)] // not a lint on stable...
-#[allow(edition_2024_expr_fragment_specifier)]
+#[allow(unknown_lints, reason = "not a lint on stable...")]
+#[allow(
+    edition_2024_expr_fragment_specifier,
+    reason = "Can't be fixed on stable"
+)]
 macro_rules! profile_scope {
     ($scope_name:expr) => {
         #[cfg(feature = "profile")]
