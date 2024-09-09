@@ -17,3 +17,6 @@ assets/favicon.pdf
 
 # https://github.com/lycheeverse/lychee
 .lycheecache
+
+# Generated from cargo-deny
+duplicates_tree

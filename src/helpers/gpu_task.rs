@@ -1,8 +1,5 @@
 use std::rc::Rc;
 
-// use embassy_sync::blocking_mutex::raw::NoopRawMutex;
-use embassy_time::Timer;
-
 pub(crate) trait GpuTask {
     async fn run(&self, compute_device: Rc<wgpu::Device>, compute_queue: Rc<wgpu::Queue>);
 }
@@ -27,17 +24,6 @@ macro_rules! register_gpu_tasks {
 use crate::{visualizations::shader_based::BdaComputeTask, GPU_TASK_CHANNEL};
 
 register_gpu_tasks!(BdaComputeTask);
-
-#[embassy_executor::task]
-pub async fn ticker_task() {
-    let mut counter = 0;
-    loop {
-        log::info!("tick {}", counter);
-        counter += 1;
-
-        Timer::after_secs(1).await;
-    }
-}
 
 #[embassy_executor::task]
 /// embassy API doenst really allow this to be handled in a struct with drop etc.

@@ -1,0 +1,42 @@
+allowed-duplicate-crates = [
+    # OS Crates, I'm never gonna get these unified
+    # Windows
+    "windows_aarch64_gnullvm",
+    "windows_aarch64_msvc",
+    "windows_i686_gnu",
+    "windows_i686_msvc",
+    "windows_x86_64_gnu",
+    "windows_x86_64_gnullvm",
+    "windows_x86_64_msvc",
+    "windows-sys",
+    "windows-targets",
+    # The following targets don't get build anyways
+    # Android
+    "ndk-sys",
+    # Redox-OS
+    "libredox",
+    "redox_syscall",
+
+    # These duplicates were, last time I checked, caused by build dependencies
+    "bit-set",
+    "bit-vec",
+    "bitflags",
+    "cfg_aliases",
+
+    # These are all caused by embassy depending on old versions
+    "embedded-hal",
+    # semver-trick
+    "nb",
+    # embassy-time, disabled
+    # "parking_lot",
+    # "parking_lot_core",
+
+    # IDK
+    "regex-automata",
+    "regex-syntax",
+    "miniz_oxide",
+
+    # yeah, as expected, everyone depends on this, that graph is one big mess.
+    # But honestly not that bad with 2 versions. and it SHOULD all be build (proc_macro) time.
+    "syn",
+]

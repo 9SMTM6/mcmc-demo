@@ -48,7 +48,7 @@ tracing = [
     "rand/log",
     "embassy-executor/log",
     "embassy-sync/log",
-    "embassy-time/log",
+    # "embassy-time/log",
 ]
 all_rngs = [
     "rng_pcg",
@@ -76,7 +76,7 @@ eframe = { version = "0.28.1", default-features = false, features = [
 ] }
 egui = "0.28.1"
 embassy-sync = "0.6.0"
-embassy-time = { version = "0.3.2" }
+# embassy-time = { version = "0.3.2" }
 getrandom = { version = "0.2.15", features = ["js"] }
 log = "0.4"
 nalgebra = { version = "0.33.0" }
@@ -110,11 +110,11 @@ wgpu = { version = "22.1", features = ["webgpu"] }
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 env_logger = "0.11.5"
 embassy-executor = { version = "0.6.0", features = ["arch-std", "executor-thread", "integrated-timers"] }
-embassy-time = { version = "*", features = ["std"] }
+# embassy-time = { version = "*", features = ["std"] }
 
 # web:
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-embassy-time = { version = "*", features = ["wasm"] }
+# embassy-time = { version = "*", features = ["wasm"] }
 tracing-web = { version = "0.1.3", optional = true }
 web-sys = { version = "0.3.69" }
 wasm-bindgen = "0.2.92"
@@ -190,7 +190,7 @@ module_name_repetitions = "warn"
 # or by [ignoring](https://rust-lang.github.io/rust-clippy/master/index.html#/multiple_crate_versions):
 # set `allowed-duplicate-crates`
 #
-# multiple_crate_versions = "warn"
+multiple_crate_versions = "warn"
 needless_borrowed_reference = "allow"
 needless_pass_by_value = "warn"
 no_effect_underscore_binding = "warn"

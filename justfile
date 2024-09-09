@@ -19,7 +19,12 @@ ci_clippy_wasm:
     cargo --locked clippy --workspace --target wasm32-unknown-unknown --all-features --all-targets -- -D warnings
 
 ci_cargo_deny:
-    cargo +stable --locked deny check --hide-inclusion-graph
+    cargo +stable --locked deny check --hide-inclusion-graph --graph duplicates_tree
+
+render_duplicates: ci_cargo_deny
+    rm -r duplicates_tree/rendered_graph_output || true
+    mkdir -p duplicates_tree/rendered_graph_output
+    find duplicates_tree/graph_output/ -name '*.dot' | xargs -I {} sh -c 'dot -Tpdf "{}" -o "duplicates_tree/rendered_graph_output/$(basename "{}" .dot).pdf"'
 
 ci_test:
     cargo +stable --locked test --target x86_64-unknown-linux-gnu --lib
