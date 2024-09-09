@@ -49,7 +49,7 @@ pub fn define_subscriber(
         })
 }
 
-#[allow(clippy::missing_panics_doc)]
+#[expect(clippy::missing_panics_doc)]
 pub fn set_default_and_redirect_log(subscriber: impl Subscriber + Send + Sync) {
     // `set_global_default` can be used by applications to specify
     // what subscriber should be used to process spans.

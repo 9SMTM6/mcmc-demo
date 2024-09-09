@@ -6,7 +6,7 @@ pub mod frame_history;
 pub mod tracing;
 
 #[macro_export]
-#[allow(clippy::module_name_repetitions)]
+#[expect(clippy::module_name_repetitions)]
 #[allow(unknown_lints)] // not a lint on stable...
 #[allow(edition_2024_expr_fragment_specifier)]
 macro_rules! profile_scope {

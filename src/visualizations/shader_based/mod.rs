@@ -11,7 +11,7 @@ pub use resolution_uniform::INITIAL_RENDER_SIZE;
 #[allow(edition_2024_expr_fragment_specifier)]
 macro_rules! create_shader_module {
     ($shader_name:expr, $module_name: ident) => {
-        #[allow(
+        #[expect(
             unused,
             elided_lifetimes_in_paths,
             clippy::approx_constant,
@@ -30,9 +30,7 @@ macro_rules! create_shader_module {
         }
     };
     ($shader_name:expr, $module_name: ident; no redefine) => {
-        #[allow(
-            unused,
-            elided_lifetimes_in_paths,
+        #[expect(
             clippy::approx_constant,
             clippy::module_name_repetitions,
             clippy::pattern_type_mismatch,

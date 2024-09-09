@@ -53,7 +53,7 @@ impl Default for McmcDemo {
 
 impl McmcDemo {
     /// Called once before the first frame.
-    #[allow(clippy::missing_panics_doc)]
+    #[expect(clippy::missing_panics_doc)]
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         cc.egui_ctx.style_mut(|style| {
             let visuals = &mut style.visuals;
@@ -119,7 +119,7 @@ impl eframe::App for McmcDemo {
         // For inspiration and more examples, go to https://egui.rs
 
         egui::TopBottomPanel::bottom("footer").show(ctx, |ui| {
-            #[allow(clippy::shadow_unrelated)]
+            #[expect(clippy::shadow_unrelated)]
             ui.horizontal(|ui| {
                 if ui.button("Reset State").clicked() {
                     *self = Default::default();
@@ -160,7 +160,7 @@ impl eframe::App for McmcDemo {
 
         egui::Window::new("Simulation").show(
             ctx,
-            #[allow(clippy::shadow_unrelated)]
+            #[expect(clippy::shadow_unrelated)]
             |ui| {
                 let ProgressMode::Batched { ref mut size } =
                     Arc::make_mut(&mut self.algo).params.progress_mode;
@@ -325,7 +325,7 @@ impl eframe::App for McmcDemo {
                     .outer_margin(egui::Margin::default())
                     .show(
                         ui,
-                        #[allow(clippy::shadow_unrelated)]
+                        #[expect(clippy::shadow_unrelated)]
                         |ui| {
                             let px_size = ui.available_size();
                             let (rect, response) =

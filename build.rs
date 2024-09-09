@@ -235,7 +235,6 @@ fn bindgen_generation(resolved_shaders_dir: &Path) -> Result<(), ErrReport> {
     bindgen.generate().into_diagnostic()
 }
 
-#[allow(dead_code)]
 fn wgsl_to_wgpu_generation(resolved_shaders: &HashMap<OsString, String>, bindings_dir: &Path) {
     let shader_entries = [
         "multimodal_gaussian.fragment",

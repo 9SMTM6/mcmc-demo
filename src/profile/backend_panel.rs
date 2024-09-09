@@ -68,7 +68,7 @@ impl BackendPanel {
         egui::SidePanel::left("backend_panel")
             .resizable(false)
             .show(ctx, |ui| {
-                #[allow(clippy::shadow_unrelated)]
+                #[expect(clippy::shadow_unrelated)]
                 ui.vertical_centered(|ui| {
                     ui.heading("💻 Backend");
                 });
@@ -83,7 +83,7 @@ impl BackendPanel {
 
         ui.separator();
 
-        #[allow(clippy::shadow_unrelated)]
+        #[expect(clippy::shadow_unrelated)]
         ui.horizontal(|ui| {
             if ui
                 .button("Reset egui")
@@ -148,7 +148,7 @@ impl BackendPanel {
         if cfg!(debug_assertions) && cfg!(target_arch = "wasm32") {
             ui.separator();
             // For testing panic handling on web:
-            #[allow(clippy::manual_assert)]
+            #[expect(clippy::manual_assert)]
             if ui.button("panic!()").clicked() {
                 panic!("intentional panic!");
             }

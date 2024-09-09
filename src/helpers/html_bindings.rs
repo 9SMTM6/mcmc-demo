@@ -43,7 +43,7 @@ pub fn show_element_by_id(id: &str) {
         .unwrap();
 }
 
-#[allow(clippy::missing_panics_doc)]
+#[expect(clippy::missing_panics_doc)]
 pub fn try_display_panic_str(panic_info: &str) {
     if let Some(el) = get_element_by_id("panic_message") {
         el.set_text_content(Some(panic_info));

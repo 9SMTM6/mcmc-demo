@@ -51,7 +51,7 @@ impl PointDisplay {
                 painter.circle_filled(step, self.radius, color.gamma_multiply(self.lowest_alpha));
             }
         }
-        #[allow(unreachable_code)]
+        #[expect(unreachable_code)]
         if false {
             todo!();
             let current_spot: Pos2 = [300.0, 400.0].into();

@@ -79,7 +79,7 @@ macro_rules! declare_rng_wrappers {
         impl rand::RngCore for WrappedRng {
             fn next_u32(&mut self) -> u32 {
                 use WrappedRng as T;
-                #[allow(clippy::pattern_type_mismatch)]
+                #[expect(clippy::pattern_type_mismatch)]
                 match self {
                     $(
                         #[cfg(feature = "rng_pcg")]
@@ -98,7 +98,7 @@ macro_rules! declare_rng_wrappers {
 
             fn next_u64(&mut self) -> u64 {
                 use WrappedRng as T;
-                #[allow(clippy::pattern_type_mismatch)]
+                #[expect(clippy::pattern_type_mismatch)]
                 match self {
                     $(
                         #[cfg(feature = "rng_pcg")]
@@ -206,7 +206,7 @@ macro_rules! declare_rng_wrappers {
 // IDK why rust thinks all these variants are never constructed if they're all selectable.
 // But thats the reason for the dead_code.
 // Module is only here to create a scope for that dead_code allow.
-#[allow(dead_code)]
+#[expect(dead_code)]
 mod rng_wrappers {
     declare_rng_wrappers! {
         pcg:
