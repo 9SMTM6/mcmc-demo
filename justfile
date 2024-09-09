@@ -19,7 +19,7 @@ ci_clippy_wasm:
     cargo --locked clippy --workspace --target wasm32-unknown-unknown --all-features --all-targets -- -D warnings
 
 ci_cargo_deny:
-    cargo +stable --locked deny check
+    cargo +stable --locked deny check --hide-inclusion-graph
 
 ci_test:
     cargo +stable --locked test --target x86_64-unknown-linux-gnu --lib
@@ -36,12 +36,13 @@ ci_required_for_deploy: patch_fat_html ci_clippy ci_clippy_wasm ci_test
 ci_typo:
     typos
 
-ci_qa: ci_fmt ci_cargo_deny ci_typo ci_semver_updates
+ci_qa: ci_fmt ci_cargo_deny ci_typo
 
 ci: ci_qa ci_required_for_deploy
 
+full_ci: ci_qa ci_required_for_deploy ci_semver_updates trunk_slim trunk_fat
+
 fix_ci_unstaged:
-    cargo +stable generate-lockfile
     typos --write-changes
 
 fix_ci_staged:
@@ -52,6 +53,8 @@ fix_ci_staged:
 # Note that this WILL stage current changes
 fix_ci: fix_ci_unstaged && fix_ci_staged
     git add .
+
+fix_full_ci: fix_ci fix_ci_semver_updates
 
 trunk_fat: patch_fat_html
     trunk serve --config Trunk.fat.toml
