@@ -407,7 +407,7 @@ impl GpuTask for ComputeTask {
         // let buffer_signal = embassy_sync::signal::Signal::<CriticalSectionRawMutex, _>::new();
         // Safety:
         // Signal is immediately awaited, extending the lifetime of buffer_signal until its encloses the lifetime of the closure, so it is going to life long enough.
-        let _val = {
+        {
             // let buffer_signal_ref = extend_lifetime(&buffer_signal);
             wgpu::util::DownloadBuffer::read_buffer(
                 device,
