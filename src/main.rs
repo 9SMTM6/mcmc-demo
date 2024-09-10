@@ -12,8 +12,6 @@
 //!    while on the web it can't be in a background thread for compatibility reasons.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
-use embassy_executor::Executor;
-
 #[cfg(feature = "tracing")]
 const DEFAULT_TRACE_LEVEL: Option<&'static str> = Some("wgpu_core=warn,wgpu_hal=warn,info");
 
@@ -23,7 +21,8 @@ const DEFAULT_TRACE_LEVEL: Option<&'static str> = Some("wgpu_core=warn,wgpu_hal=
     clippy::missing_panics_doc,
     reason = "This is the entry point, noone else calls this."
 )]
-pub fn main() {
+#[tokio::main]
+pub async fn main() {
     use egui::IconData;
     use mcmc_demo::INITIAL_RENDER_SIZE;
 
@@ -34,57 +33,35 @@ pub fn main() {
     #[cfg(not(feature = "tracing"))]
     env_logger::init();
 
-    wasm_thread::spawn(|| {
-        // Need &'static mut, this is the easiest way. If that gets to be an issue theres the alternative static_cell, or unsafe with a mut static.
-        let executor = Box::leak(Box::new(Executor::new()));
-        executor.run(|spawner| {
-            spawner
-                .spawn(mcmc_demo::gpu_task::gpu_scheduler(spawner))
-                .unwrap();
-        });
+    // TODO: reconsider whether to do that, or use tokio::task::spawn on native.
+    let local_set = tokio::task::LocalSet::new();
+
+    local_set.spawn_local(async {
+        let native_options = eframe::NativeOptions {
+            viewport: egui::ViewportBuilder::default()
+                .with_min_inner_size(INITIAL_RENDER_SIZE)
+                .with_icon(
+                    // Not keen on converting the svg to a png on top.
+                    // Not as if this currently works under wayland anyways.
+                    IconData::default(), // NOTE: Adding an icon is optional
+                                         // eframe::icon_data::from_png_bytes(&include_bytes!("../assets/icon-256.png")[..])
+                                         //     .expect("Failed to load icon"),
+                ),
+            ..Default::default()
+        };
+        eframe::run_native(
+            "mcmc-demo",
+            native_options,
+            Box::new(|cc| Ok(Box::new(mcmc_demo::McmcDemo::new(cc)))),
+        )
+        .unwrap();
     });
 
-    let native_options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default()
-            .with_min_inner_size(INITIAL_RENDER_SIZE)
-            .with_icon(
-                // Not keen on converting the svg to a png on top.
-                // Not as if this currently works under wayland anyways.
-                IconData::default(), // NOTE: Adding an icon is optional
-                                     // eframe::icon_data::from_png_bytes(&include_bytes!("../assets/icon-256.png")[..])
-                                     //     .expect("Failed to load icon"),
-            ),
-        ..Default::default()
-    };
-    eframe::run_native(
-        "mcmc-demo",
-        native_options,
-        Box::new(|cc| Ok(Box::new(mcmc_demo::McmcDemo::new(cc)))),
-    )
-    .unwrap();
+    local_set.await;
 }
 
 #[cfg(target_arch = "wasm32")]
-// If I use:
-// #[embassy_executor::main]
-// on the web I get compilation issues due to multiple instances of main being around.
-// This is caused by that attribute being written for the 'usual' case of a library entrypoint, which isn't how trunk does things.
-// I could move things into lib.rs, but then I get larger differences between native and web.
-// Thus this loader function instead, which loads a 'main' task.
 fn main() {
-    // Need &'static mut, this is the easiest way. If that gets to be an issue theres the alternative static_cell, or unsafe with a mut static.
-    let executor = Box::leak(Box::new(Executor::new()));
-    // Don't ask me why they're are named differently. They do the same AFAICT.
-    executor.start(|spawner| {
-        spawner.spawn(wasm_main_task(spawner)).unwrap();
-    });
-}
-
-// When compiling to web using trunk:
-#[cfg(target_arch = "wasm32")]
-// If I use
-#[embassy_executor::task]
-async fn wasm_main_task(spawner: embassy_executor::Spawner) {
     use mcmc_demo::html_bindings::*;
 
     // Log or trace to stderr (if you run with `RUST_LOG=debug`).
@@ -101,36 +78,31 @@ async fn wasm_main_task(spawner: embassy_executor::Spawner) {
         console_error_panic_hook::hook(panic_info);
     }));
 
-    // TODO: sending data to that gpu task is proving difficult...
-    // For starters on native this will require layered channels, one Channel to the thread (which will impose Send + Sync!) and one from that thread to the task,
-    // And then theres the issue of the lifetimes of the channel.
-    // Considering how embassy is implemented, its probably not as if it will work with smaller than static lifetimes for any executor related stuff anyways,
-    // So perhaps I will just stick these into globals, which allows me to be static anywhere.
-    // TODO: if this makes sense (I can make the gpu task blocking), consider matching this size to the maximum task in the executor
-    // let _channel = embassy_sync::channel::Channel::<NoopRawMutex, GpuTaskEnum, 4>::new();
+    wasm_bindgen_futures::spawn_local(async move {
+        let local_set = tokio::task::LocalSet::new();
 
-    spawner
-        .spawn(mcmc_demo::gpu_task::gpu_scheduler(spawner))
-        .unwrap();
+        local_set.spawn_local(async {
+            let web_options = eframe::WebOptions::default();
 
-    let web_options = eframe::WebOptions::default();
-
-    eframe::WebRunner::new()
-        .start(
-            get_egui_canvas(),
-            web_options,
-            Box::new(|cc| Ok(Box::new(mcmc_demo::McmcDemo::new(cc)))),
-        )
-        .await
-        .or_else(|err| {
-            let fmt_err = format!("{err:?}");
-            if fmt_err.contains("wgpu") {
-                // should've been handled in js
-                Ok(())
-            } else {
-                Err(err)
-            }
-        })
-        .unwrap();
-    remove_loading_state();
+            eframe::WebRunner::new()
+                .start(
+                    get_egui_canvas(),
+                    web_options,
+                    Box::new(|cc| Ok(Box::new(mcmc_demo::McmcDemo::new(cc)))),
+                )
+                .await
+                .or_else(|err| {
+                    let fmt_err = format!("{err:?}");
+                    if fmt_err.contains("wgpu") {
+                        // should've been handled in js
+                        Ok(())
+                    } else {
+                        Err(err)
+                    }
+                })
+                .unwrap();
+            remove_loading_state();
+        });
+        local_set.await;
+    });
 }

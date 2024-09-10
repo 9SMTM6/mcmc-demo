@@ -1,5 +1,6 @@
+use std::sync::Arc;
+
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
-use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use wgpu::{
     Buffer, BufferDescriptor, BufferUsages, CommandEncoderDescriptor, ComputePassDescriptor,
     ComputePipeline, ComputePipelineDescriptor, RenderPipeline, RenderPipelineDescriptor,
@@ -7,7 +8,7 @@ use wgpu::{
 
 use crate::{
     create_shader_module, gpu_task::GpuTask, simulation::random_walk_metropolis_hastings::Rwmh,
-    target_distributions::multimodal_gaussian::GaussianTargetDistr, GPU_TASK_CHANNEL,
+    target_distributions::multimodal_gaussian::GaussianTargetDistr,
 };
 
 use super::{
@@ -248,14 +249,11 @@ impl CallbackTrait for RenderCall {
             );
         }
         if res_changed || approx_changed {
-            drop(
-                GPU_TASK_CHANNEL.try_send(crate::gpu_task::GpuTaskEnum::BdaComputeTask(
-                    ComputeTask {
-                        px_size: self.px_size,
-                        algo_state: self.algo_state.clone(),
-                    },
-                )),
-            );
+            // TODO: put into gpu queue from here.
+            let _task = ComputeTask {
+                px_size: self.px_size,
+                algo_state: self.algo_state.clone(),
+            };
             // TODO: we need to remove the compute from the render queue.
             // Unsure how to achieve this. I was hoping having a separate commandencoder would siffice, but evidently not.
             // AFAIK sharing buffers isnt gonna work with separate queues, as the way to get a queue is bundled with the device creation. Both are created from the adapter.
@@ -321,23 +319,16 @@ impl CallbackTrait for RenderCall {
 }
 
 pub struct ComputeTask {
-    px_size: [f32; 2],
-    algo_state: Rwmh,
+    pub px_size: [f32; 2],
+    pub algo_state: Rwmh,
     // approx_accepted_buffer: Buffer,
     // approx_info_buffer: Buffer,
     // compute_output_buffer: Buffer,
     // resolution_buffer: Buffer,
 }
 
-const unsafe fn extend_lifetime<T>(r: &T) -> &'static T {
-    // TODO: check nomicom if thats all legal
-    // Safety:
-    // This in in an unsafe function...
-    unsafe { &*(r as *const T) }
-}
-
 impl GpuTask for ComputeTask {
-    async fn run(&self, device: std::rc::Rc<wgpu::Device>, queue: std::rc::Rc<wgpu::Queue>) {
+    async fn run(&self, device: Arc<wgpu::Device>, queue: Arc<wgpu::Queue>) {
         let webgpu_debug_name = Some(file!());
 
         let device = device.as_ref();
@@ -413,11 +404,11 @@ impl GpuTask for ComputeTask {
         queue.submit([compute_buffer]);
         // alternative to DownloadBuffer
         // compute_output_buffer.slice(..).map_async(wgpu::MapMode::Read, callback)
-        let buffer_signal = embassy_sync::signal::Signal::<CriticalSectionRawMutex, _>::new();
+        // let buffer_signal = embassy_sync::signal::Signal::<CriticalSectionRawMutex, _>::new();
         // Safety:
         // Signal is immediately awaited, extending the lifetime of buffer_signal until its encloses the lifetime of the closure, so it is going to life long enough.
-        let _val = unsafe {
-            let buffer_signal_ref = extend_lifetime(&buffer_signal);
+        let _val = {
+            // let buffer_signal_ref = extend_lifetime(&buffer_signal);
             wgpu::util::DownloadBuffer::read_buffer(
                 device,
                 queue,
@@ -425,11 +416,11 @@ impl GpuTask for ComputeTask {
                 |val| {
                     let val = val.unwrap();
                     let val: &[f32] = bytemuck::cast_slice(&val);
-                    let val = val.to_vec();
-                    buffer_signal_ref.signal(val);
+                    let _val = val.to_vec();
+                    // buffer_signal_ref.signal(val);
                 },
             );
-            buffer_signal.wait().await
+            // buffer_signal.wait().await
         };
         // TODO: continue as needed
         // Perhaps send data back on a synchronous channel, as that doesnt cost us much, and could simplify the native send.

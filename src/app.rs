@@ -1,8 +1,9 @@
 use egui::{self, ProgressBar, Shadow, Vec2};
-use std::{sync::Arc, time::Duration};
+use std::{ops::Deref, sync::Arc, time::Duration};
 use type_map::TypeMap;
 
 use crate::{
+    gpu_task::GpuTaskEnum,
     helpers::bg_task::{BgCommunicate, BgTaskHandle, Progress},
     simulation::random_walk_metropolis_hastings::{ProgressMode, Rwmh},
     target_distributions::multimodal_gaussian::GaussianTargetDistr,
@@ -55,6 +56,16 @@ impl McmcDemo {
     /// Called once before the first frame.
     #[expect(clippy::missing_panics_doc, reason = "only used once")]
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+        let (gpu_tx, gpu_rx) = tokio::sync::mpsc::channel::<GpuTaskEnum>(4);
+
+        let gpu_scheduler = crate::gpu_task::gpu_scheduler(gpu_rx);
+
+        #[cfg(not(target_arch = "wasm32"))]
+        tokio::task::spawn(gpu_scheduler);
+
+        #[cfg(target_arch = "wasm32")]
+        tokio::task::spawn_local(gpu_scheduler);
+
         cc.egui_ctx.style_mut(|style| {
             let visuals = &mut style.visuals;
             // for fill_color in [
@@ -71,7 +82,7 @@ impl McmcDemo {
             visuals.window_shadow = Shadow::NONE;
         });
 
-        let state = Self::get_state(cc);
+        let mut state = Self::get_state(cc);
         let render_state = cc
             .wgpu_render_state
             .as_ref()
@@ -82,6 +93,7 @@ impl McmcDemo {
         TargetDistribution::init_gaussian_pipeline(render_state);
         BDADiff::init_pipeline(render_state);
         BDAComputeDiff::init_pipeline(render_state);
+        state.local_resources.insert(gpu_tx);
         state
     }
 
@@ -225,6 +237,16 @@ impl eframe::App for McmcDemo {
                         // This means that the random state doesnt progress
                         let mut algo = self.algo.clone();
                         let target_distr = self.target_distr.clone();
+                        let gpu_rx: &tokio::sync::mpsc::Sender<GpuTaskEnum> =
+                            self.local_resources.get().unwrap();
+                        gpu_rx
+                            .try_send(GpuTaskEnum::BdaComputeTask(
+                                crate::visualizations::BdaComputeTask {
+                                    px_size: [1080.0, 1920.0],
+                                    algo_state: self.algo.deref().clone(),
+                                },
+                            ))
+                            .unwrap();
                         BgTaskHandle::new(
                             move |mut communicate: BgCommunicate| {
                                 let algo_ref = Arc::make_mut(&mut algo);
