@@ -48,16 +48,16 @@ ci: ci_qa ci_required_for_deploy
 
 full_ci: ci_qa ci_required_for_deploy ci_semver_updates trunk_slim trunk_fat
 
-benchmark_wasm_size:
+# compression level 4 is my best guess to the compression level couldflare defaults to on pages
+# https://blog.cloudflare.com/results-experimenting-brotli/
+benchmark_wasm_size compression_level='4':
     # ignore files in my global ~/.cargo/config.toml
     # wont work on other setups!
     export RUSTFLAGS=
     export CARGO_BUILD_INCREMENTAL=false
     trunk build --release
     trunk build --config Trunk.fat.toml --release
-    # level 4 is my best guess to the compression level couldflare defaults to on pages
-    # https://blog.cloudflare.com/results-experimenting-brotli/
-    brotli -q 4 -f dist/*/mcmc-demo*_bg.wasm
+    brotli -q {{compression_level}} -f dist/*/mcmc-demo*_bg.wasm
     lsd -lah dist/*/mcmc-demo*_bg.was*
 
 fix_ci_unstaged:
