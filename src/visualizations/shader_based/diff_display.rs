@@ -1,17 +1,17 @@
+use std::sync::Arc;
+
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
+use tokio::sync::mpsc::Sender;
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
     Buffer, BufferDescriptor, BufferUsages, RenderPipeline, RenderPipelineDescriptor,
 };
 
 use crate::{
-    create_shader_module, profile_scope,
-    simulation::random_walk_metropolis_hastings::Rwmh,
-    target_distributions::multimodal_gaussian::GaussianTargetDistr,
-    visualizations::shader_based::{
+    create_shader_module, gpu_task::GpuTaskEnum, profile_scope, simulation::random_walk_metropolis_hastings::Rwmh, target_distributions::multimodal_gaussian::GaussianTargetDistr, visualizations::{shader_based::{
         resolution_uniform::get_resolution_buffer,
         target_distr::{get_normaldistr_buffer, shader_bindings::NormalDistribution},
-    },
+    }, AlgoPainter}
 };
 
 use super::fullscreen_quad;
@@ -71,25 +71,27 @@ struct PipelineStateHolder {
     approx_info_buffer: Buffer,
 }
 
-impl BDADiff {
-    pub fn paint(
-        &self,
-        painter: &egui::Painter,
-        rect: egui::Rect,
-        algo: &Rwmh,
-        target: &GaussianTargetDistr,
-    ) {
-        painter.add(eframe::egui_wgpu::Callback::new_paint_callback(
-            rect,
-            RenderCall {
-                algo_state: algo.clone(),
-                px_size: rect.size().into(),
-                targets: target.gaussians.clone(),
-            },
-        ));
+impl AlgoPainter for BDADiff {
+    fn paint(
+            &self,
+            painter: &egui::Painter,
+            rect: egui::Rect,
+            algo: std::sync::Arc<Rwmh>,
+            target: &GaussianTargetDistr,
+        ) {
+            painter.add(eframe::egui_wgpu::Callback::new_paint_callback(
+                rect,
+                RenderCall {
+                    algo_state: algo.clone(),
+                    px_size: rect.size().into(),
+                    targets: target.gaussians.clone(),
+                },
+            ));
     }
+}
 
-    pub fn init_pipeline(render_state: &RenderState) {
+impl BDADiff {
+    pub fn init_pipeline(render_state: &RenderState, _gpu_tx: Sender<GpuTaskEnum>) {
         let device = &render_state.device;
 
         let webgpu_debug_name = Some(file!());
@@ -161,7 +163,7 @@ impl BDADiff {
 struct RenderCall {
     px_size: [f32; 2],
     targets: Vec<NormalDistribution>,
-    algo_state: Rwmh,
+    algo_state: Arc<Rwmh>,
 }
 
 impl CallbackTrait for RenderCall {

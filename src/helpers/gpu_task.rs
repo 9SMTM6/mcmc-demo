@@ -74,7 +74,7 @@ pub async fn gpu_scheduler(mut rx: tokio::sync::mpsc::Receiver<GpuTaskEnum>) {
     loop {
         let task = rx.recv().await.expect("channel should never be closed");
         // let task = GPU_TASK_CHANNEL.receive().await;
-        log::debug!("Received GPU task");
+        log::info!("Received GPU task");
         // IDK whether it'd be better to spawn a number of worker tasks that can submit parallel work, or handle parallelism in here.
         // worker tasks with await might be better for backpressure.
         task.run(compute_device.clone(), compute_queue.clone())

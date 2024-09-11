@@ -1,5 +1,5 @@
 use egui::{self, ProgressBar, Shadow, Vec2};
-use std::{ops::Deref, sync::Arc, time::Duration};
+use std::{sync::Arc, time::Duration};
 use type_map::TypeMap;
 
 use crate::{
@@ -82,7 +82,7 @@ impl McmcDemo {
             visuals.window_shadow = Shadow::NONE;
         });
 
-        let mut state = Self::get_state(cc);
+        let state = Self::get_state(cc);
         let render_state = cc
             .wgpu_render_state
             .as_ref()
@@ -90,10 +90,10 @@ impl McmcDemo {
         // I need an abstraction over `pollster::block_on` (native) and `wasm_bindgen_futures::spawn_local` (web).
         // eframe on web is just async to the top, where I use the latter, on native its using pollster to resolve the future we get from `request_device`.
         // let laaa = render_state.adapter.request_device(&DeviceDescriptor { label: Some(file!()), required_features: Default::default(), required_limits: Default::default(), memory_hints: Default::default() }, None);
-        TargetDistribution::init_gaussian_pipeline(render_state);
-        BDADiff::init_pipeline(render_state);
-        BDAComputeDiff::init_pipeline(render_state);
-        state.local_resources.insert(gpu_tx);
+        // TODO: consider dynamically initializing/uninitializing instead.
+        TargetDistribution::init_pipeline(render_state, gpu_tx.clone());
+        BDADiff::init_pipeline(render_state, gpu_tx.clone());
+        BDAComputeDiff::init_pipeline(render_state, gpu_tx.clone());
         state
     }
 
@@ -237,16 +237,6 @@ impl eframe::App for McmcDemo {
                         // This means that the random state doesnt progress
                         let mut algo = self.algo.clone();
                         let target_distr = self.target_distr.clone();
-                        let gpu_rx: &tokio::sync::mpsc::Sender<GpuTaskEnum> =
-                            self.local_resources.get().unwrap();
-                        gpu_rx
-                            .try_send(GpuTaskEnum::BdaComputeTask(
-                                crate::visualizations::BdaComputeTask {
-                                    px_size: [1080.0, 1920.0],
-                                    algo_state: self.algo.deref().clone(),
-                                },
-                            ))
-                            .unwrap();
                         BgTaskHandle::new(
                             move |mut communicate: BgCommunicate| {
                                 let algo_ref = Arc::make_mut(&mut algo);
@@ -367,7 +357,7 @@ impl eframe::App for McmcDemo {
                             self.background_display.paint(
                                 painter,
                                 rect * ctx.pixels_per_point(),
-                                &self.algo,
+                                self.algo.clone(),
                                 &self.target_distr,
                             );
 

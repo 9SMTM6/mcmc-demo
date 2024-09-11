@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 pub use egui_based::{Arrow, PredictionVariance, SamplingPoint};
 
 pub mod egui_based;
@@ -46,7 +48,7 @@ macro_rules! bg_display {
                 &self,
                 painter: &egui::Painter,
                 rect: egui::Rect,
-                algo: &Rwmh,
+                algo: Arc<Rwmh>,
                 target: &GaussianTargetDistr,
             ) {
                 match self {
@@ -83,6 +85,16 @@ macro_rules! bg_display {
             }
         }
     }
+}
+
+trait AlgoPainter {
+    fn paint(
+        &self,
+        painter: &egui::Painter,
+        rect: egui::Rect,
+        algo: Arc<Rwmh>,
+        target: &GaussianTargetDistr,
+    );
 }
 
 bg_display!(TargetDistribution, BDAComputeDiff, BDADiff,);

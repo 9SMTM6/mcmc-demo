@@ -1,12 +1,12 @@
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
+use tokio::sync::mpsc::Sender;
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
     Buffer, BufferDescriptor, BufferUsages, RenderPipeline, RenderPipelineDescriptor,
 };
 
 use crate::{
-    simulation::random_walk_metropolis_hastings::Rwmh,
-    target_distributions::multimodal_gaussian::GaussianTargetDistr,
+    gpu_task::GpuTaskEnum, simulation::random_walk_metropolis_hastings::Rwmh, target_distributions::multimodal_gaussian::GaussianTargetDistr, visualizations::AlgoPainter
 };
 
 use super::{fullscreen_quad, resolution_uniform::get_resolution_buffer};
@@ -36,21 +36,21 @@ pub struct TargetDistribution {
     // pub color: Color32,
 }
 
-impl TargetDistribution {
-    pub fn paint(
-        &self,
-        painter: &egui::Painter,
-        rect: egui::Rect,
-        _algo: &Rwmh,
-        target: &GaussianTargetDistr,
-    ) {
-        painter.add(eframe::egui_wgpu::Callback::new_paint_callback(
-            rect,
-            RenderCall {
-                px_size: rect.size().into(),
-                elements: target.gaussians.clone(),
-            },
-        ));
+impl AlgoPainter for TargetDistribution {
+    fn paint(
+            &self,
+            painter: &egui::Painter,
+            rect: egui::Rect,
+            _algo: std::sync::Arc<Rwmh>,
+            target: &GaussianTargetDistr,
+        ) {
+            painter.add(eframe::egui_wgpu::Callback::new_paint_callback(
+                rect,
+                RenderCall {
+                    px_size: rect.size().into(),
+                    elements: target.gaussians.clone(),
+                },
+            ));
     }
 }
 
@@ -78,7 +78,7 @@ pub(super) fn get_normaldistr_buffer(
 }
 
 impl TargetDistribution {
-    pub fn init_gaussian_pipeline(render_state: &RenderState) {
+    pub fn init_pipeline(render_state: &RenderState, _gpu_tx: Sender<GpuTaskEnum>) {
         let device = &render_state.device;
 
         let webgpu_debug_name = Some(file!());

@@ -1,14 +1,15 @@
 use std::sync::Arc;
 
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
+use tokio::sync::mpsc::Sender;
 use wgpu::{
     Buffer, BufferDescriptor, BufferUsages, CommandEncoderDescriptor, ComputePassDescriptor,
     ComputePipeline, ComputePipelineDescriptor, RenderPipeline, RenderPipelineDescriptor,
 };
 
 use crate::{
-    create_shader_module, gpu_task::GpuTask, simulation::random_walk_metropolis_hastings::Rwmh,
-    target_distributions::multimodal_gaussian::GaussianTargetDistr,
+    create_shader_module, gpu_task::{GpuTask, GpuTaskEnum}, simulation::random_walk_metropolis_hastings::Rwmh,
+    target_distributions::multimodal_gaussian::GaussianTargetDistr, visualizations::AlgoPainter,
 };
 
 use super::{
@@ -59,27 +60,30 @@ struct PipelineStateHolder {
     target_buffer: Buffer,
     approx_accepted_buffer: Buffer,
     approx_info_buffer: Buffer,
+    gpu_tx: Sender<GpuTaskEnum>,
+}
+
+impl AlgoPainter for BDAComputeDiff {
+    fn paint(
+            &self,
+            painter: &egui::Painter,
+            rect: egui::Rect,
+            algo: Arc<Rwmh>,
+            target: &GaussianTargetDistr,
+        ) {
+            painter.add(eframe::egui_wgpu::Callback::new_paint_callback(
+                rect,
+                RenderCall {
+                    algo_state: algo.clone(),
+                    px_size: rect.size().into(),
+                    target_distr: target.gaussians.clone(),
+                },
+            ));
+    }
 }
 
 impl BDAComputeDiff {
-    pub fn paint(
-        &self,
-        painter: &egui::Painter,
-        rect: egui::Rect,
-        algo: &Rwmh,
-        target: &GaussianTargetDistr,
-    ) {
-        painter.add(eframe::egui_wgpu::Callback::new_paint_callback(
-            rect,
-            RenderCall {
-                algo_state: algo.clone(),
-                px_size: rect.size().into(),
-                target_distr: target.gaussians.clone(),
-            },
-        ));
-    }
-
-    pub fn init_pipeline(render_state: &RenderState) {
+    pub fn init_pipeline(render_state: &RenderState, gpu_tx: Sender<GpuTaskEnum>) {
         let device = &render_state.device;
 
         let webgpu_debug_name = Some(file!());
@@ -172,6 +176,7 @@ impl BDAComputeDiff {
                 target_buffer,
                 approx_accepted_buffer,
                 approx_info_buffer,
+                gpu_tx,
             })
         else {
             unreachable!("pipeline already present?!")
@@ -182,7 +187,7 @@ impl BDAComputeDiff {
 struct RenderCall {
     px_size: [f32; 2],
     target_distr: Vec<NormalDistribution>,
-    algo_state: Rwmh,
+    algo_state: Arc<Rwmh>,
 }
 
 impl CallbackTrait for RenderCall {
@@ -207,6 +212,7 @@ impl CallbackTrait for RenderCall {
             ref compute_group_0,
             ref mut compute_group_1,
             ref mut fragment_group_1,
+            ref mut gpu_tx,
             ..
         } = callback_resources.get_mut().unwrap();
         let target = self.target_distr.as_slice();
@@ -249,11 +255,14 @@ impl CallbackTrait for RenderCall {
             );
         }
         if res_changed || approx_changed {
-            // TODO: put into gpu queue from here.
-            let _task = ComputeTask {
-                px_size: self.px_size,
-                algo_state: self.algo_state.clone(),
-            };
+            gpu_tx
+                .try_send(GpuTaskEnum::BdaComputeTask(
+                    crate::visualizations::BdaComputeTask {
+                        px_size: [1080.0, 1920.0],
+                        algo_state: self.algo_state.clone(),
+                    },
+                ))
+                .unwrap();
             // TODO: we need to remove the compute from the render queue.
             // Unsure how to achieve this. I was hoping having a separate commandencoder would siffice, but evidently not.
             // AFAIK sharing buffers isnt gonna work with separate queues, as the way to get a queue is bundled with the device creation. Both are created from the adapter.
@@ -320,11 +329,7 @@ impl CallbackTrait for RenderCall {
 
 pub struct ComputeTask {
     pub px_size: [f32; 2],
-    pub algo_state: Rwmh,
-    // approx_accepted_buffer: Buffer,
-    // approx_info_buffer: Buffer,
-    // compute_output_buffer: Buffer,
-    // resolution_buffer: Buffer,
+    pub algo_state: Arc<Rwmh>,
 }
 
 impl GpuTask for ComputeTask {
