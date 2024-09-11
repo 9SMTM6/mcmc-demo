@@ -39,4 +39,7 @@ allowed-duplicate-crates = [
     # yeah, as expected, everyone depends on this, that graph is one big mess.
     # But honestly not that bad with 2 versions. and it SHOULD all be build (proc_macro) time.
     "syn",
+
+    # why is that even in my dependency tree...
+    "glow",
 ]

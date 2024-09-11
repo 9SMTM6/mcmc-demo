@@ -45,7 +45,7 @@ impl CanvasPainter for Arrow {
             stroke: PathStroke {
                 width: 1.5,
                 color: ColorMode::Solid(Color32::RED),
-                .. Default::default()
+                ..Default::default()
             },
         };
         painter.extend([base, head]);
