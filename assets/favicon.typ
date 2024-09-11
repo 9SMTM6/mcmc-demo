@@ -8,7 +8,6 @@
   width: auto,
   height: auto,
   margin: 0cm,
-  // fill: black,
 )
 
 #let rng = gen-rng(42)
@@ -45,7 +44,7 @@
 
 #import cetz: canvas
 
-#canvas(length: 1cm, background: black, {
+#canvas(length: 1cm, background: none, {
   import cetz: plot, draw
   import finite: automaton, layout
   // manually extracted from resulting svg. Target (16pt)^2
@@ -66,7 +65,7 @@
         normal_distr,
       )
       plot.add-bar(
-        style: (stroke: black, fill: green.darken(30%), background: black),
+        style: (stroke: (paint: black, thickness: 0.6pt), fill: green.darken(30%)),
         bar-width: 0.9 / half_num_bins,
         (..hist_points, (1.0, 0.0)),
       )
