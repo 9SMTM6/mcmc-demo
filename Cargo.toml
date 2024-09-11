@@ -142,8 +142,8 @@ opt-level = 2
 # egui = { git = "https://github.com/emilk/egui", branch = "master" }
 # eframe = { git = "https://github.com/emilk/egui", branch = "master" }
 
-eframe = { git = "https://github.com/9smtm6/egui", branch = "patched" }
-egui = { git = "https://github.com/9smtm6/egui", branch = "patched" }
+eframe = { git = "https://github.com/9smtm6/egui", branch = "wasm_atomics_wgpu" }
+egui = { git = "https://github.com/9smtm6/egui", branch = "wasm_atomics_wgpu" }
 
 # Patches out a polyfill, since I need way more modern browsers anyways.
 # Upstream PR: https://github.com/chemicstry/wasm_thread/pull/26
