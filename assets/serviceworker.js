@@ -2,7 +2,10 @@ const CACHE_NAME = 'mmcmc-demo-v1';
 const HASHED_FILES = [
     /^\/mcmc-demo-[a-f0-9]{16}_bg\.wasm$/,
     /^\/mcmc-demo-[a-f0-9]{16}\.js$/,
-    /^\/snippets\/wasm-bindgen-futures-[a-f0-9]{16}\/src\/task\/worker.js$/,
+    /^\/snippets\/wasm-bindgen-futures-[a-f0-9]{16}\/src\/task\/worker\.js$/,
+    /^\/snippets\/wasm-bindgen-rayon-[a-f0-9]{16}\/src\/workerHelpers\.no-bundler\.js$/,
+    /^\/snippets\/wasm-bindgen-rayon-[a-f0-9]{16}\/src\/workerHelpers\.js$/,
+    /^\/snippets\/wasm-bindgen-rayon-[a-f0-9]{16}\/src\/workerHelpers\.worker\.js$/,
     // TODO: really I'd like to have the webpage icon not hashed with how stuff is handled.
     // But it doesn't seem trunk offers that option.
     /^\/favicon-[a-f0-9]{16}\.svg$/,
