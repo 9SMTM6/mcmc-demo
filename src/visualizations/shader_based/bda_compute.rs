@@ -8,8 +8,11 @@ use wgpu::{
 };
 
 use crate::{
-    create_shader_module, gpu_task::{GpuTask, GpuTaskEnum}, simulation::random_walk_metropolis_hastings::Rwmh,
-    target_distributions::multimodal_gaussian::GaussianTargetDistr, visualizations::AlgoPainter,
+    create_shader_module,
+    gpu_task::{GpuTask, GpuTaskEnum},
+    simulation::random_walk_metropolis_hastings::Rwmh,
+    target_distributions::multimodal_gaussian::GaussianTargetDistr,
+    visualizations::AlgoPainter,
 };
 
 use super::{
@@ -30,7 +33,7 @@ pub fn get_compute_buffer_size(resolution: &[f32; 2]) -> u64 {
 #[macro_export]
 macro_rules! definition_location {
     () => {
-        concat!("Defined at: ", file!(),":", line!())
+        concat!("Defined at: ", file!(), ":", line!())
     };
 }
 
@@ -71,20 +74,20 @@ struct PipelineStateHolder {
 
 impl AlgoPainter for BDAComputeDiff {
     fn paint(
-            &self,
-            painter: &egui::Painter,
-            rect: egui::Rect,
-            algo: Arc<Rwmh>,
-            target: &GaussianTargetDistr,
-        ) {
-            painter.add(eframe::egui_wgpu::Callback::new_paint_callback(
-                rect,
-                RenderCall {
-                    algo_state: algo.clone(),
-                    px_size: rect.size().into(),
-                    target_distr: target.gaussians.clone(),
-                },
-            ));
+        &self,
+        painter: &egui::Painter,
+        rect: egui::Rect,
+        algo: Arc<Rwmh>,
+        target: &GaussianTargetDistr,
+    ) {
+        painter.add(eframe::egui_wgpu::Callback::new_paint_callback(
+            rect,
+            RenderCall {
+                algo_state: algo.clone(),
+                px_size: rect.size().into(),
+                target_distr: target.gaussians.clone(),
+            },
+        ));
     }
 }
 
@@ -188,7 +191,9 @@ impl CallbackTrait for RenderCall {
             ref mut compute_rx,
             ref mut last_approx_len,
             ..
-        } = callback_resources.get_mut().expect("Should've been seeded.");
+        } = callback_resources
+            .get_mut()
+            .expect("Should've been seeded.");
         let target = self.target_distr.as_slice();
         if target_buffer.size() as usize != size_of_val(target) {
             let normdistr_buffer = get_normaldistr_buffer(device, Some(target));
@@ -197,10 +202,14 @@ impl CallbackTrait for RenderCall {
         let approx_accepted = self.algo_state.history.as_slice();
         let curr_approx_len = approx_accepted.len();
         let approx_changed = curr_approx_len != *last_approx_len;
-        *last_approx_len  = curr_approx_len;
+        *last_approx_len = curr_approx_len;
         let res_changed = compute_output_buffer.size() != get_compute_buffer_size(&self.px_size);
         if res_changed {
-            log::info!("resize: {buf_size} to {new_buf_len}", buf_size = compute_output_buffer.size(), new_buf_len = get_compute_buffer_size(&self.px_size));
+            log::info!(
+                "resize: {buf_size} to {new_buf_len}",
+                buf_size = compute_output_buffer.size(),
+                new_buf_len = get_compute_buffer_size(&self.px_size)
+            );
             *compute_output_buffer = get_compute_output_buffer(device, Some(&self.px_size));
             queue.write_buffer(
                 resolution_buffer,
@@ -221,28 +230,38 @@ impl CallbackTrait for RenderCall {
             //         todo!("trigger re-render from egui::Ctx in here");
             //     }
             // });
-            match gpu_tx
-                            .try_send(GpuTaskEnum::BdaComputeTask(
-                                crate::visualizations::BdaComputeTask {
-                                    px_size: self.px_size,
-                                    algo_state: self.algo_state.clone(),
-                                    result_tx: compute_tx.clone(),
-                                },
-                            )) {
-                Ok(_) => {},
+            match gpu_tx.try_send(GpuTaskEnum::BdaComputeTask(
+                crate::visualizations::BdaComputeTask {
+                    px_size: self.px_size,
+                    algo_state: self.algo_state.clone(),
+                    result_tx: compute_tx.clone(),
+                },
+            )) {
+                Ok(_) => {}
                 Err(err) => {
                     let _val = err.into_inner();
                     log::warn!("GpuTasks filled");
-                },
+                }
             }
         }
-        if compute_rx.has_changed().expect("channel should never be closed") {
+        if compute_rx
+            .has_changed()
+            .expect("channel should never be closed")
+        {
             if let &Some(ref val) = compute_rx.borrow().deref() {
-                queue.write_buffer(&compute_output_buffer, 0, bytemuck::cast_slice(val.as_slice()));
+                queue.write_buffer(
+                    compute_output_buffer,
+                    0,
+                    bytemuck::cast_slice(val.as_slice()),
+                );
             } else {
                 // clear the buffer, instead of leaving wrong values there.
                 // There ought to be a better way....
-                queue.write_buffer(&compute_output_buffer, 0, &vec![0u8; compute_output_buffer.size() as usize]);
+                queue.write_buffer(
+                    compute_output_buffer,
+                    0,
+                    &vec![0u8; compute_output_buffer.size() as usize],
+                );
             }
         }
 
@@ -382,10 +401,17 @@ impl GpuTask for ComputeTask {
                 let val = val.unwrap();
                 // let val: &[f32] = bytemuck::cast_slice(&val);
                 let val = val.to_vec();
-                buffer_tx.send(val).expect("embedding ought to avoid drop of channel");
+                buffer_tx
+                    .send(val)
+                    .expect("embedding ought to avoid drop of channel");
             },
         );
-        let result_buf = buffer_rx.await.expect("embedding ought to avoid drop of channel");
-        self.result_tx.send(Some(result_buf)).map_err(|_val| ()).unwrap();
+        let result_buf = buffer_rx
+            .await
+            .expect("embedding ought to avoid drop of channel");
+        self.result_tx
+            .send(Some(result_buf))
+            .map_err(|_val| ())
+            .unwrap();
     }
 }

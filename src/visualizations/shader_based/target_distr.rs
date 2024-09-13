@@ -6,7 +6,8 @@ use wgpu::{
 };
 
 use crate::{
-    gpu_task::GpuTaskEnum, simulation::random_walk_metropolis_hastings::Rwmh, target_distributions::multimodal_gaussian::GaussianTargetDistr, visualizations::AlgoPainter
+    gpu_task::GpuTaskEnum, simulation::random_walk_metropolis_hastings::Rwmh,
+    target_distributions::multimodal_gaussian::GaussianTargetDistr, visualizations::AlgoPainter,
 };
 
 use super::{fullscreen_quad, resolution_uniform::get_resolution_buffer};
@@ -38,19 +39,19 @@ pub struct TargetDistribution {
 
 impl AlgoPainter for TargetDistribution {
     fn paint(
-            &self,
-            painter: &egui::Painter,
-            rect: egui::Rect,
-            _algo: std::sync::Arc<Rwmh>,
-            target: &GaussianTargetDistr,
-        ) {
-            painter.add(eframe::egui_wgpu::Callback::new_paint_callback(
-                rect,
-                RenderCall {
-                    px_size: rect.size().into(),
-                    elements: target.gaussians.clone(),
-                },
-            ));
+        &self,
+        painter: &egui::Painter,
+        rect: egui::Rect,
+        _algo: std::sync::Arc<Rwmh>,
+        target: &GaussianTargetDistr,
+    ) {
+        painter.add(eframe::egui_wgpu::Callback::new_paint_callback(
+            rect,
+            RenderCall {
+                px_size: rect.size().into(),
+                elements: target.gaussians.clone(),
+            },
+        ));
     }
 }
 
@@ -78,7 +79,7 @@ pub(super) fn get_normaldistr_buffer(
 }
 
 impl TargetDistribution {
-    pub fn init_pipeline(render_state: &RenderState, _gpu_tx: Sender<GpuTaskEnum>) {
+    pub fn init_pipeline(render_state: &RenderState, _: Sender<GpuTaskEnum>) {
         let device = &render_state.device;
 
         let webgpu_debug_name = Some(file!());
