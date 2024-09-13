@@ -300,9 +300,11 @@ impl eframe::App for McmcDemo {
                                     point_display.reject_display = None;
                                 } else {
                                     let mut reject_color_fullspace =
-                                    egui::Rgba::from(*reject_color).to_array();
+                                        egui::Rgba::from(*reject_color).to_array();
                                     ui.label("set rejection color");
-                                    ui.color_edit_button_rgba_unmultiplied(&mut reject_color_fullspace);
+                                    ui.color_edit_button_rgba_unmultiplied(
+                                        &mut reject_color_fullspace,
+                                    );
                                     *reject_color = egui::Rgba::from_rgba_unmultiplied(
                                         reject_color_fullspace[0],
                                         reject_color_fullspace[1],

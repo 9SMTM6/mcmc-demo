@@ -104,7 +104,6 @@ wgpu = { version = "22.1", features = ["webgpu"] }
 tokio = { version = "1.40.0", default-features = false, features = ["sync", "macros", "rt"] }
 wasm-bindgen-futures = "0.4.43"
 rayon = "1.10.0"
-wasm-bindgen-rayon = { version = "1.2.1", features = ["no-bundler"] }
 
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
@@ -117,6 +116,7 @@ console_error_panic_hook = "0.1.7"
 tracing-web = { version = "0.1.3", optional = true }
 web-sys = { version = "0.3.69" }
 wasm-bindgen = "0.2.92"
+wasm-bindgen-rayon = { version = "1.2.1", features = ["no-bundler"] }
 
 [build-dependencies]
 miette = { version = "7.2.0", features = ["fancy"] }
