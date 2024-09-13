@@ -1,10 +1,10 @@
-use std::sync::Arc;
+use std::{ops::Deref, sync::Arc};
 
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
-use tokio::sync::mpsc::Sender;
+use tokio::sync::{mpsc, oneshot, watch};
 use wgpu::{
     Buffer, BufferDescriptor, BufferUsages, CommandEncoderDescriptor, ComputePassDescriptor,
-    ComputePipeline, ComputePipelineDescriptor, RenderPipeline, RenderPipelineDescriptor,
+    ComputePipelineDescriptor, RenderPipeline, RenderPipelineDescriptor,
 };
 
 use crate::{
@@ -27,18 +27,23 @@ pub fn get_compute_buffer_size(resolution: &[f32; 2]) -> u64 {
     (resolution[0] * resolution[1]) as u64 * size_of::<f32>() as u64
 }
 
+#[macro_export]
+macro_rules! definition_location {
+    () => {
+        concat!("Defined at: ", file!(),":", line!())
+    };
+}
+
 pub(super) fn get_compute_output_buffer(
     device: &wgpu::Device,
     current_res: Option<&[f32; 2]>,
 ) -> wgpu::Buffer {
-    let res = match current_res {
-        None => &INITIAL_RENDER_SIZE,
-        Some(res) => res,
-    };
+    let res = current_res.unwrap_or(&INITIAL_RENDER_SIZE);
 
     device.create_buffer(&BufferDescriptor {
-        label: Some(file!()),
-        usage: BufferUsages::STORAGE | BufferUsages::COPY_SRC,
+        label: Some(definition_location!()),
+        // todo: consider splitting definition, MIGHT improve perf.
+        usage: BufferUsages::STORAGE | BufferUsages::COPY_SRC | BufferUsages::COPY_DST,
         mapped_at_creation: false,
         size: get_compute_buffer_size(res),
     })
@@ -48,19 +53,20 @@ pub(super) fn get_compute_output_buffer(
 #[derive(Default)]
 pub struct BDAComputeDiff {}
 
+// I dont need to read this properly on the CPU right now
+type ComputeBufCpuRepr = Option<Vec<u8>>;
+
 struct PipelineStateHolder {
-    compute_pipeline: ComputePipeline,
     fragment_pipeline: RenderPipeline,
-    compute_group_0: compute_bindings::BindGroup0,
-    compute_group_1: compute_bindings::BindGroup1,
     fragment_group_0: fragment_bindings::BindGroup0,
     fragment_group_1: fragment_bindings::BindGroup1,
     compute_output_buffer: Buffer,
     resolution_buffer: Buffer,
     target_buffer: Buffer,
-    approx_accepted_buffer: Buffer,
-    approx_info_buffer: Buffer,
-    gpu_tx: Sender<GpuTaskEnum>,
+    gpu_tx: mpsc::Sender<GpuTaskEnum>,
+    compute_tx: watch::Sender<ComputeBufCpuRepr>,
+    compute_rx: watch::Receiver<ComputeBufCpuRepr>,
+    last_approx_len: usize,
 }
 
 impl AlgoPainter for BDAComputeDiff {
@@ -83,22 +89,12 @@ impl AlgoPainter for BDAComputeDiff {
 }
 
 impl BDAComputeDiff {
-    pub fn init_pipeline(render_state: &RenderState, gpu_tx: Sender<GpuTaskEnum>) {
+    pub fn init_pipeline(render_state: &RenderState, gpu_tx: mpsc::Sender<GpuTaskEnum>) {
         let device = &render_state.device;
 
-        let webgpu_debug_name = Some(file!());
+        let webgpu_debug_name = Some(definition_location!());
 
-        let compute_layout = compute_bindings::create_pipeline_layout(device);
         let fragment_layout = fragment_bindings::create_pipeline_layout(device);
-
-        let compute_pipeline = device.create_compute_pipeline(&ComputePipelineDescriptor {
-            module: &compute_bindings::create_shader_module(device),
-            entry_point: "cs_main",
-            compilation_options: Default::default(),
-            label: webgpu_debug_name,
-            layout: Some(&compute_layout),
-            cache: None,
-        });
 
         let fragment_pipeline = device.create_render_pipeline(&RenderPipelineDescriptor {
             vertex: fullscreen_quad::vertex_state(
@@ -122,25 +118,7 @@ impl BDAComputeDiff {
 
         let target_buffer = get_normaldistr_buffer(device, None);
 
-        let (approx_accepted_buffer, approx_info_buffer) = get_approx_buffers(device, None);
-
         let compute_output_buffer = get_compute_output_buffer(device, None);
-
-        let compute_group_0 = compute_bindings::BindGroup0::from_bindings(
-            device,
-            compute_bindings::BindGroupLayout0 {
-                resolution_info: resolution_buffer.as_entire_buffer_binding(),
-            },
-        );
-
-        let compute_group_1 = compute_bindings::bind_groups::BindGroup1::from_bindings(
-            device,
-            compute_bindings::BindGroupLayout1 {
-                accepted: approx_accepted_buffer.as_entire_buffer_binding(),
-                count_info: approx_info_buffer.as_entire_buffer_binding(),
-                compute_output: compute_output_buffer.as_entire_buffer_binding(),
-            },
-        );
 
         let fragment_group_0 = fragment_bindings::BindGroup0::from_bindings(
             device,
@@ -157,6 +135,8 @@ impl BDAComputeDiff {
             },
         );
 
+        let (compute_tx, compute_rx) = watch::channel(None);
+
         // Because the graphics pipeline must have the same lifetime as the egui render pass,
         // instead of storing the pipeline in our struct, we insert it into the
         // `callback_resources` type map, which is stored alongside the render pass.
@@ -165,18 +145,16 @@ impl BDAComputeDiff {
             .write()
             .callback_resources
             .insert(PipelineStateHolder {
-                compute_group_0,
-                compute_group_1,
                 fragment_group_0,
                 fragment_group_1,
                 fragment_pipeline,
-                compute_pipeline,
                 resolution_buffer,
                 compute_output_buffer,
                 target_buffer,
-                approx_accepted_buffer,
-                approx_info_buffer,
                 gpu_tx,
+                compute_rx,
+                compute_tx,
+                last_approx_len: 0,
             })
         else {
             unreachable!("pipeline already present?!")
@@ -200,50 +178,29 @@ impl CallbackTrait for RenderCall {
         _egui_encoder: &mut wgpu::CommandEncoder,
         callback_resources: &mut eframe::egui_wgpu::CallbackResources,
     ) -> Vec<wgpu::CommandBuffer> {
-        // I don't reserve with capacity on purpose, as that means every render will do an allocation here.
-        let mut command_buffers = Vec::new();
         let &mut PipelineStateHolder {
-            ref compute_pipeline,
             ref resolution_buffer,
             ref mut target_buffer,
-            ref mut approx_accepted_buffer,
-            ref mut approx_info_buffer,
             ref mut compute_output_buffer,
-            ref compute_group_0,
-            ref mut compute_group_1,
             ref mut fragment_group_1,
-            ref mut gpu_tx,
+            ref gpu_tx,
+            ref compute_tx,
+            ref mut compute_rx,
+            ref mut last_approx_len,
             ..
-        } = callback_resources.get_mut().unwrap();
+        } = callback_resources.get_mut().expect("Should've been seeded.");
         let target = self.target_distr.as_slice();
         if target_buffer.size() as usize != size_of_val(target) {
             let normdistr_buffer = get_normaldistr_buffer(device, Some(target));
             *target_buffer = normdistr_buffer;
         }
         let approx_accepted = self.algo_state.history.as_slice();
-        let approx_changed = approx_accepted_buffer.size() as usize != size_of_val(approx_accepted);
-        if approx_changed {
-            let (accept_buffer, info_buffer) = get_approx_buffers(device, Some(approx_accepted));
-            *approx_accepted_buffer = accept_buffer;
-            *approx_info_buffer = info_buffer;
-            // these will change in size if the underlying data changes,
-            // so we only write the buffers in that case.
-            queue.write_buffer(
-                approx_accepted_buffer,
-                0,
-                bytemuck::cast_slice(self.algo_state.history.as_slice()),
-            );
-            queue.write_buffer(
-                approx_info_buffer,
-                0,
-                bytemuck::cast_slice(&[RWMHCountInfo {
-                    max_remain_count: self.algo_state.max_remain_count,
-                    total_point_count: self.algo_state.total_point_count,
-                }]),
-            );
-        }
+        let curr_approx_len = approx_accepted.len();
+        let approx_changed = curr_approx_len != *last_approx_len;
+        *last_approx_len  = curr_approx_len;
         let res_changed = compute_output_buffer.size() != get_compute_buffer_size(&self.px_size);
         if res_changed {
+            log::info!("resize: {buf_size} to {new_buf_len}", buf_size = compute_output_buffer.size(), new_buf_len = get_compute_buffer_size(&self.px_size));
             *compute_output_buffer = get_compute_output_buffer(device, Some(&self.px_size));
             queue.write_buffer(
                 resolution_buffer,
@@ -255,42 +212,40 @@ impl CallbackTrait for RenderCall {
             );
         }
         if res_changed || approx_changed {
-            gpu_tx
-                .try_send(GpuTaskEnum::BdaComputeTask(
-                    crate::visualizations::BdaComputeTask {
-                        px_size: [1080.0, 1920.0],
-                        algo_state: self.algo_state.clone(),
-                    },
-                ))
-                .unwrap();
-            // TODO: we need to remove the compute from the render queue.
-            // Unsure how to achieve this. I was hoping having a separate commandencoder would siffice, but evidently not.
-            // AFAIK sharing buffers isnt gonna work with separate queues, as the way to get a queue is bundled with the device creation. Both are created from the adapter.
-            // Aside that, its also annoying, since I either need to coordinate things, or I need to smuggle the new device and queue in here.
-            let mut compute_encoder = device.create_command_encoder(&CommandEncoderDescriptor {
-                label: Some(file!()),
-            });
-            let mut compute_pass = compute_encoder.begin_compute_pass(&ComputePassDescriptor {
-                label: Some(file!()),
-                timestamp_writes: None,
-            });
-            compute_pass.set_pipeline(compute_pipeline);
-            *compute_group_1 = compute_bindings::BindGroup1::from_bindings(
-                device,
-                compute_bindings::BindGroupLayout1 {
-                    compute_output: compute_output_buffer.as_entire_buffer_binding(),
-                    accepted: approx_accepted_buffer.as_entire_buffer_binding(),
-                    count_info: approx_info_buffer.as_entire_buffer_binding(),
+            // old value is now outdated.
+            compute_tx.send(None).unwrap();
+            // tokio::task::spawn_local({
+            //     let mut compute_rx = compute_rx.clone();
+            //     async move {
+            //         compute_rx.wait_for(|val| val.is_some()).await.unwrap();
+            //         todo!("trigger re-render from egui::Ctx in here");
+            //     }
+            // });
+            match gpu_tx
+                            .try_send(GpuTaskEnum::BdaComputeTask(
+                                crate::visualizations::BdaComputeTask {
+                                    px_size: self.px_size,
+                                    algo_state: self.algo_state.clone(),
+                                    result_tx: compute_tx.clone(),
+                                },
+                            )) {
+                Ok(_) => {},
+                Err(err) => {
+                    let _val = err.into_inner();
+                    log::warn!("GpuTasks filled");
                 },
-            );
-            compute_group_0.set(&mut compute_pass);
-            compute_group_1.set(&mut compute_pass);
-            compute_pass.dispatch_workgroups(self.px_size[0] as u32, self.px_size[1] as u32, 1);
-            // I dont understand precisely why, but this is required.
-            // It must do some management in the drop impl.
-            drop(compute_pass);
-            command_buffers.push(compute_encoder.finish());
+            }
         }
+        if compute_rx.has_changed().expect("channel should never be closed") {
+            if let &Some(ref val) = compute_rx.borrow().deref() {
+                queue.write_buffer(&compute_output_buffer, 0, bytemuck::cast_slice(val.as_slice()));
+            } else {
+                // clear the buffer, instead of leaving wrong values there.
+                // There ought to be a better way....
+                queue.write_buffer(&compute_output_buffer, 0, &vec![0u8; compute_output_buffer.size() as usize]);
+            }
+        }
+
         queue.write_buffer(
             target_buffer,
             0,
@@ -305,7 +260,7 @@ impl CallbackTrait for RenderCall {
                 gauss_bases: target_buffer.as_entire_buffer_binding(),
             },
         );
-        command_buffers
+        Vec::new()
     }
 
     fn paint<'a>(
@@ -328,13 +283,14 @@ impl CallbackTrait for RenderCall {
 }
 
 pub struct ComputeTask {
-    pub px_size: [f32; 2],
-    pub algo_state: Arc<Rwmh>,
+    px_size: [f32; 2],
+    algo_state: Arc<Rwmh>,
+    result_tx: watch::Sender<ComputeBufCpuRepr>,
 }
 
 impl GpuTask for ComputeTask {
     async fn run(&self, device: Arc<wgpu::Device>, queue: Arc<wgpu::Queue>) {
-        let webgpu_debug_name = Some(file!());
+        let webgpu_debug_name = Some(definition_location!());
 
         let device = device.as_ref();
         let queue = queue.as_ref();
@@ -351,10 +307,10 @@ impl GpuTask for ComputeTask {
         });
 
         let mut compute_encoder = device.create_command_encoder(&CommandEncoderDescriptor {
-            label: Some(file!()),
+            label: Some(definition_location!()),
         });
         let mut compute_pass = compute_encoder.begin_compute_pass(&ComputePassDescriptor {
-            label: Some(file!()),
+            label: Some(definition_location!()),
             timestamp_writes: None,
         });
         compute_pass.set_pipeline(&compute_pipeline);
@@ -372,8 +328,14 @@ impl GpuTask for ComputeTask {
                 resolution_info: resolution_buffer.as_entire_buffer_binding(),
             },
         );
-        // these will change in size if the underlying data changes,
-        // so we only write the buffers in that case.
+        queue.write_buffer(
+            &resolution_buffer,
+            0,
+            bytemuck::cast_slice(&[ResolutionInfo {
+                resolution: self.px_size,
+                _pad: [0.0; 2],
+            }]),
+        );
         queue.write_buffer(
             &accept_buffer,
             0,
@@ -407,28 +369,23 @@ impl GpuTask for ComputeTask {
         drop(compute_pass);
         let compute_buffer = compute_encoder.finish();
         queue.submit([compute_buffer]);
+        // asyncify the callback from read_buffer
+        // Doing this to allow for backpressure.
+        let (buffer_tx, buffer_rx) = oneshot::channel();
         // alternative to DownloadBuffer
         // compute_output_buffer.slice(..).map_async(wgpu::MapMode::Read, callback)
-        // let buffer_signal = embassy_sync::signal::Signal::<CriticalSectionRawMutex, _>::new();
-        // Safety:
-        // Signal is immediately awaited, extending the lifetime of buffer_signal until its encloses the lifetime of the closure, so it is going to life long enough.
-        {
-            // let buffer_signal_ref = extend_lifetime(&buffer_signal);
-            wgpu::util::DownloadBuffer::read_buffer(
-                device,
-                queue,
-                &compute_output_buffer.slice(..),
-                |val| {
-                    let val = val.unwrap();
-                    let val: &[f32] = bytemuck::cast_slice(&val);
-                    let _val = val.to_vec();
-                    // buffer_signal_ref.signal(val);
-                },
-            );
-            // buffer_signal.wait().await
-        };
-        // TODO: continue as needed
-        // Perhaps send data back on a synchronous channel, as that doesnt cost us much, and could simplify the native send.
-        // Receiving tasks on such would be annoying though, so we might need such an abstraction anyways...
+        wgpu::util::DownloadBuffer::read_buffer(
+            device,
+            queue,
+            &compute_output_buffer.slice(..),
+            |val| {
+                let val = val.unwrap();
+                // let val: &[f32] = bytemuck::cast_slice(&val);
+                let val = val.to_vec();
+                buffer_tx.send(val).expect("embedding ought to avoid drop of channel");
+            },
+        );
+        let result_buf = buffer_rx.await.expect("embedding ought to avoid drop of channel");
+        self.result_tx.send(Some(result_buf)).map_err(|_val| ()).unwrap();
     }
 }

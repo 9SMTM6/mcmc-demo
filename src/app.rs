@@ -56,7 +56,7 @@ impl McmcDemo {
     /// Called once before the first frame.
     #[expect(clippy::missing_panics_doc, reason = "only used once")]
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        let (gpu_tx, gpu_rx) = tokio::sync::mpsc::channel::<GpuTaskEnum>(4);
+        let (gpu_tx, gpu_rx) = tokio::sync::mpsc::channel::<GpuTaskEnum>(8);
 
         let gpu_scheduler = crate::gpu_task::gpu_scheduler(gpu_rx);
 
