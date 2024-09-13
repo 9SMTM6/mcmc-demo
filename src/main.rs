@@ -81,6 +81,12 @@ fn main() {
     wasm_bindgen_futures::spawn_local(async move {
         let local_set = tokio::task::LocalSet::new();
 
+        wasm_bindgen_futures::JsFuture::from(wasm_bindgen_rayon::init_thread_pool(
+            wasm_thread::available_parallelism().unwrap().into(),
+        ))
+        .await
+        .unwrap();
+
         local_set.spawn_local(async {
             let web_options = eframe::WebOptions::default();
 

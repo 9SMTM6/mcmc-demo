@@ -1,5 +1,9 @@
 #import "binary_distance_approx.buffer.wgsl";
 
+// This is not used for now.
+// Perhaps I'll figure out the synchronization at some point, but as it stands, this is probably not correctly synchonized,
+// And doing this on the CPU is so much easier ;-P.
+
 @group(1) @binding(41)
 var<storage, read> unnormalized: array<u32>;
 

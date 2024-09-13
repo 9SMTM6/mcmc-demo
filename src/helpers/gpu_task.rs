@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 pub(crate) trait GpuTask {
-    async fn run(&self, compute_device: Arc<wgpu::Device>, compute_queue: Arc<wgpu::Queue>);
+    async fn run(&mut self, compute_device: Arc<wgpu::Device>, compute_queue: Arc<wgpu::Queue>);
 }
 
 macro_rules! register_gpu_tasks {
@@ -11,10 +11,10 @@ macro_rules! register_gpu_tasks {
         }
 
         impl GpuTask for GpuTaskEnum {
-            async fn run(&self, compute_device: Arc<wgpu::Device>, compute_queue: Arc<wgpu::Queue>) {
+            async fn run(&mut self, compute_device: Arc<wgpu::Device>, compute_queue: Arc<wgpu::Queue>) {
                 use GpuTaskEnum as D;
                 match self {
-                    $(&D::$gpu_task(ref inner) => inner.run(compute_device, compute_queue).await),+
+                    $(&mut D::$gpu_task(ref mut inner) => inner.run(compute_device, compute_queue).await),+
                 }
             }
         }
@@ -72,7 +72,7 @@ pub async fn gpu_scheduler(mut rx: tokio::sync::mpsc::Receiver<GpuTaskEnum>) {
     let compute_queue = Arc::new(compute_queue);
 
     loop {
-        let task = rx.recv().await.expect("channel should never be closed");
+        let mut task = rx.recv().await.expect("channel should never be closed");
         // let task = GPU_TASK_CHANNEL.receive().await;
         log::info!("Received GPU task");
         // IDK whether it'd be better to spawn a number of worker tasks that can submit parallel work, or handle parallelism in here.

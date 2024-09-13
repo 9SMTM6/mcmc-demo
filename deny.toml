@@ -6,6 +6,7 @@ unknown-git = "deny"
 allow-git = [
     "https://github.com/emilk/egui",
     "https://github.com/9SMTM6/wasm_thread",
+    "https://github.com/9SMTM6/wasm-bindgen-rayon.git",
 ]
 
 [advisories]

@@ -57,7 +57,7 @@ pub(super) fn get_compute_output_buffer(
 pub struct BDAComputeDiff {}
 
 // I dont need to read this properly on the CPU right now
-type ComputeBufCpuRepr = Option<Vec<u8>>;
+type ComputeBufCpuRepr = Vec<f32>;
 
 struct PipelineStateHolder {
     fragment_pipeline: RenderPipeline,
@@ -67,8 +67,8 @@ struct PipelineStateHolder {
     resolution_buffer: Buffer,
     target_buffer: Buffer,
     gpu_tx: mpsc::Sender<GpuTaskEnum>,
-    compute_tx: watch::Sender<ComputeBufCpuRepr>,
-    compute_rx: watch::Receiver<ComputeBufCpuRepr>,
+    compute_tx: watch::Sender<Option<ComputeBufCpuRepr>>,
+    compute_rx: watch::Receiver<Option<ComputeBufCpuRepr>>,
     last_approx_len: usize,
 }
 
@@ -230,11 +230,12 @@ impl CallbackTrait for RenderCall {
             //         todo!("trigger re-render from egui::Ctx in here");
             //     }
             // });
+            let (tx, rx) = oneshot::channel::<ComputeBufCpuRepr>();
             match gpu_tx.try_send(GpuTaskEnum::BdaComputeTask(
                 crate::visualizations::BdaComputeTask {
                     px_size: self.px_size,
                     algo_state: self.algo_state.clone(),
-                    result_tx: compute_tx.clone(),
+                    result_tx: Some(tx),
                 },
             )) {
                 Ok(_) => {}
@@ -243,6 +244,25 @@ impl CallbackTrait for RenderCall {
                     log::warn!("GpuTasks filled");
                 }
             }
+
+            wasm_thread::spawn({
+                let compute_tx = compute_tx.clone();
+                move || {
+                    use rayon::prelude::*;
+                    // TODO: ensure this doesn't copy when sending over the channel.
+                    // Otherwise I will have to find an alternative.
+                    let mut prob_buffer = rx.blocking_recv().unwrap();
+
+                    let max = *prob_buffer
+                        .par_iter()
+                        .max_by(|lhs, rhs| lhs.total_cmp(rhs))
+                        .unwrap_or(&1.0);
+                    prob_buffer
+                        .par_iter_mut()
+                        .for_each(|unnorm_prob| *unnorm_prob /= max);
+                    compute_tx.send(Some(prob_buffer)).unwrap();
+                }
+            });
         }
         if compute_rx
             .has_changed()
@@ -304,11 +324,11 @@ impl CallbackTrait for RenderCall {
 pub struct ComputeTask {
     px_size: [f32; 2],
     algo_state: Arc<Rwmh>,
-    result_tx: watch::Sender<ComputeBufCpuRepr>,
+    result_tx: Option<oneshot::Sender<ComputeBufCpuRepr>>,
 }
 
 impl GpuTask for ComputeTask {
-    async fn run(&self, device: Arc<wgpu::Device>, queue: Arc<wgpu::Queue>) {
+    async fn run(&mut self, device: Arc<wgpu::Device>, queue: Arc<wgpu::Queue>) {
         let webgpu_debug_name = Some(definition_location!());
 
         let device = device.as_ref();
@@ -399,7 +419,7 @@ impl GpuTask for ComputeTask {
             &compute_output_buffer.slice(..),
             |val| {
                 let val = val.unwrap();
-                // let val: &[f32] = bytemuck::cast_slice(&val);
+                let val: &[f32] = bytemuck::cast_slice(&val);
                 let val = val.to_vec();
                 buffer_tx
                     .send(val)
@@ -410,7 +430,9 @@ impl GpuTask for ComputeTask {
             .await
             .expect("embedding ought to avoid drop of channel");
         self.result_tx
-            .send(Some(result_buf))
+            .take()
+            .unwrap()
+            .send(result_buf)
             .map_err(|_val| ())
             .unwrap();
     }
