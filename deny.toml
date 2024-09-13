@@ -4,7 +4,7 @@ unknown-registry = "deny"
 unknown-git = "deny"
 
 allow-git = [
-    "https://github.com/9smtm6/egui",
+    "https://github.com/emilk/egui",
     "https://github.com/9SMTM6/wasm_thread",
 ]
 

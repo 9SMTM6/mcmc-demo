@@ -139,11 +139,11 @@ opt-level = 2
 # the release on patched branches MUST match the set version above,# otherwise cargo will ignore this (it will warn about it though).
 
 # If you want to use the bleeding edge version of egui and eframe:
-# egui = { git = "https://github.com/emilk/egui", branch = "master" }
-# eframe = { git = "https://github.com/emilk/egui", branch = "master" }
-
-eframe = { git = "https://github.com/9smtm6/egui", branch = "wasm_atomics_wgpu" }
-egui = { git = "https://github.com/9smtm6/egui", branch = "wasm_atomics_wgpu" }
+# TODO: currently required for the fixes merged in https://github.com/emilk/egui/pull/5098
+# Once this was released I can reconsider this.
+# However the released egui regularly lags behind in wgpu versions, so perhaps this will stay for as long as its actively developed.
+egui = { git = "https://github.com/emilk/egui", branch = "master" }
+eframe = { git = "https://github.com/emilk/egui", branch = "master" }
 
 # Patches out a polyfill, since I need way more modern browsers anyways.
 # Upstream PR: https://github.com/chemicstry/wasm_thread/pull/26
