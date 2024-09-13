@@ -273,45 +273,47 @@ impl eframe::App for McmcDemo {
                 });
                 ui.collapsing("approximation point-display", |ui| {
                     if let Some(ref mut point_display) = self.point_display {
-                        if let Some(ref mut reject_color) = point_display.reject_display {
-                            let mut reject_color_fullspace =
-                                egui::Rgba::from(*reject_color).to_array();
-                            ui.label("set rejection color");
-                            ui.color_edit_button_rgba_unmultiplied(&mut reject_color_fullspace);
-                            *reject_color = egui::Rgba::from_rgba_unmultiplied(
-                                reject_color_fullspace[0],
-                                reject_color_fullspace[1],
-                                reject_color_fullspace[2],
-                                reject_color_fullspace[3],
-                            )
-                            .into();
-                            if ui.button("don't display rejections").clicked() {
-                                point_display.reject_display = None;
-                            }
-                        } else if ui.button("display rejections").clicked() {
-                            point_display.reject_display = Some(egui::Color32::YELLOW);
-                        };
-                        let mut accept_color_fullspace =
-                            egui::Rgba::from(point_display.accept_color).to_array();
-                        ui.label("set acceptance color");
-                        ui.color_edit_button_rgba_unmultiplied(&mut accept_color_fullspace);
-                        point_display.accept_color = egui::Rgba::from_rgba_unmultiplied(
-                            accept_color_fullspace[0],
-                            accept_color_fullspace[1],
-                            accept_color_fullspace[2],
-                            accept_color_fullspace[3],
-                        )
-                        .into();
-                        ui.add(
-                            egui::Slider::new(&mut point_display.radius, 0.5..=5.0)
-                                .text("point radius"),
-                        );
-                        ui.add(
-                            egui::Slider::new(&mut point_display.lowest_alpha, 0.1..=0.9)
-                                .text("minimum point alpha"),
-                        );
                         if ui.button("remove point display").clicked() {
                             self.point_display = None;
+                        } else {
+                            let mut accept_color_fullspace =
+                                egui::Rgba::from(point_display.accept_color).to_array();
+                            ui.label("set acceptance color");
+                            ui.color_edit_button_rgba_unmultiplied(&mut accept_color_fullspace);
+                            point_display.accept_color = egui::Rgba::from_rgba_unmultiplied(
+                                accept_color_fullspace[0],
+                                accept_color_fullspace[1],
+                                accept_color_fullspace[2],
+                                accept_color_fullspace[3],
+                            )
+                            .into();
+                            ui.add(
+                                egui::Slider::new(&mut point_display.radius, 0.5..=5.0)
+                                    .text("point radius"),
+                            );
+                            ui.add(
+                                egui::Slider::new(&mut point_display.lowest_alpha, 0.1..=0.9)
+                                    .text("minimum point alpha"),
+                            );
+                            if let Some(ref mut reject_color) = point_display.reject_display {
+                                if ui.button("remove display rejections display").clicked() {
+                                    point_display.reject_display = None;
+                                } else {
+                                    let mut reject_color_fullspace =
+                                    egui::Rgba::from(*reject_color).to_array();
+                                    ui.label("set rejection color");
+                                    ui.color_edit_button_rgba_unmultiplied(&mut reject_color_fullspace);
+                                    *reject_color = egui::Rgba::from_rgba_unmultiplied(
+                                        reject_color_fullspace[0],
+                                        reject_color_fullspace[1],
+                                        reject_color_fullspace[2],
+                                        reject_color_fullspace[3],
+                                    )
+                                    .into();
+                                }
+                            } else if ui.button("display rejections").clicked() {
+                                point_display.reject_display = Some(egui::Color32::YELLOW);
+                            };
                         }
                     } else if ui.button("show point display").clicked() {
                         self.point_display = Some(Default::default());
