@@ -21,8 +21,7 @@ const DEFAULT_TRACE_LEVEL: Option<&'static str> = Some("wgpu_core=warn,wgpu_hal=
     clippy::missing_panics_doc,
     reason = "This is the entry point, noone else calls this."
 )]
-#[tokio::main]
-pub async fn main() {
+pub fn main() {
     use egui::IconData;
     use mcmc_demo::INITIAL_RENDER_SIZE;
 
@@ -33,31 +32,32 @@ pub async fn main() {
     #[cfg(not(feature = "tracing"))]
     env_logger::init();
 
-    // TODO: reconsider whether to do that, or use tokio::task::spawn on native.
-    let local_set = tokio::task::LocalSet::new();
+    // egui must run on the main thread.
+    // At the same time tokio breaks with a long-running blocking task, and using spawn_blocking will move that task of the main thread.
+    // Thus the manual finangling.
 
-    local_set.spawn_local(async {
-        let native_options = eframe::NativeOptions {
-            viewport: egui::ViewportBuilder::default()
-                .with_min_inner_size(INITIAL_RENDER_SIZE)
-                .with_icon(
-                    // Not keen on converting the svg to a png on top.
-                    // Not as if this currently works under wayland anyways.
-                    IconData::default(), // NOTE: Adding an icon is optional
-                                         // eframe::icon_data::from_png_bytes(&include_bytes!("../assets/icon-256.png")[..])
-                                         //     .expect("Failed to load icon"),
-                ),
-            ..Default::default()
-        };
-        eframe::run_native(
-            "mcmc-demo",
-            native_options,
-            Box::new(|cc| Ok(Box::new(mcmc_demo::McmcDemo::new(cc)))),
-        )
-        .unwrap();
-    });
+    let tokio_rt = tokio::runtime::Builder::new_multi_thread().build().unwrap();
 
-    local_set.await;
+    let _rt_guard = tokio_rt.enter();
+
+    let native_options = eframe::NativeOptions {
+        viewport: egui::ViewportBuilder::default()
+            .with_min_inner_size(INITIAL_RENDER_SIZE)
+            .with_icon(
+                // Not keen on converting the svg to a png on top.
+                // Not as if this currently works under wayland anyways.
+                IconData::default(), // NOTE: Adding an icon is optional
+                                     // eframe::icon_data::from_png_bytes(&include_bytes!("../assets/icon-256.png")[..])
+                                     //     .expect("Failed to load icon"),
+            ),
+        ..Default::default()
+    };
+    eframe::run_native(
+        "mcmc-demo",
+        native_options,
+        Box::new(|cc| Ok(Box::new(mcmc_demo::McmcDemo::new(cc)))),
+    )
+    .unwrap();
 }
 
 #[cfg(target_arch = "wasm32")]

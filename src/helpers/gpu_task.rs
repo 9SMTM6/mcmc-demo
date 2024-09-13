@@ -23,7 +23,15 @@ macro_rules! register_gpu_tasks {
 
 use crate::visualizations::shader_based::BdaComputeTask;
 
-register_gpu_tasks!(BdaComputeTask);
+register_gpu_tasks!(BdaComputeTask, DebugTask);
+
+pub struct DebugTask;
+
+impl GpuTask for DebugTask {
+    async fn run(&mut self, _compute_device: Arc<wgpu::Device>, _compute_queue: Arc<wgpu::Queue>) {
+        log::info!("I'm actually running");
+    }
+}
 
 #[allow(
     clippy::used_underscore_binding,
@@ -77,8 +85,15 @@ pub async fn gpu_scheduler(mut rx: tokio::sync::mpsc::Receiver<GpuTaskEnum>) {
         log::info!("Received GPU task");
         // IDK whether it'd be better to spawn a number of worker tasks that can submit parallel work, or handle parallelism in here.
         // worker tasks with await might be better for backpressure.
-        task.run(compute_device.clone(), compute_queue.clone())
-            .await;
+        tokio::spawn({
+            let compute_device = compute_device.clone();
+            let compute_queue = compute_queue.clone();
+            async move {
+                task.run(compute_device.clone(), compute_queue.clone())
+                    .await;
+                log::info!("Task finished");
+            }
+        });
         // spawner.spawn(run_gpu_task(task, compute_device.clone(), compute_queue.clone())).unwrap();
     }
 }

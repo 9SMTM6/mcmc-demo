@@ -1,9 +1,10 @@
 use egui::{self, ProgressBar, Shadow, Vec2};
+use tokio::sync::mpsc;
 use std::{sync::Arc, time::Duration};
 use type_map::TypeMap;
 
 use crate::{
-    gpu_task::GpuTaskEnum,
+    gpu_task::{DebugTask, GpuTaskEnum},
     helpers::bg_task::{BgCommunicate, BgTaskHandle, Progress},
     simulation::random_walk_metropolis_hastings::{ProgressMode, Rwmh},
     target_distributions::multimodal_gaussian::GaussianTargetDistr,
@@ -82,7 +83,7 @@ impl McmcDemo {
             visuals.window_shadow = Shadow::NONE;
         });
 
-        let state = Self::get_state(cc);
+        let mut state = Self::get_state(cc);
         let render_state = cc
             .wgpu_render_state
             .as_ref()
@@ -94,6 +95,7 @@ impl McmcDemo {
         TargetDistribution::init_pipeline(render_state, gpu_tx.clone());
         BDADiff::init_pipeline(render_state, gpu_tx.clone());
         BDAComputeDiff::init_pipeline(render_state, gpu_tx.clone());
+        state.local_resources.insert(gpu_tx);
         state
     }
 
@@ -232,6 +234,8 @@ impl eframe::App for McmcDemo {
                     );
                     ctx.request_repaint_after(Duration::from_millis(16));
                 } else if ui.button("batch step").clicked() {
+                    let gpu_task_queue = self.local_resources.get::<mpsc::Sender<GpuTaskEnum>>().unwrap();
+                    gpu_task_queue.try_send(GpuTaskEnum::DebugTask(DebugTask)).unwrap();
                     let existing = self.local_resources.insert(BatchJob({
                         // TODO: HIGHLY problematic!
                         // This means that the random state doesnt progress
