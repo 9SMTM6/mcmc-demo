@@ -42,8 +42,9 @@ shipped_fonts = ["eframe/default_fonts"]
 ## Enable data collection or profiling with puffer, with a button in the UI that starts said profiler.
 profile = ["dep:puffin", "dep:puffin_http", "eframe/puffin"]
 ## This has a considerable influence on wasm binary size
-## I presume thats because of embedded strings from dependencies.
-## Alternatively the libraries are just so large...
+## It not just enables required dependencies to handle tracing,
+## but also enables tracing and logging in dependencies,
+## as well as enabling a bunch of debug macros to be able to record structural data.
 tracing = [
     # Tracing is always enabled, to be able to use tracing macros for logs etc.
     # This has been observed not to make a huge difference in wasm size.
