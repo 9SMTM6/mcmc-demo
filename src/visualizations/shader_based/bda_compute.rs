@@ -235,8 +235,8 @@ impl CallbackTrait for RenderCall {
             )) {
                 Ok(_) => {}
                 Err(err) => {
-                    let _val = err.into_inner();
-                    log::warn!("GpuTasks filled");
+                    let _dropped_task = err.into_inner();
+                    tracing::warn!("GpuTasks filled");
                 }
             }
 
@@ -247,7 +247,7 @@ impl CallbackTrait for RenderCall {
                     // TODO: ensure this doesn't copy when sending over the channel.
                     // Otherwise I will have to find an alternative.
                     let Ok(mut prob_buffer) = rx.blocking_recv() else {
-                        log::debug!("Closing Maxnorm worker main-thread, as sender channel-end closed");
+                        tracing::debug!("Closing Maxnorm worker main-thread, as sender channel-end closed");
                         return;
                     };
 
@@ -427,7 +427,7 @@ impl GpuTask for ComputeTask {
                 if let Err(err) = buffer_tx
                     .send(val)
                 {
-                    // log::info!()
+                    tracing::info!(err = ?err, "Closing channel");
                 }
             },
         );

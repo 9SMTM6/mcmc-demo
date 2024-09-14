@@ -29,7 +29,7 @@ pub struct DebugTask;
 
 impl GpuTask for DebugTask {
     async fn run(&mut self, _compute_device: Arc<wgpu::Device>, _compute_queue: Arc<wgpu::Queue>) {
-        log::info!("I'm actually running");
+        tracing::info!("I'm actually running");
     }
 }
 
@@ -81,11 +81,11 @@ pub async fn gpu_scheduler(mut rx: tokio::sync::mpsc::Receiver<GpuTaskEnum>) {
 
     loop {
         let Some(mut task) = rx.recv().await else {
-            log::debug!("Finalizing GPU Task, as sending channel was closed");
+            tracing::debug!("Finalizing GPU Task, as sending channel was closed");
             break;
         };
         // let task = GPU_TASK_CHANNEL.receive().await;
-        log::debug!("Received GPU task");
+        tracing::debug!("Received GPU task");
         // IDK whether it'd be better to spawn a number of worker tasks that can submit parallel work, or handle parallelism in here.
         // worker tasks with await might be better for backpressure.
         // No longer waiting here as for some reason on native the first task seems to block forever.
@@ -95,7 +95,7 @@ pub async fn gpu_scheduler(mut rx: tokio::sync::mpsc::Receiver<GpuTaskEnum>) {
             async move {
                 task.run(compute_device.clone(), compute_queue.clone())
                     .await;
-                // log::debug!("Task finished");
+                // tracing::debug!("Task finished");
             }
         };
         #[cfg(not(target_arch = "wasm32"))]

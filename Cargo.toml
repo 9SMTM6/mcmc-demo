@@ -43,9 +43,12 @@ shipped_fonts = ["eframe/default_fonts"]
 profile = ["dep:puffin", "dep:puffin_http", "eframe/puffin"]
 ## This has a considerable influence on wasm binary size
 ## I presume thats because of embedded strings from dependencies.
-## Alternatively the libraries are just so large, but IÄve got a hard time with that.
+## Alternatively the libraries are just so large...
 tracing = [
-    "dep:tracing",
+    # Tracing is always enabled, to be able to use tracing macros for logs etc.
+    # This has been observed not to make a huge difference in wasm size.
+    # Otherwise it becomes a pain to manage the differences between tracing and log macros.
+    # "dep:tracing",
     "dep:tracing-log",
     "dep:tracing-subscriber",
     "dep:tracing-web",
@@ -82,7 +85,6 @@ eframe = { version = "0.28.1", default-features = false, features = [
 ] }
 egui = "0.28.1"
 getrandom = { version = "0.2.15", features = ["js"] }
-log = "0.4"
 nalgebra = { version = "0.33.0" }
 puffin = { version = "0.19.0", optional = true }
 puffin_http = { version = "0.16.0", optional = true }
@@ -94,7 +96,10 @@ rand_xorshift = { version = "0.3.0", optional = true }
 rand_xoshiro = { version = "0.6.0", optional = true }
 serde = { version = "1", features = ["derive"], optional = true }
 time = { version = "0.3.36", features = ["wasm-bindgen"], optional = true }
-tracing = { version = "0.1.40", optional = true }
+tracing = { version = "0.1.40", features = [
+    # emit log messages if no tracing subscriber is enabled
+    "log",
+] }
 tracing-log = { version = "0.2.0", optional = true }
 tracing-subscriber = { version = "0.3.18", optional = true, features = [
     "env-filter",

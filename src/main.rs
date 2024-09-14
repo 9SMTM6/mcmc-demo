@@ -13,7 +13,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
 #[cfg(feature = "tracing")]
-const DEFAULT_TRACE_LEVEL: Option<&'static str> = Some("wgpu_core=warn,wgpu_hal=warn,info");
+const DEFAULT_TRACE_LEVEL: Option<&'static str> = Some("info,mcmc_demo=trace,wgpu_core=warn,wgpu_hal=warn");
 
 // When compiling natively:
 #[cfg(not(target_arch = "wasm32"))]
@@ -30,6 +30,9 @@ pub fn main() {
     #[cfg(feature = "tracing")]
     mcmc_demo::set_default_and_redirect_log(mcmc_demo::define_subscriber(DEFAULT_TRACE_LEVEL));
     #[cfg(not(feature = "tracing"))]
+    // A log only knows events, no thread/task etc traces.
+    // Mostly there for the web, to get a smaller WASM binary.
+    // Since theres no subscriber installed, tracing events will also be redirected to log.
     env_logger::init();
 
     // egui must run on the main thread.
@@ -70,7 +73,12 @@ fn main() {
     mcmc_demo::set_default_and_redirect_log(mcmc_demo::define_subscriber(DEFAULT_TRACE_LEVEL));
     #[cfg(not(feature = "tracing"))]
     // Redirect `log` message to `console.log` and friends:
-    eframe::WebLogger::init(log::LevelFilter::Info).ok();
+    // Since theres no subscriber installed, tracing events will also be redirected to log.
+    eframe::WebLogger::init(
+        // I choose this indirect way to avoid having to directly depend on env.
+        // That way nobody gets tempted to use env macros instead of tracing ones.
+        std::str::FromStr::from_str("Info").unwrap()
+    ).ok();
 
     std::panic::set_hook(Box::new(move |panic_info| {
         try_display_panic_str(&panic_info.to_string());
