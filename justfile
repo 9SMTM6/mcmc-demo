@@ -83,3 +83,7 @@ trunk_slim:
     trunk serve
 
 alias ts := trunk_slim
+
+# I have yet to find a practical use for this, but how to do this under wayland isn't well documented, so lets keep this around in case it ever becomes helpful.
+renderdoc:
+    WAYLAND_DISPLAY="" qrenderdoc renderdoc_settings.cap

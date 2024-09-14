@@ -62,6 +62,8 @@ pub async fn gpu_scheduler(mut rx: tokio::sync::mpsc::Receiver<GpuTaskEnum>) {
         .await
         .unwrap();
 
+    // compute_device.start_capture();
+
     #[cfg_attr(
         target_arch = "wasm32",
         allow(
