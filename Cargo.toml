@@ -18,6 +18,8 @@ default = [
     "x11",
     "persistence",
 ]
+## Enable checkpoint saving of (some of the) state.
+## Has considerable influence on binary size because of embedded serializations (field names etc).
 persistence = [
     "eframe/persistence",
     "nalgebra/serde-serialize",
@@ -34,9 +36,14 @@ persistence = [
 # doesnt work, since it can't translate storagebuffers.
 # And my experiments with passing stuff via textures was not successful.
 # webgl_compat = ["wgpu/webgl"]
+## Support layers for x11 on Linux. Wayland is always supported.
 x11 = ["eframe/x11"]
 shipped_fonts = ["eframe/default_fonts"]
+## Enable data collection or profiling with puffer, with a button in the UI that starts said profiler.
 profile = ["dep:puffin", "dep:puffin_http", "eframe/puffin"]
+## This has a considerable influence on wasm binary size
+## I presume thats because of embedded strings from dependencies.
+## Alternatively the libraries are just so large, but IÄve got a hard time with that.
 tracing = [
     "dep:tracing",
     "dep:tracing-log",
@@ -47,6 +54,7 @@ tracing = [
     # "wgpu/trace",
     "rand/log",
     "tokio/tracing",
+    "rand/log",
 ]
 all_rngs = [
     "rng_pcg",
@@ -78,10 +86,7 @@ log = "0.4"
 nalgebra = { version = "0.33.0" }
 puffin = { version = "0.19.0", optional = true }
 puffin_http = { version = "0.16.0", optional = true }
-rand = { version = "0.8.5", default-features = false, features = [
-    "log",
-    "std",
-] }
+rand = { version = "0.8.5", default-features = false, features = ["std"] }
 rand_chacha = { version = "0.3.1", optional = true }
 rand_distr = "0.4.3"
 rand_pcg = { version = "0.3.1", optional = true }
@@ -101,7 +106,11 @@ wasm_thread = { version = "0.3.0", default-features = false, features = [
     "es_modules",
 ] }
 wgpu = { version = "22.1", features = ["webgpu"] }
-tokio = { version = "1.40.0", default-features = false, features = ["sync", "macros", "rt"] }
+tokio = { version = "1.40.0", default-features = false, features = [
+    "sync",
+    "macros",
+    "rt",
+] }
 wasm-bindgen-futures = "0.4.43"
 rayon = "1.10.0"
 
@@ -150,7 +159,7 @@ eframe = { git = "https://github.com/emilk/egui", branch = "master" }
 # Patches out a polyfill, since I need way more modern browsers anyways.
 # Upstream PR: https://github.com/chemicstry/wasm_thread/pull/26
 wasm_thread = { git = "https://github.com/9SMTM6/wasm_thread", branch = "configurable_polyfill" }
-wasm-bindgen-rayon = { git = "https://github.com/9SMTM6/wasm-bindgen-rayon.git" , branch = "update-deps-fix-thread-local"}
+wasm-bindgen-rayon = { git = "https://github.com/9SMTM6/wasm-bindgen-rayon.git", branch = "update-deps-fix-thread-local" }
 # wgsl_to_wgpu = { path = "../wgsl_to_wgpu/wgsl_to_wgpu" }
 # wgpu = { git = "https://github.com/9smtm6/wgpu", branch = "patched" }
 
