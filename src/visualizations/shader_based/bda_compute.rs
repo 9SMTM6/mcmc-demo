@@ -205,11 +205,6 @@ impl CallbackTrait for RenderCall {
         *last_approx_len = curr_approx_len;
         let res_changed = compute_output_buffer.size() != get_compute_buffer_size(&self.px_size);
         if res_changed {
-            log::info!(
-                "resize: {buf_size} to {new_buf_len}",
-                buf_size = compute_output_buffer.size(),
-                new_buf_len = get_compute_buffer_size(&self.px_size)
-            );
             *compute_output_buffer = get_compute_output_buffer(device, Some(&self.px_size));
             queue.write_buffer(
                 resolution_buffer,
@@ -251,7 +246,10 @@ impl CallbackTrait for RenderCall {
                     use rayon::prelude::*;
                     // TODO: ensure this doesn't copy when sending over the channel.
                     // Otherwise I will have to find an alternative.
-                    let mut prob_buffer = rx.blocking_recv().unwrap();
+                    let Ok(mut prob_buffer) = rx.blocking_recv() else {
+                        log::debug!("Closing Maxnorm worker main-thread, as sender channel-end closed");
+                        return;
+                    };
 
                     let max = *prob_buffer
                         .par_iter()
@@ -260,7 +258,9 @@ impl CallbackTrait for RenderCall {
                     prob_buffer
                         .par_iter_mut()
                         .for_each(|unnorm_prob| *unnorm_prob /= max);
-                    compute_tx.send(Some(prob_buffer)).unwrap();
+                    compute_tx.send(Some(prob_buffer)).map_err(|_err| {
+                        "Channel Closed"
+                    }).unwrap();
                 }
             });
         }
@@ -321,6 +321,8 @@ impl CallbackTrait for RenderCall {
     }
 }
 
+
+#[cfg_attr(feature = "tracing", derive(Debug))]
 pub struct ComputeTask {
     px_size: [f32; 2],
     algo_state: Arc<Rwmh>,
@@ -328,6 +330,7 @@ pub struct ComputeTask {
 }
 
 impl GpuTask for ComputeTask {
+    #[cfg_attr(feature = "tracing", tracing::instrument(name = "Running BDA GPU Task", skip(device, queue)))]
     async fn run(&mut self, device: Arc<wgpu::Device>, queue: Arc<wgpu::Queue>) {
         let webgpu_debug_name = Some(definition_location!());
 
@@ -421,9 +424,11 @@ impl GpuTask for ComputeTask {
                 let val = val.unwrap();
                 let val: &[f32] = bytemuck::cast_slice(&val);
                 let val = val.to_vec();
-                buffer_tx
+                if let Err(err) = buffer_tx
                     .send(val)
-                    .expect("embedding ought to avoid drop of channel");
+                {
+                    // log::info!()
+                }
             },
         );
         let result_buf = buffer_rx
