@@ -247,7 +247,9 @@ impl CallbackTrait for RenderCall {
                     // TODO: ensure this doesn't copy when sending over the channel.
                     // Otherwise I will have to find an alternative.
                     let Ok(mut prob_buffer) = rx.blocking_recv() else {
-                        tracing::debug!("Closing Maxnorm worker main-thread, as sender channel-end closed");
+                        tracing::debug!(
+                            "Closing Maxnorm worker main-thread, as sender channel-end closed"
+                        );
                         return;
                     };
 
@@ -258,9 +260,10 @@ impl CallbackTrait for RenderCall {
                     prob_buffer
                         .par_iter_mut()
                         .for_each(|unnorm_prob| *unnorm_prob /= max);
-                    compute_tx.send(Some(prob_buffer)).map_err(|_err| {
-                        "Channel Closed"
-                    }).unwrap();
+                    compute_tx
+                        .send(Some(prob_buffer))
+                        .map_err(|_err| "Channel Closed")
+                        .unwrap();
                 }
             });
         }
@@ -270,7 +273,7 @@ impl CallbackTrait for RenderCall {
         {
             if let &Some(ref val) = compute_rx.borrow().deref() {
                 // TODO: duplicated the setting here to avoid validation errors.
-                // Figure out corrent handling
+                // Figure out correct handling
                 *compute_output_buffer = get_compute_output_buffer(device, Some(&self.px_size));
                 queue.write_buffer(
                     compute_output_buffer,
@@ -324,7 +327,6 @@ impl CallbackTrait for RenderCall {
     }
 }
 
-
 #[cfg_attr(feature = "more_debug_impls", derive(Debug))]
 pub struct ComputeTask {
     px_size: [f32; 2],
@@ -333,7 +335,10 @@ pub struct ComputeTask {
 }
 
 impl GpuTask for ComputeTask {
-    #[cfg_attr(feature = "tracing", tracing::instrument(name = "BDA GPU Task", skip(device, queue)))]
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(name = "BDA GPU Task", skip(device, queue))
+    )]
     async fn run(&mut self, device: Arc<wgpu::Device>, queue: Arc<wgpu::Queue>) {
         tracing::info!("Starting");
         let webgpu_debug_name = Some(definition_location!());
@@ -428,9 +433,7 @@ impl GpuTask for ComputeTask {
                 let val = val.unwrap();
                 let val: &[f32] = bytemuck::cast_slice(&val);
                 let val = val.to_vec();
-                if let Err(_err) = buffer_tx
-                    .send(val)
-                {
+                if let Err(_err) = buffer_tx.send(val) {
                     tracing::debug!("Failed send on closed channel");
                 }
             },

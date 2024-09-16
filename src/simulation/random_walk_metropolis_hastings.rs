@@ -109,16 +109,22 @@ pub struct Rwmh {
     // should be HashMap<AlgoVec, i32> or similar,
     // but this is an issue as the f32 in AlgoVec isnt Eq.
     // So IDK how to do this right.
-    #[cfg_attr(feature = "more_debug_impls", educe(Debug(method(debug_fmt_vec_as_len))))]
+    #[cfg_attr(
+        feature = "more_debug_impls",
+        educe(Debug(method(debug_fmt_vec_as_len)))
+    )]
     pub history: Vec<AcceptRecord>,
-    #[cfg_attr(feature = "more_debug_impls", educe(Debug(method(debug_fmt_vec_as_len))))]
+    #[cfg_attr(
+        feature = "more_debug_impls",
+        educe(Debug(method(debug_fmt_vec_as_len)))
+    )]
     pub rejected_history: Vec<AlgoVec>,
     pub params: AlgoParams,
 }
 
-#[cfg(feature="more_debug_impls")]
-fn debug_fmt_vec_as_len<T>(s: &Vec<T>, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-    write!(f, "Vec<len={len}>", len=s.len())
+#[cfg(feature = "more_debug_impls")]
+fn debug_fmt_vec_as_len<T>(s: &[T], f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+    write!(f, "Vec<len={len}>", len = s.len())
 }
 
 impl Default for Rwmh {

@@ -13,7 +13,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
 #[cfg(feature = "tracing")]
-const DEFAULT_TRACE_LEVEL: Option<&'static str> = Some("info,mcmc_demo=trace,wgpu_core=warn,wgpu_hal=warn");
+const DEFAULT_TRACE_LEVEL: Option<&'static str> =
+    Some("info,mcmc_demo=trace,wgpu_core=warn,wgpu_hal=warn");
 
 // When compiling natively:
 #[cfg(not(target_arch = "wasm32"))]
@@ -77,8 +78,9 @@ fn main() {
     eframe::WebLogger::init(
         // I choose this indirect way to avoid having to directly depend on env.
         // That way nobody gets tempted to use env macros instead of tracing ones.
-        std::str::FromStr::from_str("Info").unwrap()
-    ).ok();
+        std::str::FromStr::from_str("Info").unwrap(),
+    )
+    .ok();
 
     std::panic::set_hook(Box::new(move |panic_info| {
         try_display_panic_str(&panic_info.to_string());

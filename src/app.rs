@@ -1,6 +1,6 @@
 use egui::{self, ProgressBar, Shadow, Vec2};
-use tokio::sync::mpsc;
 use std::{sync::Arc, time::Duration};
+use tokio::sync::mpsc;
 use type_map::TypeMap;
 
 use crate::{
@@ -238,8 +238,13 @@ impl eframe::App for McmcDemo {
                     );
                     ctx.request_repaint_after(Duration::from_millis(16));
                 } else if ui.button("batch step").clicked() {
-                    let gpu_task_queue = self.local_resources.get::<mpsc::Sender<GpuTaskEnum>>().unwrap();
-                    gpu_task_queue.try_send(GpuTaskEnum::DebugTask(DebugTask)).unwrap();
+                    let gpu_task_queue = self
+                        .local_resources
+                        .get::<mpsc::Sender<GpuTaskEnum>>()
+                        .unwrap();
+                    gpu_task_queue
+                        .try_send(GpuTaskEnum::DebugTask(DebugTask))
+                        .unwrap();
                     let existing = self.local_resources.insert(BatchJob({
                         // TODO: HIGHLY problematic!
                         // This means that the random state doesnt progress
