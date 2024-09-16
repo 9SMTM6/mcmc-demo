@@ -146,7 +146,11 @@ impl eframe::App for McmcDemo {
             #[expect(clippy::shadow_unrelated, reason = "false positive, is related.")]
             ui.horizontal(|ui| {
                 if ui.button("Reset State").clicked() {
-                    *self = Default::default();
+                    // We keep local_resources, as thats not really data.
+                    *self = Self {
+                        local_resources: std::mem::take(&mut self.local_resources),
+                        ..Default::default()
+                    };
                     ui.data_mut(|type_map| type_map.clear());
                 }
                 #[cfg(feature = "profile")]
