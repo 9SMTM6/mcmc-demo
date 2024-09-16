@@ -6,6 +6,7 @@ use super::{Percentage, RngIter, StandardNormal};
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Clone)]
+#[cfg_attr(feature = "more_debug_impls", derive(Debug))]
 pub struct GaussianProposal {
     pub sigma: f32,
     pub rng: RngIter<StandardNormal>,
@@ -22,6 +23,7 @@ impl Default for GaussianProposal {
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Clone)]
+#[cfg_attr(feature = "more_debug_impls", derive(Debug))]
 pub struct IPromiseThisIsNonZeroUsize(usize);
 
 impl IPromiseThisIsNonZeroUsize {
@@ -44,6 +46,7 @@ impl IPromiseThisIsNonZeroUsize {
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Clone)]
+#[cfg_attr(feature = "more_debug_impls", derive(Debug))]
 pub enum ProgressMode {
     Batched { size: IPromiseThisIsNonZeroUsize },
 }
@@ -58,6 +61,7 @@ impl Default for ProgressMode {
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Default, Clone)]
+#[cfg_attr(feature = "more_debug_impls", derive(Debug))]
 pub struct AlgoParams {
     pub proposal: GaussianProposal,
     pub accept: RngIter<Percentage>,
@@ -95,6 +99,9 @@ impl Default for AcceptRecord {
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Clone)]
+// cfg_attr sure is annoying...
+#[cfg_attr(feature = "more_debug_impls", derive(educe::Educe))]
+#[cfg_attr(feature = "more_debug_impls", educe(Debug))]
 pub struct Rwmh {
     pub current_loc: AcceptRecord,
     pub max_remain_count: u32,
@@ -102,9 +109,16 @@ pub struct Rwmh {
     // should be HashMap<AlgoVec, i32> or similar,
     // but this is an issue as the f32 in AlgoVec isnt Eq.
     // So IDK how to do this right.
+    #[cfg_attr(feature = "more_debug_impls", educe(Debug(method(debug_fmt_vec_as_len))))]
     pub history: Vec<AcceptRecord>,
+    #[cfg_attr(feature = "more_debug_impls", educe(Debug(method(debug_fmt_vec_as_len))))]
     pub rejected_history: Vec<AlgoVec>,
     pub params: AlgoParams,
+}
+
+#[cfg(feature="more_debug_impls")]
+fn debug_fmt_vec_as_len<T>(s: &Vec<T>, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+    write!(f, "Vec<len={len}>", len=s.len())
 }
 
 impl Default for Rwmh {

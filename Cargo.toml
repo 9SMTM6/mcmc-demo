@@ -40,7 +40,14 @@ persistence = [
 x11 = ["eframe/x11"]
 shipped_fonts = ["eframe/default_fonts"]
 ## Enable data collection or profiling with puffer, with a button in the UI that starts said profiler.
-profile = ["dep:puffin", "dep:puffin_http", "eframe/puffin"]
+profile = [
+    "dep:puffin", 
+    "dep:puffin_http", 
+    "eframe/puffin",
+    # Note that this is NOT a tokio-trace trace.
+    # "temporarily removed". Reinstatement issue: https://github.com/gfx-rs/wgpu/issues/5974
+    # "wgpu/trace",
+]
 ## This has a considerable influence on wasm binary size
 ## It not just enables required dependencies to handle tracing,
 ## but also enables tracing and logging in dependencies,
@@ -54,11 +61,16 @@ tracing = [
     "dep:tracing-subscriber",
     "dep:tracing-web",
     "dep:time",
-    # "temporarily removed". Reinstatement issue: https://github.com/gfx-rs/wgpu/issues/5974
-    # "wgpu/trace",
+    "dependency_logs",
+    "more_debug_impls",
+]
+dependency_logs = [
     "rand/log",
+    # needs tokio_unstable cfg flag.
     "tokio/tracing",
-    "rand/log",
+]
+more_debug_impls = [
+    "dep:educe",
 ]
 all_rngs = [
     "rng_pcg",
@@ -119,6 +131,7 @@ tokio = { version = "1.40.0", default-features = false, features = [
 ] }
 wasm-bindgen-futures = "0.4.43"
 rayon = "1.10.0"
+educe = { version = "0.6.0", default-features = false, features = ["Debug"], optional = true }
 
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]

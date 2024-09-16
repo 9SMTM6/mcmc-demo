@@ -83,7 +83,7 @@ pub async fn gpu_scheduler(mut rx: tokio::sync::mpsc::Receiver<GpuTaskEnum>) {
 
     loop {
         let Some(mut task) = rx.recv().await else {
-            tracing::debug!("Finalizing GPU Task, as sending channel was closed");
+            tracing::debug!("Finalizing GPU Scheduler, as sending channel was closed");
             break;
         };
         // let task = GPU_TASK_CHANNEL.receive().await;

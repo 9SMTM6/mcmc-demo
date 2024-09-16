@@ -42,6 +42,7 @@ macro_rules! declare_rng_wrappers {
 
         #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
         #[derive(Clone)]
+        #[cfg_attr(feature = "more_debug_impls", derive(Debug))]
         pub enum WrappedRng {
             $(
                 #[cfg(feature = "rng_pcg")]
@@ -271,6 +272,7 @@ impl Display for WrappedRngDiscriminants {
 // But I've spend enough time on this for now, so I'll get to it whenever I do.
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Clone)]
+#[cfg_attr(feature = "more_debug_impls", derive(Debug))]
 pub struct RngIter<Distr: Distribution<f32>> {
     pub rng: WrappedRng,
     distr: Distr,
@@ -309,6 +311,7 @@ impl<Distr: Distribution<f32>> RngIter<Distr> {
 
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Clone, Default)]
+#[cfg_attr(feature = "more_debug_impls", derive(Debug))]
 pub struct Percentage;
 
 impl Distribution<f32> for Percentage {
@@ -320,6 +323,7 @@ impl Distribution<f32> for Percentage {
 /// Recreated just to implement default
 #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Clone, Default)]
+#[cfg_attr(feature = "more_debug_impls", derive(Debug))]
 pub struct StandardNormal;
 
 impl Distribution<f32> for StandardNormal {

@@ -269,6 +269,9 @@ impl CallbackTrait for RenderCall {
             .expect("channel should never be closed")
         {
             if let &Some(ref val) = compute_rx.borrow().deref() {
+                // TODO: duplicated the setting here to avoid validation errors.
+                // Figure out corrent handling
+                *compute_output_buffer = get_compute_output_buffer(device, Some(&self.px_size));
                 queue.write_buffer(
                     compute_output_buffer,
                     0,
@@ -322,7 +325,7 @@ impl CallbackTrait for RenderCall {
 }
 
 
-#[cfg_attr(feature = "tracing", derive(Debug))]
+#[cfg_attr(feature = "more_debug_impls", derive(Debug))]
 pub struct ComputeTask {
     px_size: [f32; 2],
     algo_state: Arc<Rwmh>,
@@ -330,8 +333,9 @@ pub struct ComputeTask {
 }
 
 impl GpuTask for ComputeTask {
-    #[cfg_attr(feature = "tracing", tracing::instrument(name = "Running BDA GPU Task", skip(device, queue)))]
+    #[cfg_attr(feature = "tracing", tracing::instrument(name = "BDA GPU Task", skip(device, queue)))]
     async fn run(&mut self, device: Arc<wgpu::Device>, queue: Arc<wgpu::Queue>) {
+        tracing::info!("Starting");
         let webgpu_debug_name = Some(definition_location!());
 
         let device = device.as_ref();
@@ -424,13 +428,14 @@ impl GpuTask for ComputeTask {
                 let val = val.unwrap();
                 let val: &[f32] = bytemuck::cast_slice(&val);
                 let val = val.to_vec();
-                if let Err(err) = buffer_tx
+                if let Err(_err) = buffer_tx
                     .send(val)
                 {
-                    tracing::info!(err = ?err, "Closing channel");
+                    tracing::debug!("Failed send on closed channel");
                 }
             },
         );
+        // TODO this is blocking on native for the very first task, and IDK why.
         let result_buf = buffer_rx
             .await
             .expect("embedding ought to avoid drop of channel");
@@ -440,5 +445,6 @@ impl GpuTask for ComputeTask {
             .send(result_buf)
             .map_err(|_val| ())
             .unwrap();
+        tracing::info!("Finishing");
     }
 }
