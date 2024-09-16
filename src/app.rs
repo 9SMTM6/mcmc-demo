@@ -94,7 +94,7 @@ impl McmcDemo {
         // TODO: consider dynamically initializing/uninitializing instead.
         TargetDistribution::init_pipeline(render_state, gpu_tx.clone());
         BDADiff::init_pipeline(render_state, gpu_tx.clone());
-        BDAComputeDiff::init_pipeline(render_state, gpu_tx.clone());
+        BDAComputeDiff::init_pipeline(render_state, gpu_tx.clone(), cc.egui_ctx.clone());
         state.local_resources.insert(gpu_tx);
         state
     }

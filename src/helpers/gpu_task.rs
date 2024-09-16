@@ -107,3 +107,18 @@ pub async fn gpu_scheduler(mut rx: tokio::sync::mpsc::Receiver<GpuTaskEnum>) {
         // spawner.spawn(run_gpu_task(task, compute_device.clone(), compute_queue.clone())).unwrap();
     }
 }
+
+#[derive(Clone)]
+pub struct RepaintToken {
+    inner: egui::Context,
+}
+
+impl RepaintToken {
+    pub fn new(inner: egui::Context) -> Self {
+        Self { inner }
+    }
+
+    pub fn request_repaint(&self) {
+        self.inner.request_repaint();
+    }
+}

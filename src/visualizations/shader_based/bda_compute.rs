@@ -2,6 +2,7 @@ use std::{ops::Deref, sync::Arc};
 
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
 use tokio::sync::{mpsc, oneshot, watch};
+use tracing::Instrument;
 use wgpu::{
     Buffer, BufferDescriptor, BufferUsages, CommandEncoderDescriptor, ComputePassDescriptor,
     ComputePipelineDescriptor, RenderPipeline, RenderPipelineDescriptor,
@@ -9,7 +10,7 @@ use wgpu::{
 
 use crate::{
     create_shader_module,
-    gpu_task::{GpuTask, GpuTaskEnum},
+    gpu_task::{GpuTask, GpuTaskEnum, RepaintToken},
     simulation::random_walk_metropolis_hastings::Rwmh,
     target_distributions::multimodal_gaussian::GaussianTargetDistr,
     visualizations::AlgoPainter,
@@ -70,6 +71,7 @@ struct PipelineStateHolder {
     compute_tx: watch::Sender<Option<ComputeBufCpuRepr>>,
     compute_rx: watch::Receiver<Option<ComputeBufCpuRepr>>,
     last_approx_len: usize,
+    repaint_token: RepaintToken,
 }
 
 impl AlgoPainter for BDAComputeDiff {
@@ -92,7 +94,11 @@ impl AlgoPainter for BDAComputeDiff {
 }
 
 impl BDAComputeDiff {
-    pub fn init_pipeline(render_state: &RenderState, gpu_tx: mpsc::Sender<GpuTaskEnum>) {
+    pub fn init_pipeline(
+        render_state: &RenderState,
+        gpu_tx: mpsc::Sender<GpuTaskEnum>,
+        ctx: egui::Context,
+    ) {
         let device = &render_state.device;
 
         let webgpu_debug_name = Some(definition_location!());
@@ -158,6 +164,7 @@ impl BDAComputeDiff {
                 compute_rx,
                 compute_tx,
                 last_approx_len: 0,
+                repaint_token: RepaintToken::new(ctx),
             })
         else {
             unreachable!("pipeline already present?!")
@@ -190,6 +197,7 @@ impl CallbackTrait for RenderCall {
             ref compute_tx,
             ref mut compute_rx,
             ref mut last_approx_len,
+            ref repaint_token,
             ..
         } = callback_resources
             .get_mut()
@@ -218,13 +226,20 @@ impl CallbackTrait for RenderCall {
         if res_changed || approx_changed {
             // old value is now outdated.
             compute_tx.send(None).unwrap();
-            // tokio::task::spawn_local({
-            //     let mut compute_rx = compute_rx.clone();
-            //     async move {
-            //         compute_rx.wait_for(|val| val.is_some()).await.unwrap();
-            //         todo!("trigger re-render from egui::Ctx in here");
-            //     }
-            // });
+            let refresh_on_finished = {
+                let mut compute_rx = compute_rx.clone();
+                let repaint_token = repaint_token.clone();
+                async move {
+                    compute_rx.wait_for(|val| val.is_some()).await.unwrap();
+                    tracing::debug!("Requesting repaint after finish");
+                    repaint_token.request_repaint();
+                }
+            }
+            .in_current_span();
+            #[cfg(target_arch = "wasm32")]
+            tokio::task::spawn_local(refresh_on_finished);
+            #[cfg(not(target_arch = "wasm32"))]
+            tokio::task::spawn(refresh_on_finished);
             let (tx, rx) = oneshot::channel::<ComputeBufCpuRepr>();
             match gpu_tx.try_send(GpuTaskEnum::BdaComputeTask(
                 crate::visualizations::BdaComputeTask {
@@ -272,14 +287,15 @@ impl CallbackTrait for RenderCall {
             .expect("channel should never be closed")
         {
             if let &Some(ref val) = compute_rx.borrow().deref() {
-                // TODO: duplicated the setting here to avoid validation errors.
-                // Figure out correct handling
-                *compute_output_buffer = get_compute_output_buffer(device, Some(&self.px_size));
-                queue.write_buffer(
-                    compute_output_buffer,
-                    0,
-                    bytemuck::cast_slice(val.as_slice()),
-                );
+                if compute_output_buffer.size() != (val.as_slice().len() * 4) as u64 {
+                    tracing::error!("TODO: Fix this mismatch. Might just go away when I asure that only the latest render continues");
+                } else {
+                    queue.write_buffer(
+                        compute_output_buffer,
+                        0,
+                        bytemuck::cast_slice(val.as_slice()),
+                    );
+                }
             } else {
                 // clear the buffer, instead of leaving wrong values there.
                 // There ought to be a better way....
