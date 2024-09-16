@@ -94,11 +94,7 @@ impl AlgoPainter for BDAComputeDiff {
 }
 
 impl BDAComputeDiff {
-    pub fn init_pipeline(
-        render_state: &RenderState,
-        gpu_tx: mpsc::Sender<GpuTaskEnum>,
-        ctx: egui::Context,
-    ) {
+    pub fn init_pipeline(render_state: &RenderState, gpu_tx: mpsc::Sender<GpuTaskEnum>, ctx: egui::Context) {
         let device = &render_state.device;
 
         let webgpu_debug_name = Some(definition_location!());
@@ -234,8 +230,7 @@ impl CallbackTrait for RenderCall {
                     tracing::debug!("Requesting repaint after finish");
                     repaint_token.request_repaint();
                 }
-            }
-            .in_current_span();
+            }.in_current_span();
             #[cfg(target_arch = "wasm32")]
             tokio::task::spawn_local(refresh_on_finished);
             #[cfg(not(target_arch = "wasm32"))]
@@ -288,7 +283,7 @@ impl CallbackTrait for RenderCall {
         {
             if let &Some(ref val) = compute_rx.borrow().deref() {
                 if compute_output_buffer.size() != (val.as_slice().len() * 4) as u64 {
-                    tracing::error!("TODO: Fix this mismatch. Might just go away when I asure that only the latest render continues");
+                    tracing::error!("TODO: Fix this mismatch. Might just go away when I assure that only the latest render continues");
                 } else {
                     queue.write_buffer(
                         compute_output_buffer,

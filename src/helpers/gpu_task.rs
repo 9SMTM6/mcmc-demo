@@ -100,6 +100,7 @@ pub async fn gpu_scheduler(mut rx: tokio::sync::mpsc::Receiver<GpuTaskEnum>) {
                 // tracing::debug!("Task finished");
             }
         };
+        // task_future.await;
         #[cfg(not(target_arch = "wasm32"))]
         tokio::task::spawn(task_future);
         #[cfg(target_arch = "wasm32")]

@@ -69,8 +69,8 @@ fn main() {
     use mcmc_demo::html_bindings::*;
 
     // Log or trace to stderr (if you run with `RUST_LOG=debug`).
-    // tracing has more and precise scope information, and works well with multithreading, where regular logging as a single threaded approach breaks.
     #[cfg(feature = "tracing")]
+    // tracing has more and precise scope information, and works well with multithreading, where regular logging as a 'single threaded' approach breaks.
     mcmc_demo::set_default_and_redirect_log(mcmc_demo::define_subscriber(DEFAULT_TRACE_LEVEL));
     #[cfg(not(feature = "tracing"))]
     // Redirect `log` message to `console.log` and friends:
