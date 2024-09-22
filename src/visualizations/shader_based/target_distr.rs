@@ -1,12 +1,11 @@
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
-use tokio::sync::mpsc::Sender;
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
     Buffer, BufferDescriptor, BufferUsages, RenderPipeline, RenderPipelineDescriptor,
 };
 
 use crate::{
-    gpu_task::GpuTaskEnum, simulation::random_walk_metropolis_hastings::Rwmh,
+    simulation::random_walk_metropolis_hastings::Rwmh,
     target_distributions::multimodal_gaussian::GaussianTargetDistr, visualizations::AlgoPainter,
 };
 
@@ -79,7 +78,7 @@ pub(super) fn get_normaldistr_buffer(
 }
 
 impl TargetDistribution {
-    pub fn init_pipeline(render_state: &RenderState, _: Sender<GpuTaskEnum>) {
+    pub fn init_pipeline(render_state: &RenderState) {
         let device = &render_state.device;
 
         let webgpu_debug_name = Some(file!());

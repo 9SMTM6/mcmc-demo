@@ -1,10 +1,9 @@
 use egui::{self, ProgressBar, Shadow, Vec2};
 use std::{sync::Arc, time::Duration};
-use tokio::sync::mpsc;
 use type_map::TypeMap;
 
 use crate::{
-    gpu_task::{DebugTask, GpuTaskEnum},
+    gpu_task::{get_gpu_channels, GpuTaskSenders},
     helpers::bg_task::{BgCommunicate, BgTaskHandle, Progress},
     simulation::random_walk_metropolis_hastings::{ProgressMode, Rwmh},
     target_distributions::multimodal_gaussian::GaussianTargetDistr,
@@ -30,6 +29,7 @@ pub struct McmcDemo {
     // TODO: to make things more modular, switch to a composite struct for the simulation.
     // That struct will hold the algo, the data, the rngs and maybe the display (or an vector of displays, pointdisplay, targetdistr display, diff display).
     // It'll then implement legal transitions, e.g. changing the target distribution will lead to data reset etc.
+    /// Note that this Arc is used in a copy-on-write fashion, with only atomic reassignments.
     algo: Arc<Rwmh>,
     point_display: Option<PointDisplay>,
     target_distr: GaussianTargetDistr,
@@ -57,7 +57,7 @@ impl McmcDemo {
     /// Called once before the first frame.
     #[expect(clippy::missing_panics_doc, reason = "only used once")]
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        let (gpu_tx, gpu_rx) = tokio::sync::mpsc::channel::<GpuTaskEnum>(8);
+        let (GpuTaskSenders{bda_compute}, gpu_rx) = get_gpu_channels();
 
         let gpu_scheduler = crate::gpu_task::gpu_scheduler(gpu_rx);
 
@@ -83,7 +83,7 @@ impl McmcDemo {
             visuals.window_shadow = Shadow::NONE;
         });
 
-        let mut state = Self::get_state(cc);
+        let state = Self::get_state(cc);
         let render_state = cc
             .wgpu_render_state
             .as_ref()
@@ -92,10 +92,9 @@ impl McmcDemo {
         // eframe on web is just async to the top, where I use the latter, on native its using pollster to resolve the future we get from `request_device`.
         // let laaa = render_state.adapter.request_device(&DeviceDescriptor { label: Some(file!()), required_features: Default::default(), required_limits: Default::default(), memory_hints: Default::default() }, None);
         // TODO: consider dynamically initializing/uninitializing instead.
-        TargetDistribution::init_pipeline(render_state, gpu_tx.clone());
-        BDADiff::init_pipeline(render_state, gpu_tx.clone());
-        BDAComputeDiff::init_pipeline(render_state, gpu_tx.clone(), cc.egui_ctx.clone());
-        state.local_resources.insert(gpu_tx);
+        TargetDistribution::init_pipeline(render_state);
+        BDADiff::init_pipeline(render_state);
+        BDAComputeDiff::init_pipeline(render_state, bda_compute, cc.egui_ctx.clone());
         state
     }
 
@@ -238,13 +237,6 @@ impl eframe::App for McmcDemo {
                     );
                     ctx.request_repaint_after(Duration::from_millis(16));
                 } else if ui.button("batch step").clicked() {
-                    let gpu_task_queue = self
-                        .local_resources
-                        .get::<mpsc::Sender<GpuTaskEnum>>()
-                        .unwrap();
-                    gpu_task_queue
-                        .try_send(GpuTaskEnum::DebugTask(DebugTask))
-                        .unwrap();
                     let existing = self.local_resources.insert(BatchJob({
                         // TODO: HIGHLY problematic!
                         // This means that the random state doesnt progress

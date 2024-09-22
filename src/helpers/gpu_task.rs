@@ -4,26 +4,32 @@ pub(crate) trait GpuTask {
     async fn run(&mut self, compute_device: Arc<wgpu::Device>, compute_queue: Arc<wgpu::Queue>);
 }
 
-macro_rules! register_gpu_tasks {
-    ($($gpu_task: ident),+) => {
-        pub enum GpuTaskEnum {
-            $($gpu_task($gpu_task)),+
-        }
-
-        impl GpuTask for GpuTaskEnum {
-            async fn run(&mut self, compute_device: Arc<wgpu::Device>, compute_queue: Arc<wgpu::Queue>) {
-                use GpuTaskEnum as D;
-                match self {
-                    $(&mut D::$gpu_task(ref mut inner) => inner.run(compute_device, compute_queue).await),+
-                }
-            }
-        }
-    };
-}
-
 use crate::visualizations::shader_based::BdaComputeTask;
 
-register_gpu_tasks!(BdaComputeTask, DebugTask);
+use super::async_last_task_processor::{
+    get_async_last_task_processor, TaskRunnerFactory, TaskSender,
+};
+
+pub(crate) struct GpuTaskReceivers {
+    pub bda_compute: TaskRunnerFactory<BdaComputeTask>,
+}
+
+pub struct GpuTaskSenders {
+    pub bda_compute: TaskSender<BdaComputeTask>,
+}
+
+pub(crate) fn get_gpu_channels() -> (GpuTaskSenders, GpuTaskReceivers) {
+    let (send_gpu_task, gpu_task_runner) = get_async_last_task_processor::<BdaComputeTask>();
+
+    (
+        GpuTaskSenders {
+            bda_compute: send_gpu_task,
+        },
+        GpuTaskReceivers {
+            bda_compute: gpu_task_runner,
+        },
+    )
+}
 
 pub struct DebugTask;
 
@@ -42,7 +48,7 @@ impl GpuTask for DebugTask {
 ///
 /// # Panics
 /// If no wgpu adapter is found, if no wgpu device could be found with the provided settings, if the gpu_task channel was closed.
-pub async fn gpu_scheduler(mut rx: tokio::sync::mpsc::Receiver<GpuTaskEnum>) {
+pub(crate) async fn gpu_scheduler(rxs: GpuTaskReceivers) {
     let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
         #[cfg(target_arch = "wasm32")]
         backends: wgpu::Backends::BROWSER_WEBGPU,
@@ -66,7 +72,7 @@ pub async fn gpu_scheduler(mut rx: tokio::sync::mpsc::Receiver<GpuTaskEnum>) {
 
     #[cfg_attr(
         target_arch = "wasm32",
-        allow(
+        expect(
             clippy::arc_with_non_send_sync,
             reason = "Future needs to be Send on native, where wgpu types are send"
         )
@@ -74,39 +80,24 @@ pub async fn gpu_scheduler(mut rx: tokio::sync::mpsc::Receiver<GpuTaskEnum>) {
     let compute_device = Arc::new(compute_device);
     #[cfg_attr(
         target_arch = "wasm32",
-        allow(
+        expect(
             clippy::arc_with_non_send_sync,
             reason = "Future needs to be Send on native, where wgpu types are send"
         )
     )]
     let compute_queue = Arc::new(compute_queue);
 
-    loop {
-        let Some(mut task) = rx.recv().await else {
-            tracing::debug!("Finalizing GPU Scheduler, as sending channel was closed");
-            break;
-        };
-        // let task = GPU_TASK_CHANNEL.receive().await;
-        tracing::debug!("Received GPU task");
-        // IDK whether it'd be better to spawn a number of worker tasks that can submit parallel work, or handle parallelism in here.
-        // worker tasks with await might be better for backpressure.
-        // No longer waiting here as for some reason on native the first task seems to block forever.
-        let task_future = {
+    // Add a tokio::join when more GPU tasks are added.
+    rxs.bda_compute
+        .bind_task(|| {
             let compute_device = compute_device.clone();
             let compute_queue = compute_queue.clone();
-            async move {
-                task.run(compute_device.clone(), compute_queue.clone())
-                    .await;
-                // tracing::debug!("Task finished");
+            |mut task: BdaComputeTask| async move {
+                task.run(compute_device, compute_queue).await;
             }
-        };
-        // task_future.await;
-        #[cfg(not(target_arch = "wasm32"))]
-        tokio::task::spawn(task_future);
-        #[cfg(target_arch = "wasm32")]
-        tokio::task::spawn_local(task_future);
-        // spawner.spawn(run_gpu_task(task, compute_device.clone(), compute_queue.clone())).unwrap();
-    }
+        })
+        .run_compute_loop()
+        .await;
 }
 
 #[derive(Clone)]

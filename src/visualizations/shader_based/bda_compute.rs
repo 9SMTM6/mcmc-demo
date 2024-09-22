@@ -1,7 +1,7 @@
 use std::{ops::Deref, sync::Arc};
 
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
-use tokio::sync::{mpsc, oneshot, watch};
+use tokio::sync::{oneshot, watch};
 use tracing::Instrument;
 use wgpu::{
     Buffer, BufferDescriptor, BufferUsages, CommandEncoderDescriptor, ComputePassDescriptor,
@@ -10,7 +10,8 @@ use wgpu::{
 
 use crate::{
     create_shader_module,
-    gpu_task::{GpuTask, GpuTaskEnum, RepaintToken},
+    gpu_task::{GpuTask, RepaintToken},
+    helpers::async_last_task_processor::TaskSender,
     simulation::random_walk_metropolis_hastings::Rwmh,
     target_distributions::multimodal_gaussian::GaussianTargetDistr,
     visualizations::AlgoPainter,
@@ -67,7 +68,7 @@ struct PipelineStateHolder {
     compute_output_buffer: Buffer,
     resolution_buffer: Buffer,
     target_buffer: Buffer,
-    gpu_tx: mpsc::Sender<GpuTaskEnum>,
+    gpu_tx: TaskSender<ComputeTask>,
     compute_tx: watch::Sender<Option<ComputeBufCpuRepr>>,
     compute_rx: watch::Receiver<Option<ComputeBufCpuRepr>>,
     last_approx_len: usize,
@@ -94,7 +95,11 @@ impl AlgoPainter for BDAComputeDiff {
 }
 
 impl BDAComputeDiff {
-    pub fn init_pipeline(render_state: &RenderState, gpu_tx: mpsc::Sender<GpuTaskEnum>, ctx: egui::Context) {
+    pub fn init_pipeline(
+        render_state: &RenderState,
+        gpu_tx: TaskSender<ComputeTask>,
+        ctx: egui::Context,
+    ) {
         let device = &render_state.device;
 
         let webgpu_debug_name = Some(definition_location!());
@@ -140,6 +145,7 @@ impl BDAComputeDiff {
             },
         );
 
+        // TODO: This is the actual issue here. I think. I wrote the async_last_task_processor to replace this, why is it still around?
         let (compute_tx, compute_rx) = watch::channel(None);
 
         // Because the graphics pipeline must have the same lifetime as the egui render pass,
@@ -226,26 +232,27 @@ impl CallbackTrait for RenderCall {
                 let mut compute_rx = compute_rx.clone();
                 let repaint_token = repaint_token.clone();
                 async move {
-                    compute_rx.wait_for(|val| val.is_some()).await.unwrap();
-                    tracing::debug!("Requesting repaint after finish");
-                    repaint_token.request_repaint();
+                    if let Ok(_) = compute_rx.wait_for(|val| val.is_some()).await {
+                        tracing::debug!("Requesting repaint after finish");
+                        repaint_token.request_repaint();
+                    } else {
+                        tracing::debug!("Refresh canceled");
+                    }
                 }
-            }.in_current_span();
+            }
+            .in_current_span();
             #[cfg(target_arch = "wasm32")]
             tokio::task::spawn_local(refresh_on_finished);
             #[cfg(not(target_arch = "wasm32"))]
             tokio::task::spawn(refresh_on_finished);
             let (tx, rx) = oneshot::channel::<ComputeBufCpuRepr>();
-            match gpu_tx.try_send(GpuTaskEnum::BdaComputeTask(
-                crate::visualizations::BdaComputeTask {
-                    px_size: self.px_size,
-                    algo_state: self.algo_state.clone(),
-                    result_tx: Some(tx),
-                },
-            )) {
+            match gpu_tx.send_update_blocking(crate::visualizations::BdaComputeTask {
+                px_size: self.px_size,
+                algo_state: self.algo_state.clone(),
+                result_tx: Some(tx),
+            }) {
                 Ok(_) => {}
-                Err(err) => {
-                    let _dropped_task = err.into_inner();
+                Err(_err) => {
                     tracing::warn!("GpuTasks filled");
                 }
             }
@@ -441,6 +448,7 @@ impl GpuTask for ComputeTask {
             queue,
             &compute_output_buffer.slice(..),
             |val| {
+                tracing::info!("executed");
                 let val = val.unwrap();
                 let val: &[f32] = bytemuck::cast_slice(&val);
                 let val = val.to_vec();
@@ -449,10 +457,12 @@ impl GpuTask for ComputeTask {
                 }
             },
         );
+        tracing::info!("reached");
         // TODO this is blocking on native for the very first task, and IDK why.
         let result_buf = buffer_rx
             .await
             .expect("embedding ought to avoid drop of channel");
+        tracing::info!("reached2");
         self.result_tx
             .take()
             .unwrap()

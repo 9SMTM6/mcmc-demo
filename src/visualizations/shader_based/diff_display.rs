@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
-use tokio::sync::mpsc::Sender;
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
     Buffer, BufferDescriptor, BufferUsages, RenderPipeline, RenderPipelineDescriptor,
@@ -9,7 +8,6 @@ use wgpu::{
 
 use crate::{
     create_shader_module,
-    gpu_task::GpuTaskEnum,
     profile_scope,
     simulation::random_walk_metropolis_hastings::Rwmh,
     target_distributions::multimodal_gaussian::GaussianTargetDistr,
@@ -99,7 +97,7 @@ impl AlgoPainter for BDADiff {
 }
 
 impl BDADiff {
-    pub fn init_pipeline(render_state: &RenderState, _: Sender<GpuTaskEnum>) {
+    pub fn init_pipeline(render_state: &RenderState) {
         let device = &render_state.device;
 
         let webgpu_debug_name = Some(file!());
