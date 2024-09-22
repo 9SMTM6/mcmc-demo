@@ -1,6 +1,12 @@
-use std::{fmt::Debug, sync::{atomic::{AtomicBool, Ordering}, Arc}};
-use tokio::sync::{Mutex, Notify};
 use std::future::Future;
+use std::{
+    fmt::Debug,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
+};
+use tokio::sync::{Mutex, Notify};
 
 pub(crate) trait ComputeTask<T> {
     async fn run(&self, value: T);
@@ -23,7 +29,7 @@ pub struct TaskRunner<T, C: ComputeTask<T>> {
 
 #[must_use]
 /// If you drop this Factory, the Sender will never be notified that the other end is inactive.
-/// 
+///
 /// Can't figure out how to solve that properly. Implementing Drop means I can't move out of this struct.
 pub(crate) struct TaskRunnerFactory<T> {
     change_notify: Arc<Notify>,
@@ -83,7 +89,34 @@ impl<T> TaskSender<T> {
     }
 }
 
-impl<T: Debug, C: ComputeTask<T>> TaskRunner<T, C> {
+#[cfg(feature = "more_debug_impls")]
+mod cond_trait_impl {
+    use std::fmt::Debug;
+
+    /// A little helper ensuring that the bound type implements debug, if that support was compiled in with `feature = "more_debug_impls"`.
+    /// Required since I can't seem to conditionally include a bound.
+    pub trait DebugBoundIfCompiled: Debug {}
+
+    impl<T: Debug> DebugBoundIfCompiled for T {}
+}
+#[cfg(not(feature = "more_debug_impls"))]
+mod cond_trait_impl {
+    use std::fmt::Debug;
+
+    /// A little helper ensuring that the bound type implements debug, if that support was compiled in with `feature = "more_debug_impls"`.
+    /// Required since I can't seem to conditionally include a bound.
+    pub trait DebugBoundIfCompiled {}
+
+    impl<T> DebugBoundIfCompiled for T {}
+}
+
+pub use cond_trait_impl::*;
+
+impl<T, C> TaskRunner<T, C>
+where
+    T: DebugBoundIfCompiled,
+    C: ComputeTask<T>,
+{
     /// Initializes the compute loop
     pub async fn run_compute_loop(self) {
         // Wait until notified of a task change
@@ -94,7 +127,10 @@ impl<T: Debug, C: ComputeTask<T>> TaskRunner<T, C> {
             let mut data_guard = self.data.lock().await;
 
             if let Some(task) = data_guard.take() {
+                #[cfg(feature = "more_debug_impls")]
                 tracing::debug!(?task, "task received");
+                #[cfg(not(feature = "more_debug_impls"))]
+                tracing::debug!("task received");
                 drop(data_guard); // Drop guard so new tasks can be sent
                 tokio::select! {
                     _ = self.change_notify.notified() => {
@@ -115,8 +151,7 @@ impl<T: Debug, C: ComputeTask<T>> TaskRunner<T, C> {
     }
 }
 
-pub fn get_async_last_task_processor<T>(
-) -> (TaskSender<T>, TaskRunnerFactory<T>) {
+pub fn get_async_last_task_processor<T>() -> (TaskSender<T>, TaskRunnerFactory<T>) {
     let change_notify = Arc::new(Notify::new());
     let data = Arc::new(Mutex::new(None));
     let is_other_end_active = Arc::new(AtomicBool::new(true));
@@ -152,6 +187,7 @@ mod test {
 
     use super::*;
 
+    #[cfg(feature = "more_debug_impls")]
     #[tokio::test]
     async fn runs_task_sucessfully() {
         let (tx, mut rx) = tokio::sync::mpsc::channel(1);
@@ -162,9 +198,9 @@ mod test {
                 tx.send(()).await.unwrap();
             }
         });
-        let (f, g,h) = tokio::join!(
+        let (f, g, h) = tokio::join!(
             tokio::spawn(runner.run_compute_loop()),
-            tokio::spawn(async move { 
+            tokio::spawn(async move {
                 t_tx.send_update(()).await.unwrap();
                 drop(t_tx);
             }),
@@ -185,10 +221,8 @@ mod test {
     #[tokio::test]
     async fn cancels_on_sender_drop() {
         let (t_tx, runner) = get_async_last_task_processor();
-        let runner = runner.bind_task(move || {
-            |_val: ()| async move {}
-        });
-        let (f, g) =tokio::join!(
+        let runner = runner.bind_task(move || |_val: ()| async move {});
+        let (f, g) = tokio::join!(
             tokio::spawn(async move {
                 tokio::select! {
                     _ = tokio::time::sleep(Duration::from_millis(200)) => {
@@ -209,9 +243,7 @@ mod test {
     #[tokio::test]
     async fn errors_on_runner_drop() {
         let (t_tx, runner) = get_async_last_task_processor();
-        let runner = runner.bind_task(move || {
-            |_val: ()| async move {}
-        });
+        let runner = runner.bind_task(move || |_val: ()| async move {});
         drop(runner);
         assert!(t_tx.send_update(()).await.is_err());
     }

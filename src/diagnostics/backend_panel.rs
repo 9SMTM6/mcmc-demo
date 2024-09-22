@@ -59,7 +59,7 @@ pub struct BackendPanel {
     run_mode: RunMode,
 
     #[cfg_attr(feature = "persistence", serde(skip))]
-    frame_history: crate::profile::frame_history::FrameHistory,
+    frame_history: crate::diagnostics::frame_history::FrameHistory,
 
     egui_windows: EguiWindows,
 }

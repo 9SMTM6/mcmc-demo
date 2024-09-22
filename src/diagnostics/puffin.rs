@@ -1,10 +1,3 @@
-#[cfg(feature = "profile")]
-pub mod backend_panel;
-#[cfg(feature = "profile")]
-pub mod frame_history;
-#[cfg(feature = "tracing")]
-pub mod tracing;
-
 #[macro_export]
 #[expect(clippy::module_name_repetitions, reason = "makes autoimport nicer")]
 #[allow(unknown_lints, reason = "not a lint on stable...")]
