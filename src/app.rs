@@ -152,7 +152,7 @@ impl eframe::App for McmcDemo {
                     };
                     ui.data_mut(|type_map| type_map.clear());
                 }
-                #[cfg(feature = "profile")]
+                #[cfg(feature = "backend_panel")]
                 {
                     use crate::diagnostics::backend_panel::BackendPanel;
                     let is_opened = self.local_resources.contains::<BackendPanel>();
@@ -175,7 +175,7 @@ impl eframe::App for McmcDemo {
             });
         });
 
-        #[cfg(feature = "profile")]
+        #[cfg(feature = "backend_panel")]
         if let Some(backend) = self
             .local_resources
             .get_mut::<crate::diagnostics::backend_panel::BackendPanel>()

@@ -40,10 +40,10 @@ pub fn define_subscriber(
             used
         })
         .with({
-            #[cfg(all(feature = "profile", target_arch = "wasm32"))]
+            #[cfg(all(feature = "performance_profile", target_arch = "wasm32"))]
             let used = tracing_web::performance_layer()
                 .with_details_from_fields(tr_sub::fmt::format::Pretty::default());
-            #[cfg(not(all(feature = "profile", target_arch = "wasm32")))]
+            #[cfg(not(all(feature = "performance_profile", target_arch = "wasm32")))]
             let used = tr_sub::layer::Identity::new();
             used
         })

@@ -12,11 +12,23 @@ targets = ["x86_64-unknown-linux-gnu", "wasm32-unknown-unknown"]
 [features]
 default = [
     "all_rngs",
-    "profile",
+    "backend_panel",
+    "performance_profile",
     "shipped_fonts",
     "tracing",
     "x11",
     "persistence",
+]
+## Get a backend planel, that reports frametimes, renderer information, and debug settings for egui.
+## Ported pretty straight from the demo application.
+backend_panel = []
+## Native: Enable data collection or profiling with puffer, with a button in the backend_panel that starts said profiler.
+## Web: Record tracing events and spans to the performance API.
+performance_profile = [
+    "backend_panel",
+    "dep:puffin",
+    "dep:puffin_http",
+    "eframe/puffin",
 ]
 ## Enable checkpoint saving of (some of the) state.
 ## Has considerable influence on binary size because of embedded serializations (field names etc).
@@ -33,21 +45,12 @@ persistence = [
     # "wgpu/serde",
     "dep:serde",
 ]
-# doesnt work, since it can't translate storagebuffers.
-# And my experiments with passing stuff via textures was not successful.
+## doesnt work, since it can't translate storagebuffers.
+## And my experiments with passing stuff via textures was not successful.
 # webgl_compat = ["wgpu/webgl"]
 ## Support layers for x11 on Linux. Wayland is always supported.
 x11 = ["eframe/x11"]
 shipped_fonts = ["eframe/default_fonts"]
-## Enable data collection or profiling with puffer, with a button in the UI that starts said profiler.
-profile = [
-    "dep:puffin", 
-    "dep:puffin_http", 
-    "eframe/puffin",
-    # Note that this is NOT a tokio-trace trace.
-    # "temporarily removed". Reinstatement issue: https://github.com/gfx-rs/wgpu/issues/5974
-    # "wgpu/trace",
-]
 ## This has a considerable influence on wasm binary size
 ## It not just enables required dependencies to handle tracing,
 ## but also enables tracing and logging in dependencies,
@@ -69,9 +72,7 @@ dependency_logs = [
     # needs tokio_unstable cfg flag.
     "tokio/tracing",
 ]
-more_debug_impls = [
-    "dep:educe",
-]
+more_debug_impls = ["dep:educe"]
 all_rngs = [
     "rng_pcg",
     # "rng_small",
@@ -84,6 +85,11 @@ rng_chacha = ["dep:rand_chacha"]
 rng_xoshiro = ["dep:rand_xoshiro"]
 rng_xorshift = ["dep:rand_xorshift"]
 # rng_small = ["rand/small_rng"]
+# wgpu_trace = [
+#     # Note that this is NOT a tokio-trace trace.
+#     # "temporarily removed". Reinstatement issue: https://github.com/gfx-rs/wgpu/issues/5974
+#     "wgpu/trace",
+# ]
 
 [dependencies]
 bytemuck = { version = "1.16.0" }
@@ -130,8 +136,12 @@ tokio = { version = "1.40.0", default-features = false, features = [
 ] }
 wasm-bindgen-futures = "0.4.43"
 rayon = "1.10.0"
-educe = { version = "0.6.0", default-features = false, features = ["Debug"], optional = true }
-futures = { version = "0.3.30", default-features = false, features = ["executor"] }
+educe = { version = "0.6.0", default-features = false, features = [
+    "Debug",
+], optional = true }
+futures = { version = "0.3.30", default-features = false, features = [
+    "executor",
+] }
 
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]

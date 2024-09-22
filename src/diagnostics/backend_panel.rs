@@ -160,9 +160,9 @@ impl BackendPanel {
             if ui.button("Quit").clicked() {
                 ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close);
             }
-            #[cfg(all(feature = "profile", not(target_arch = "wasm32")))]
+            #[cfg(all(feature = "performance_profile", not(target_arch = "wasm32")))]
             if ui.button("Puffin Profiling").clicked() {
-                super::start_puffin_server();
+                crate::diagnostics::puffin::start_puffin_server();
             }
         }
     }
