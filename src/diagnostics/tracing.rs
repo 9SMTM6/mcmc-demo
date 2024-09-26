@@ -22,7 +22,7 @@ pub fn define_subscriber(
 ) -> impl tracing::Subscriber + Send + Sync {
     // spawn the console server in the background,
     // returning a `Layer`:
-    #[cfg(all(feature = "tokio_console", not(target_arch = "wasm32")))]
+    #[cfg(all(feature = "tokio_console", tokio_unstable, not(target_arch = "wasm32")))]
     let console_layer = console_subscriber::spawn();
     let get_env_filter = || tr_sub::EnvFilter::try_from_default_env()
         .unwrap_or_else(|_| tr_sub::EnvFilter::new(default_log_level.unwrap_or("info")));
@@ -60,9 +60,9 @@ pub fn define_subscriber(
             used
         })
         .with({
-            #[cfg(all(feature = "tokio_console", not(target_arch = "wasm32")))]
+            #[cfg(all(feature = "tokio_console", tokio_unstable, not(target_arch = "wasm32")))]
             let used = console_layer;
-            #[cfg(not(all(feature = "tokio_console", not(target_arch = "wasm32"))))]
+            #[cfg(not(all(feature = "tokio_console", tokio_unstable, not(target_arch = "wasm32"))))]
             let used = tr_sub::layer::Identity::new();
             used
         })
