@@ -1,7 +1,7 @@
 use tr_sub::layer::SubscriberExt as _;
 use tracing::{self, Subscriber};
 use tracing_log;
-use tracing_subscriber::{self as tr_sub, fmt::time::UtcTime};
+use tracing_subscriber::{self as tr_sub, fmt::time::UtcTime, Layer};
 
 // trait CfgWasmChain {
 //     fn apply_on_wasm()
@@ -24,24 +24,32 @@ pub fn define_subscriber(
     // returning a `Layer`:
     #[cfg(all(feature = "tokio_console", not(target_arch = "wasm32")))]
     let console_layer = console_subscriber::spawn();
+    let get_env_filter = || tr_sub::EnvFilter::try_from_default_env()
+        .unwrap_or_else(|_| tr_sub::EnvFilter::new(default_log_level.unwrap_or("info")));
     // The `with` method is provided by `SubscriberExt`, an extension
     // trait for `Subscriber` exposed by `tracing_subscriber`
     tr_sub::Registry::default()
         // We are falling back to printing all spans at info-level or above
         // if the RUST_LOG environment variable has not been set.
         .with(
-            tr_sub::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| tr_sub::EnvFilter::new(default_log_level.unwrap_or("info"))),
+            get_env_filter()
+                // always enable the events required by tokio console.
+                .add_directive("tokio=trace".parse().unwrap())
+                .add_directive("runtime=trace".parse().unwrap()),
         )
+        // this layer prints to stdout/browser console
         .with({
-            let base = tr_sub::fmt::layer().with_timer(UtcTime::rfc_3339());
+            let base = tr_sub::fmt::layer()
+                .with_timer(UtcTime::rfc_3339())
+                .pretty();
             #[cfg(target_arch = "wasm32")]
             let used = base
                 .with_ansi(is_chromium()) // chromium supports ANSI, Firefox does not seem to.
                 .with_writer(tracing_web::MakeWebConsoleWriter::new());
             #[cfg(not(target_arch = "wasm32"))]
             let used = base;
-            used
+            // don't show tokio console events, unless manually added
+            Layer::with_filter(used, get_env_filter())
         })
         .with({
             #[cfg(all(feature = "performance_profile", target_arch = "wasm32"))]
