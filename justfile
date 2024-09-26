@@ -69,9 +69,8 @@ fix_ci_staged:
     cargo +stable --locked fmt --all
 
 tokio_console:
-    # ensure cargo run will work immediately, since we put it in the background with &
-    RUST_LOG=tokio=trace,runtime=trace RUSTFLAGS="--cfg tokio_unstable" cargo +stable build --features tokio_console --target x86_64-unknown-linux-gnu
-    RUST_LOG=tokio=trace,runtime=trace RUSTFLAGS="--cfg tokio_unstable" cargo +stable run --features tokio_console --target x86_64-unknown-linux-gnu &
+    RUSTFLAGS="--cfg tokio_unstable" cargo +stable build --features tokio_console --target x86_64-unknown-linux-gnu
+    RUST_LOG=tokio=trace,runtime=trace ./target/x86_64-unknown-linux-gnu/debug/mcmc-demo &
     # spawn tokio-console in another terminal window
     konsole -e tokio-console
 
