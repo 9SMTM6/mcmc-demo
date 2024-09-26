@@ -84,6 +84,7 @@ rng_pcg = ["dep:rand_pcg"]
 rng_chacha = ["dep:rand_chacha"]
 rng_xoshiro = ["dep:rand_xoshiro"]
 rng_xorshift = ["dep:rand_xorshift"]
+tokio_console = ["dep:console-subscriber", "tokio/tracing"]
 # rng_small = ["rand/small_rng"]
 # wgpu_trace = [
 #     # Note that this is NOT a tokio-trace trace.
@@ -142,6 +143,7 @@ educe = { version = "0.6.0", default-features = false, features = [
 futures = { version = "0.3.30", default-features = false, features = [
     "executor",
 ] }
+console-subscriber = { version = "0.4.0", optional = true }
 
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]

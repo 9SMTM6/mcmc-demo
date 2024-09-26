@@ -20,6 +20,10 @@ pub fn is_chromium() -> bool {
 pub fn define_subscriber(
     default_log_level: Option<&str>,
 ) -> impl tracing::Subscriber + Send + Sync {
+    // spawn the console server in the background,
+    // returning a `Layer`:
+    #[cfg(all(feature = "tokio_console", not(target_arch = "wasm32")))]
+    let console_layer = console_subscriber::spawn();
     // The `with` method is provided by `SubscriberExt`, an extension
     // trait for `Subscriber` exposed by `tracing_subscriber`
     tr_sub::Registry::default()
@@ -44,6 +48,13 @@ pub fn define_subscriber(
             let used = tracing_web::performance_layer()
                 .with_details_from_fields(tr_sub::fmt::format::Pretty::default());
             #[cfg(not(all(feature = "performance_profile", target_arch = "wasm32")))]
+            let used = tr_sub::layer::Identity::new();
+            used
+        })
+        .with({
+            #[cfg(all(feature = "tokio_console", not(target_arch = "wasm32")))]
+            let used = console_layer;
+            #[cfg(not(all(feature = "tokio_console", not(target_arch = "wasm32"))))]
             let used = tr_sub::layer::Identity::new();
             used
         })
