@@ -72,7 +72,6 @@ struct PipelineStateHolder {
     compute_tx: watch::Sender<Option<ComputeBufCpuRepr>>,
     compute_rx: watch::Receiver<Option<ComputeBufCpuRepr>>,
     last_approx_len: usize,
-    repaint_token: RepaintToken,
 }
 
 impl AlgoPainter for BDAComputeDiff {
@@ -148,6 +147,23 @@ impl BDAComputeDiff {
         // TODO: This is the actual issue here. I think. I wrote the async_last_task_processor to replace this, why is it still around?
         let (compute_tx, compute_rx) = watch::channel(None);
 
+        let refresh_on_finished = {
+            let mut compute_rx = compute_rx.clone();
+            let repaint_token = RepaintToken::new(ctx);
+            async move {
+                while let Ok(_) = compute_rx.wait_for(|val| val.is_some()).await {
+                    tracing::debug!("Requesting repaint after finish");
+                    repaint_token.request_repaint();
+                }
+                tracing::debug!("Refresh loop canceled");
+            }
+        }
+        .in_current_span();
+        #[cfg(target_arch = "wasm32")]
+        tokio::task::spawn_local(refresh_on_finished);
+        #[cfg(not(target_arch = "wasm32"))]
+        tokio::task::spawn(refresh_on_finished);
+
         // Because the graphics pipeline must have the same lifetime as the egui render pass,
         // instead of storing the pipeline in our struct, we insert it into the
         // `callback_resources` type map, which is stored alongside the render pass.
@@ -166,7 +182,6 @@ impl BDAComputeDiff {
                 compute_rx,
                 compute_tx,
                 last_approx_len: 0,
-                repaint_token: RepaintToken::new(ctx),
             })
         else {
             unreachable!("pipeline already present?!")
@@ -199,7 +214,6 @@ impl CallbackTrait for RenderCall {
             ref compute_tx,
             ref mut compute_rx,
             ref mut last_approx_len,
-            ref repaint_token,
             ..
         } = callback_resources
             .get_mut()
@@ -228,23 +242,6 @@ impl CallbackTrait for RenderCall {
         if res_changed || approx_changed {
             // old value is now outdated.
             compute_tx.send(None).unwrap();
-            let refresh_on_finished = {
-                let mut compute_rx = compute_rx.clone();
-                let repaint_token = repaint_token.clone();
-                async move {
-                    if let Ok(_) = compute_rx.wait_for(|val| val.is_some()).await {
-                        tracing::debug!("Requesting repaint after finish");
-                        repaint_token.request_repaint();
-                    } else {
-                        tracing::debug!("Refresh canceled");
-                    }
-                }
-            }
-            .in_current_span();
-            #[cfg(target_arch = "wasm32")]
-            tokio::task::spawn_local(refresh_on_finished);
-            #[cfg(not(target_arch = "wasm32"))]
-            tokio::task::spawn(refresh_on_finished);
             let (tx, rx) = oneshot::channel::<ComputeBufCpuRepr>();
             match gpu_tx.send_update_blocking(crate::visualizations::BdaComputeTask {
                 px_size: self.px_size,
@@ -299,6 +296,7 @@ impl CallbackTrait for RenderCall {
                     );
                 }
             } else {
+                tracing::debug!("Clearing Buffer because of empty watch channel");
                 // clear the buffer, instead of leaving wrong values there.
                 // There ought to be a better way....
                 queue.write_buffer(
