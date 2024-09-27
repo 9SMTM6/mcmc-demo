@@ -7,8 +7,7 @@ use wgpu::{
 };
 
 use crate::{
-    create_shader_module,
-    profile_scope,
+    create_shader_module, profile_scope,
     simulation::random_walk_metropolis_hastings::Rwmh,
     target_distributions::multimodal_gaussian::GaussianTargetDistr,
     visualizations::{

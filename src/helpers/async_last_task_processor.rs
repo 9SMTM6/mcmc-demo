@@ -189,7 +189,7 @@ mod test {
 
     #[cfg(feature = "more_debug_impls")]
     #[tokio::test]
-    async fn runs_task_sucessfully() {
+    async fn runs_task_successfully() {
         let (tx, mut rx) = tokio::sync::mpsc::channel(1);
         let (t_tx, runner) = get_async_last_task_processor();
         let runner = runner.bind_task(move || {

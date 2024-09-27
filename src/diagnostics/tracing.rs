@@ -25,8 +25,10 @@ pub fn define_subscriber(
     // returning a `Layer`:
     #[cfg(all(feature = "tokio_console", tokio_unstable, not(target_arch = "wasm32")))]
     let console_layer = console_subscriber::spawn();
-    let get_env_filter = || tr_sub::EnvFilter::try_from_default_env()
-        .unwrap_or_else(|_| tr_sub::EnvFilter::new(default_log_level.unwrap_or("info")));
+    let get_env_filter = || {
+        tr_sub::EnvFilter::try_from_default_env()
+            .unwrap_or_else(|_| tr_sub::EnvFilter::new(default_log_level.unwrap_or("info")))
+    };
     // The `with` method is provided by `SubscriberExt`, an extension
     // trait for `Subscriber` exposed by `tracing_subscriber`
     tr_sub::Registry::default()
@@ -63,7 +65,11 @@ pub fn define_subscriber(
         .with({
             #[cfg(all(feature = "tokio_console", tokio_unstable, not(target_arch = "wasm32")))]
             let used = console_layer;
-            #[cfg(not(all(feature = "tokio_console", tokio_unstable, not(target_arch = "wasm32"))))]
+            #[cfg(not(all(
+                feature = "tokio_console",
+                tokio_unstable,
+                not(target_arch = "wasm32")
+            )))]
             let used = tr_sub::layer::Identity::new();
             used
         })

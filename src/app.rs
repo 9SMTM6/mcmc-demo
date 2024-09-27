@@ -57,7 +57,7 @@ impl McmcDemo {
     /// Called once before the first frame.
     #[expect(clippy::missing_panics_doc, reason = "only used once")]
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        let (GpuTaskSenders{bda_compute}, gpu_rx) = get_gpu_channels();
+        let (GpuTaskSenders { bda_compute }, gpu_rx) = get_gpu_channels();
 
         let gpu_scheduler = crate::gpu_task::gpu_scheduler(gpu_rx);
 
