@@ -327,7 +327,7 @@ impl CallbackTrait for RenderCall {
     fn paint<'a>(
         &'a self,
         _info: egui::PaintCallbackInfo,
-        render_pass: &mut wgpu::RenderPass<'a>,
+        render_pass: &mut wgpu::RenderPass<'static>,
         callback_resources: &'a eframe::egui_wgpu::CallbackResources,
     ) {
         let &PipelineStateHolder {

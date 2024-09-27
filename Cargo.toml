@@ -18,6 +18,7 @@ default = [
     "tracing",
     "x11",
     "persistence",
+    "dependency_logs",
 ]
 ## Get a backend planel, that reports frametimes, renderer information, and debug settings for egui.
 ## Ported pretty straight from the demo application.
@@ -67,11 +68,13 @@ tracing = [
     "dependency_logs",
     "more_debug_impls",
 ]
+## Add logs for dependencies
 dependency_logs = [
     "rand/log",
     # needs tokio_unstable cfg flag.
     "tokio/tracing",
 ]
+## More debug impls. ATM only interesting in connection with tracing.
 more_debug_impls = ["dep:educe"]
 all_rngs = [
     "rng_pcg",
@@ -84,6 +87,7 @@ rng_pcg = ["dep:rand_pcg"]
 rng_chacha = ["dep:rand_chacha"]
 rng_xoshiro = ["dep:rand_xoshiro"]
 rng_xorshift = ["dep:rand_xorshift"]
+## Add tokio-console for debugging. Native only.
 tokio_console = ["dep:console-subscriber", "tokio/tracing"]
 # rng_small = ["rand/small_rng"]
 # wgpu_trace = [
@@ -98,11 +102,11 @@ bytemuck = { version = "1.16.0" }
 # Upstream fix PR: https://github.com/embassy-rs/embassy/pull/3312
 # can be removed after that is released.
 # Can't do this with a patch on embassy-executor, since that would require all embassy-* crates to be patched, and this is easier to follow.s
-eframe = { version = "0.28.1", default-features = false, features = [
+eframe = { version = "0.29", default-features = false, features = [
     "wgpu",
     "wayland",
 ] }
-egui = "0.28.1"
+egui = "0.29"
 getrandom = { version = "0.2.15", features = ["js"] }
 nalgebra = { version = "0.33.0" }
 puffin = { version = "0.19.0", optional = true }
@@ -143,10 +147,10 @@ educe = { version = "0.6.0", default-features = false, features = [
 futures = { version = "0.3.30", default-features = false, features = [
     "executor",
 ] }
-console-subscriber = { version = "0.4.0", optional = true }
 
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+console-subscriber = { version = "0.4.0", optional = true }
 env_logger = "0.11.5"
 tokio = { version = "*", features = ["rt-multi-thread"] }
 
@@ -184,11 +188,9 @@ opt-level = 2
 # the release on patched branches MUST match the set version above,# otherwise cargo will ignore this (it will warn about it though).
 
 # If you want to use the bleeding edge version of egui and eframe:
-# TODO: currently required for the fixes merged in https://github.com/emilk/egui/pull/5098
-# Once this was released I can reconsider this.
-# However the released egui regularly lags behind in wgpu versions, so perhaps this will stay for as long as its actively developed.
-egui = { git = "https://github.com/emilk/egui", branch = "master" }
-eframe = { git = "https://github.com/emilk/egui", branch = "master" }
+# The released egui regularly lags behind in wgpu versions, if this is relevant, re-add the patch.
+# egui = { git = "https://github.com/emilk/egui", branch = "master" }
+# eframe = { git = "https://github.com/emilk/egui", branch = "master" }
 
 # Patches out a polyfill, since I need way more modern browsers anyways.
 # Upstream PR: https://github.com/chemicstry/wasm_thread/pull/26

@@ -1,4 +1,3 @@
-#![cfg(feature = "performance_profile")]
 #[macro_export]
 #[expect(clippy::module_name_repetitions, reason = "makes autoimport nicer")]
 #[allow(unknown_lints, reason = "not a lint on stable...")]
@@ -13,10 +12,10 @@ macro_rules! profile_scope {
     };
 }
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(all(not(target_arch = "wasm32"), feature = "performance_profile"))]
 const PUFFIN_URL: &str = "127.0.0.1:8585";
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(all(not(target_arch = "wasm32"), feature = "performance_profile"))]
 // puffin server doesn't exist on web.
 // On the web we've got tracing_web that installed a tracing subscriber that reports to the [performance api](https://developer.mozilla.org/en-US/docs/Web/API/Performance).
 pub fn start_puffin_server() {

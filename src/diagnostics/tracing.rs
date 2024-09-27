@@ -1,3 +1,4 @@
+#![cfg(feature = "tracing")]
 use tr_sub::layer::SubscriberExt as _;
 use tracing::{self, Subscriber};
 use tracing_log;
