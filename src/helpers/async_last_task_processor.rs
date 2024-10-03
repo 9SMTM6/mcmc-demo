@@ -76,9 +76,10 @@ impl<T> TaskSender<T> {
         if !self.is_other_end_active.load(Ordering::SeqCst) {
             Err(TaskSendError::TaskRunnerDropped)
         } else {
-            let mut data_guard = self.data.lock().await;
-            *data_guard = Some(new_task);
-            drop(data_guard);
+            {
+                let mut data_guard = self.data.lock().await;
+                *data_guard = Some(new_task);
+            }
             self.change_notify.notify_one();
             Ok(())
         }
@@ -124,14 +125,14 @@ where
         loop {
             tracing::debug!("looped");
 
-            let mut data_guard = self.data.lock().await;
-
-            if let Some(task) = data_guard.take() {
+            if let Some(task) = {
+                let mut data_guard = self.data.lock().await;
+                data_guard.take()
+            } {
                 #[cfg(feature = "more_debug_impls")]
-                tracing::debug!(?task, "task received");
+                tracing::info!(?task, "task received");
                 #[cfg(not(feature = "more_debug_impls"))]
-                tracing::debug!("task received");
-                drop(data_guard); // Drop guard so new tasks can be sent
+                tracing::info!("task received");
                 tokio::select! {
                     _ = self.change_notify.notified() => {
                         tracing::debug!("New task arrived, re-enter loop");
