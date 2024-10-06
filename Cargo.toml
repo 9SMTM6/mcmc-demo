@@ -152,7 +152,7 @@ futures = { version = "0.3.30", default-features = false, features = [
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 console-subscriber = { version = "0.4.0", optional = true }
 env_logger = "0.11.5"
-tokio = { version = "*", features = ["rt-multi-thread"] }
+tokio = { version = "*", features = ["rt-multi-thread", "time"] }
 
 # web:
 [target.'cfg(target_arch = "wasm32")'.dependencies]
@@ -195,7 +195,6 @@ opt-level = 2
 # Patches out a polyfill, since I need way more modern browsers anyways.
 # Upstream PR: https://github.com/chemicstry/wasm_thread/pull/26
 wasm_thread = { git = "https://github.com/9SMTM6/wasm_thread", branch = "configurable_polyfill" }
-wasm-bindgen-rayon = { git = "https://github.com/9SMTM6/wasm-bindgen-rayon.git", branch = "update-deps-fix-thread-local" }
 # wgsl_to_wgpu = { path = "../wgsl_to_wgpu/wgsl_to_wgpu" }
 # wgpu = { git = "https://github.com/9smtm6/wgpu", branch = "patched" }
 
