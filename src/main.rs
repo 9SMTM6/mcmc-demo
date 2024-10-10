@@ -40,7 +40,12 @@ pub fn main() {
     // At the same time tokio breaks with a long-running blocking task, and using spawn_blocking will move that task of the main thread.
     // Thus the manual finangling.
 
-    let tokio_rt = tokio::runtime::Builder::new_multi_thread().build().unwrap();
+    let mut tokio_rt = tokio::runtime::Builder::new_multi_thread();
+
+    #[cfg(feature = "debounce_async_loops")]
+    tokio_rt.enable_time();
+    
+    let tokio_rt = tokio_rt.build().unwrap();
 
     let _rt_guard = tokio_rt.enter();
 

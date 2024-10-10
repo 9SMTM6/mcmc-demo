@@ -52,6 +52,7 @@ impl<T> Drop for TaskSender<T> {
     fn drop(&mut self) {
         // Mark sender as inactive
         self.is_other_end_active.store(false, Ordering::SeqCst);
+        tracing::info!("Dropped TaskSender");
         // Notify the change, so the runner can finalize
         self.change_notify.notify_one();
     }
@@ -121,8 +122,12 @@ where
     /// Initializes the compute loop
     pub async fn run_compute_loop(self) {
         // Wait until notified of a task change
-        self.change_notify.notified().await;
+        let mut recorded_notify = false;
         loop {
+            if !recorded_notify {
+                self.change_notify.notified().await;
+            }
+            recorded_notify = false;
             tracing::debug!("looped");
 
             if let Some(task) = {
@@ -136,6 +141,7 @@ where
                 tokio::select! {
                     _ = self.change_notify.notified() => {
                         tracing::debug!("New task arrived, re-enter loop");
+                        recorded_notify = true;
                         // New task arrived, re-enter loop
                     },
                     _ = self.task.run(task) => {
@@ -147,6 +153,8 @@ where
                 break;
             } else {
                 tracing::error!("Unexpected State");
+                #[cfg(feature = "debounce_async_loops")]
+                tokio::time::sleep(std::time::Duration::from_secs(1) / 3).await;
             }
         }
     }

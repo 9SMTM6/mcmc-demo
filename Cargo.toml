@@ -23,6 +23,8 @@ default = [
 ## Get a backend planel, that reports frametimes, renderer information, and debug settings for egui.
 ## Ported pretty straight from the demo application.
 backend_panel = []
+## Add a sleep into async loops, to avoid effective busy waiting in unexpected situations that may happen during debugging.
+debounce_async_loops = ["tokio/time"]
 ## Native: Enable data collection or profiling with puffer, with a button in the backend_panel that starts said profiler.
 ## Web: Record tracing events and spans to the performance API.
 performance_profile = [
@@ -152,7 +154,7 @@ futures = { version = "0.3.30", default-features = false, features = [
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 console-subscriber = { version = "0.4.0", optional = true }
 env_logger = "0.11.5"
-tokio = { version = "*", features = ["rt-multi-thread", "time"] }
+tokio = { version = "*", features = ["rt-multi-thread"] }
 
 # web:
 [target.'cfg(target_arch = "wasm32")'.dependencies]
