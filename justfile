@@ -1,14 +1,13 @@
 generate_favicon:
-    typst compile assets/favicon.typ assets/favicon.intermediate.svg
-    svgcleaner assets/favicon.intermediate.svg assets/favicon.svg
+    just mcmc_demo/generate_favicon
 
 # Generate new matching `index.fat.html` from `index.html` and `index.fat.html.patch`
 patch_fat_html:
-    patch index.html -o index.fat.html < index.fat.html.patch
+    just mcmc_demo/patch_fat_html
 
 # Generate new patch file from matched `index.html` and `index.fat.html`
 diff_fat_html:
-    diff -u index.html index.fat.html > index.fat.html.patch || 0
+    just mcmc_demo/diff_fat_html
 
 ci_fmt:
     cargo +stable --locked fmt --all -- --check
@@ -81,12 +80,12 @@ fix_ci: fix_ci_unstaged && fix_ci_staged
 fix_full_ci: fix_ci fix_ci_semver_updates
 
 trunk_fat: patch_fat_html
-    trunk serve --config Trunk.fat.toml
+    just mcmc_demo/trunk_fat
 
 alias tf := trunk_fat
 
-trunk_slim:
-    trunk serve
+trunk_slim: patch_fat_html
+    just mcmc_demo/trunk_slim
 
 alias ts := trunk_slim
 

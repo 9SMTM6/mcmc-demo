@@ -1,0 +1,7 @@
+[package]
+name = "mcmc_demo_macros"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+
+[dependencies]
