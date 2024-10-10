@@ -281,7 +281,7 @@ pub struct RngIter<Distr: Distribution<f32>> {
 impl<T: Default + Distribution<f32>> Default for RngIter<T> {
     fn default() -> Self {
         Self {
-            rng: WrappedRngDiscriminants::Pcg32.seed_from_u64(42),
+            rng: WrappedRngDiscriminants::Pcg64Mcg.seed_from_u64(42),
             distr: Default::default(),
         }
     }
