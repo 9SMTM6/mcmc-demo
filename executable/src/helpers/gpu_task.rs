@@ -6,20 +6,19 @@ pub(crate) trait GpuTask {
 
 use crate::visualizations::shader_based::BdaComputeTask;
 
-use super::async_last_task_processor::{
-    get_async_last_task_processor, TaskRunnerFactory, TaskSender,
-};
+use super::async_last_task_processor::{self, TaskRunnerFactory, TaskSender};
 
 pub(crate) struct GpuTaskReceivers {
     pub bda_compute: TaskRunnerFactory<BdaComputeTask>,
 }
 
+#[allow(clippy::module_name_repetitions, reason = "Easier auto-import")]
 pub struct GpuTaskSenders {
     pub bda_compute: TaskSender<BdaComputeTask>,
 }
 
 pub(crate) fn get_gpu_channels() -> (GpuTaskSenders, GpuTaskReceivers) {
-    let (send_gpu_task, gpu_task_runner) = get_async_last_task_processor::<BdaComputeTask>();
+    let (send_gpu_task, gpu_task_runner) = async_last_task_processor::get::<BdaComputeTask>();
 
     (
         GpuTaskSenders {
@@ -106,7 +105,7 @@ pub struct RepaintToken {
 }
 
 impl RepaintToken {
-    pub fn new(inner: egui::Context) -> Self {
+    pub const fn new(inner: egui::Context) -> Self {
         Self { inner }
     }
 

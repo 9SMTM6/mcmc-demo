@@ -160,7 +160,7 @@ where
     }
 }
 
-pub fn get_async_last_task_processor<T>() -> (TaskSender<T>, TaskRunnerFactory<T>) {
+pub fn get<T>() -> (TaskSender<T>, TaskRunnerFactory<T>) {
     let change_notify = Arc::new(Notify::new());
     let data = Arc::new(Mutex::new(None));
     let is_other_end_active = Arc::new(AtomicBool::new(true));
@@ -200,7 +200,7 @@ mod test {
     #[tokio::test]
     async fn runs_task_successfully() {
         let (tx, mut rx) = tokio::sync::mpsc::channel(1);
-        let (t_tx, runner) = get_async_last_task_processor();
+        let (t_tx, runner) = get();
         let runner = runner.bind_task(move || {
             let tx = tx.clone();
             |_val: ()| async move {
@@ -229,7 +229,7 @@ mod test {
 
     #[tokio::test]
     async fn cancels_on_sender_drop() {
-        let (t_tx, runner) = get_async_last_task_processor();
+        let (t_tx, runner) = get();
         let runner = runner.bind_task(move || |_val: ()| async move {});
         let (f, g) = tokio::join!(
             tokio::spawn(async move {
@@ -251,7 +251,7 @@ mod test {
 
     #[tokio::test]
     async fn errors_on_runner_drop() {
-        let (t_tx, runner) = get_async_last_task_processor();
+        let (t_tx, runner) = get();
         let runner = runner.bind_task(move || |_val: ()| async move {});
         drop(runner);
         assert!(t_tx.send_update(()).await.is_err());

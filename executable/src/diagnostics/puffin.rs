@@ -1,5 +1,4 @@
 #[macro_export]
-#[expect(clippy::module_name_repetitions, reason = "makes autoimport nicer")]
 #[allow(unknown_lints, reason = "not a lint on stable...")]
 #[allow(
     edition_2024_expr_fragment_specifier,

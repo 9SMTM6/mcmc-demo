@@ -18,6 +18,10 @@ pub fn is_chromium() -> bool {
     user_agent.contains("chrom")
 }
 
+#[allow(
+    clippy::missing_panics_doc,
+    reason = "Unwrap on &'static str parse should always work"
+)]
 pub fn define_subscriber(
     default_log_level: Option<&str>,
 ) -> impl tracing::Subscriber + Send + Sync {
@@ -37,8 +41,8 @@ pub fn define_subscriber(
         .with(
             get_env_filter()
                 // always enable the events required by tokio console.
-                .add_directive("tokio=trace".parse().unwrap())
-                .add_directive("runtime=trace".parse().unwrap()),
+                .add_directive("tokio=trace".parse().expect("static string"))
+                .add_directive("runtime=trace".parse().expect("static string")),
         )
         // this layer prints to stdout/browser console
         .with({
