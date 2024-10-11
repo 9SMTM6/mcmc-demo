@@ -1,13 +1,13 @@
 generate_favicon:
-    just mcmc_demo/generate_favicon
+    just executable/generate_favicon
 
 # Generate new matching `index.fat.html` from `index.html` and `index.fat.html.patch`
 patch_fat_html:
-    just mcmc_demo/patch_fat_html
+    just executable/patch_fat_html
 
 # Generate new patch file from matched `index.html` and `index.fat.html`
 diff_fat_html:
-    just mcmc_demo/diff_fat_html
+    just executable/diff_fat_html
 
 ci_fmt:
     cargo +stable --locked fmt --all -- --check
