@@ -14,7 +14,7 @@
 
 #[cfg(feature = "tracing")]
 const DEFAULT_TRACE_LEVEL: Option<&'static str> =
-    Some("info,mcmc_demo=trace,wgpu_core=warn,wgpu_hal=warn");
+    Some("info,wgpu_core=warn,wgpu_hal=warn");
 
 // When compiling natively:
 #[cfg(not(target_arch = "wasm32"))]
@@ -44,7 +44,7 @@ pub fn main() {
 
     #[cfg(feature = "debounce_async_loops")]
     tokio_rt.enable_time();
-    
+
     let tokio_rt = tokio_rt.build().unwrap();
 
     let _rt_guard = tokio_rt.enter();
