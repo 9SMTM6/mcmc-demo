@@ -1993,6 +1993,7 @@ dependencies = [
  "rayon",
  "regex",
  "serde",
+ "shared",
  "time",
  "tokio",
  "tracing",

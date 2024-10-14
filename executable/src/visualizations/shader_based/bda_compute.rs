@@ -2,7 +2,8 @@ use std::{ops::Deref, sync::Arc};
 
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
 use macros::{cfg_educe_debug, cfg_persistence_derive};
-use tokio::sync::{oneshot, watch};
+use shared::cfg_if_expr;
+use tokio::{sync::{oneshot, watch}, task};
 use tracing::Instrument;
 use wgpu::{
     Buffer, BufferDescriptor, BufferUsages, CommandEncoderDescriptor, ComputePassDescriptor,
@@ -160,10 +161,14 @@ impl BDAComputeDiff {
             }
         }
         .in_current_span();
-        #[cfg(target_arch = "wasm32")]
-        tokio::task::spawn_local(refresh_on_finished);
-        #[cfg(not(target_arch = "wasm32"))]
-        tokio::task::spawn(refresh_on_finished);
+        let spawner = cfg_if_expr!(
+            => [target_arch = "wasm32"]
+            task::spawn_local
+            => [not]
+            task::spawn
+        );
+
+        spawner(refresh_on_finished);
 
         // Because the graphics pipeline must have the same lifetime as the egui render pass,
         // instead of storing the pipeline in our struct, we insert it into the

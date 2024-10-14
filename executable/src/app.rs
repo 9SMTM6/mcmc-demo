@@ -1,5 +1,7 @@
 use egui::{self, ProgressBar, Shadow, Vec2};
 use macros::cfg_persistence_derive;
+use shared::cfg_if_expr;
+use tokio::task;
 use std::{sync::Arc, time::Duration};
 use type_map::TypeMap;
 
@@ -58,11 +60,14 @@ impl McmcDemo {
 
         let gpu_scheduler = crate::gpu_task::gpu_scheduler(gpu_rx);
 
-        #[cfg(not(target_arch = "wasm32"))]
-        tokio::task::spawn(gpu_scheduler);
+        let spawner = cfg_if_expr!(
+            => [target_arch = "wasm32"]
+            task::spawn_local
+            => [not]
+            task::spawn
+        );
 
-        #[cfg(target_arch = "wasm32")]
-        tokio::task::spawn_local(gpu_scheduler);
+        spawner(gpu_scheduler);
 
         cc.egui_ctx.style_mut(|style| {
             let visuals = &mut style.visuals;

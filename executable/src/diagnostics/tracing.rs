@@ -1,4 +1,5 @@
 #![cfg(feature = "tracing")]
+use shared::cfg_if_expr;
 use tr_sub::layer::SubscriberExt as _;
 use tracing::{self, Subscriber};
 use tracing_log;
@@ -49,34 +50,30 @@ pub fn define_subscriber(
             let base = tr_sub::fmt::layer()
                 .with_timer(UtcTime::rfc_3339())
                 .pretty();
-            #[cfg(target_arch = "wasm32")]
-            let used = base
-                .with_ansi(is_chromium()) // chromium supports ANSI, Firefox does not seem to.
-                .with_writer(tracing_web::MakeWebConsoleWriter::new());
-            #[cfg(not(target_arch = "wasm32"))]
-            let used = base;
+            let used = cfg_if_expr!(
+                => [target_arch = "wasm32"]
+                base
+                    .with_ansi(is_chromium()) // chromium supports ANSI, Firefox does not seem to.
+                    .with_writer(tracing_web::MakeWebConsoleWriter::new())
+                => [not]
+                base
+            );
             // don't show tokio console events, unless manually added
             Layer::with_filter(used, get_env_filter())
         })
-        .with({
-            #[cfg(all(feature = "performance_profile", target_arch = "wasm32"))]
-            let used = tracing_web::performance_layer()
-                .with_details_from_fields(tr_sub::fmt::format::Pretty::default());
-            #[cfg(not(all(feature = "performance_profile", target_arch = "wasm32")))]
-            let used = tr_sub::layer::Identity::new();
-            used
-        })
-        .with({
-            #[cfg(all(feature = "tokio_console", tokio_unstable, not(target_arch = "wasm32")))]
-            let used = console_layer;
-            #[cfg(not(all(
-                feature = "tokio_console",
-                tokio_unstable,
-                not(target_arch = "wasm32")
-            )))]
-            let used = tr_sub::layer::Identity::new();
-            used
-        })
+        .with(cfg_if_expr!(
+            => [all(feature = "performance_profile", target_arch = "wasm32")]
+            tracing_web::performance_layer()
+                .with_details_from_fields(tr_sub::fmt::format::Pretty::default())
+            => [not]
+            tr_sub::layer::Identity::new()
+        ))
+        .with(cfg_if_expr!(
+            => [all(feature = "tokio_console", tokio_unstable, not(target_arch = "wasm32"))]
+            console_layer
+            => [not]
+            tr_sub::layer::Identity::new()
+        ))
 }
 
 #[expect(clippy::missing_panics_doc, reason = "only gets used during init")]

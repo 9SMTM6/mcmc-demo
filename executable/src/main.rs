@@ -14,6 +14,7 @@
 
 #[cfg(feature = "tracing")]
 const DEFAULT_TRACE_LEVEL: Option<&'static str> = Some("info,wgpu_core=warn,wgpu_hal=warn");
+use shared::cfg_if_expr;
 
 // When compiling natively:
 #[cfg(not(target_arch = "wasm32"))]
@@ -27,14 +28,15 @@ pub fn main() {
 
     // Log or trace to stderr (if you run with `RUST_LOG=debug`).
     // tracing has more and precise scope information, and works well with multithreading, where regular logging as a single threaded approach breaks.
-    #[cfg(feature = "tracing")]
-    mcmc_demo::set_default_and_redirect_log(mcmc_demo::define_subscriber(DEFAULT_TRACE_LEVEL));
-    #[cfg(not(feature = "tracing"))]
-    // A log only knows events, no thread/task etc traces.
-    // Mostly there for the web, to get a smaller WASM binary.
-    // Since theres no subscriber installed, tracing events will also be redirected to log.
-    env_logger::init();
-
+    cfg_if_expr!(
+        => [feature = "tracing"]
+        mcmc_demo::set_default_and_redirect_log(mcmc_demo::define_subscriber(DEFAULT_TRACE_LEVEL))
+        => [not]
+        // A log only knows events, no thread/task etc traces.
+        // Mostly there for the web, to get a smaller WASM binary.
+        // Since theres no subscriber installed, tracing events will also be redirected to log.
+        env_logger::init()
+    );
     // egui must run on the main thread.
     // At the same time tokio breaks with a long-running blocking task, and using spawn_blocking will move that task of the main thread.
     // Thus the manual finangling.
@@ -72,19 +74,20 @@ pub fn main() {
 fn main() {
     use mcmc_demo::html_bindings::*;
 
-    // Log or trace to stderr (if you run with `RUST_LOG=debug`).
-    #[cfg(feature = "tracing")]
-    // tracing has more and precise scope information, and works well with multithreading, where regular logging as a 'single threaded' approach breaks.
-    mcmc_demo::set_default_and_redirect_log(mcmc_demo::define_subscriber(DEFAULT_TRACE_LEVEL));
-    #[cfg(not(feature = "tracing"))]
-    // Redirect `log` message to `console.log` and friends:
-    // Since theres no subscriber installed, tracing events will also be redirected to log.
-    eframe::WebLogger::init(
-        // I choose this indirect way to avoid having to directly depend on env.
-        // That way nobody gets tempted to use env macros instead of tracing ones.
-        std::str::FromStr::from_str("Info").unwrap(),
-    )
-    .ok();
+    cfg_if_expr!(
+        => [feature = "tracing"]
+            // Log or trace to stderr (if you run with `RUST_LOG=debug`).
+            mcmc_demo::set_default_and_redirect_log(mcmc_demo::define_subscriber(DEFAULT_TRACE_LEVEL))
+        => [not]
+        // Redirect `log` message to `console.log` and friends:
+        // Since theres no subscriber installed, tracing events will also be redirected to log.
+        eframe::WebLogger::init(
+            // I choose this indirect way to avoid having to directly depend on env.
+            // That way nobody gets tempted to use env macros instead of tracing ones.
+            std::str::FromStr::from_str("Info").unwrap(),
+        )
+        .unwrap()
+    );
 
     std::panic::set_hook(Box::new(move |panic_info| {
         try_display_panic_str(&panic_info.to_string());
