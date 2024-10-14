@@ -14,7 +14,7 @@
         const show_warning = () => {
             document.getElementById("no_webgpu")?.removeAttribute("hidden");
         };
-        navigator.gpu?.requestAdapter().catch(show_warning) ?? show_warning()
+        navigator.gpu?.requestAdapter()?.catch(show_warning) ?? show_warning()
         // Register Service Worker. this will cache the wasm / js scripts for offline use (for PWA functionality).
         // It should always get the most up to date files (if connected to the server), but you can Force refresh (Ctrl + F5) to enforce that. 
         if ('serviceWorker' in navigator) {
