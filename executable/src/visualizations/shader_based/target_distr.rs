@@ -1,4 +1,5 @@
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
+use macros::cfg_persistence_derive;
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
     Buffer, BufferDescriptor, BufferUsages, RenderPipeline, RenderPipelineDescriptor,
@@ -30,7 +31,7 @@ struct MultiModalGaussPipeline {
     target_buffer: Buffer,
 }
 
-#[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
+#[cfg_persistence_derive]
 #[derive(Default)]
 pub struct TargetDistribution {
     // pub color: Color32,

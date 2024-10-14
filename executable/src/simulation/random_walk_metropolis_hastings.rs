@@ -1,12 +1,14 @@
+use macros::{cfg_educe_debug, cfg_persistence_derive};
+
 use crate::target_distributions::multimodal_gaussian::GaussianTargetDistr;
 
 use crate::visualizations::shader_based::diff_display::shader_bindings::RWMHAcceptRecord;
 
 use super::{Percentage, RngIter, StandardNormal};
 
-#[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
+#[cfg_persistence_derive]
 #[derive(Clone)]
-#[cfg_attr(feature = "more_debug_impls", derive(Debug))]
+#[cfg_educe_debug]
 pub struct GaussianProposal {
     pub sigma: f32,
     pub rng: RngIter<StandardNormal>,
@@ -21,9 +23,9 @@ impl Default for GaussianProposal {
     }
 }
 
-#[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
+#[cfg_persistence_derive]
 #[derive(Clone)]
-#[cfg_attr(feature = "more_debug_impls", derive(Debug))]
+#[cfg_educe_debug]
 pub struct IPromiseThisIsNonZeroUsize(usize);
 
 impl IPromiseThisIsNonZeroUsize {
@@ -44,9 +46,9 @@ impl IPromiseThisIsNonZeroUsize {
     }
 }
 
-#[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
+#[cfg_persistence_derive]
 #[derive(Clone)]
-#[cfg_attr(feature = "more_debug_impls", derive(Debug))]
+#[cfg_educe_debug]
 pub enum ProgressMode {
     Batched { size: IPromiseThisIsNonZeroUsize },
 }
@@ -59,9 +61,9 @@ impl Default for ProgressMode {
     }
 }
 
-#[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
+#[cfg_persistence_derive]
 #[derive(Default, Clone)]
-#[cfg_attr(feature = "more_debug_impls", derive(Debug))]
+#[cfg_educe_debug]
 pub struct AlgoParams {
     pub proposal: GaussianProposal,
     pub accept: RngIter<Percentage>,
@@ -97,11 +99,9 @@ impl Default for AcceptRecord {
     }
 }
 
-#[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
+#[cfg_persistence_derive]
 #[derive(Clone)]
-// cfg_attr sure is annoying...
-#[cfg_attr(feature = "more_debug_impls", derive(educe::Educe))]
-#[cfg_attr(feature = "more_debug_impls", educe(Debug))]
+#[cfg_educe_debug]
 pub struct Rwmh {
     pub current_loc: AcceptRecord,
     pub max_remain_count: u32,
@@ -109,15 +109,9 @@ pub struct Rwmh {
     // should be HashMap<AlgoVec, i32> or similar,
     // but this is an issue as the f32 in AlgoVec isnt Eq.
     // So IDK how to do this right.
-    #[cfg_attr(
-        feature = "more_debug_impls",
-        educe(Debug(method(debug_fmt_vec_as_len)))
-    )]
+    #[educe(Debug(method(debug_fmt_vec_as_len)))]
     pub history: Vec<AcceptRecord>,
-    #[cfg_attr(
-        feature = "more_debug_impls",
-        educe(Debug(method(debug_fmt_vec_as_len)))
-    )]
+    #[educe(Debug(method(debug_fmt_vec_as_len)))]
     pub rejected_history: Vec<AlgoVec>,
     pub params: AlgoParams,
 }

@@ -1,4 +1,5 @@
 use egui::{Color32, Pos2};
+use macros::cfg_persistence_derive;
 
 use crate::{
     app::ndc_to_canvas_coord,
@@ -6,7 +7,7 @@ use crate::{
     visualizations::{self, CanvasPainter},
 };
 
-#[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
+#[cfg_persistence_derive]
 pub struct PointDisplay {
     pub lowest_alpha: f32,
     pub radius: f32,

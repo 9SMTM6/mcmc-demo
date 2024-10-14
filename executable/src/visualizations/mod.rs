@@ -1,5 +1,7 @@
 use std::sync::Arc;
 
+use macros::cfg_persistence_derive;
+
 pub use egui_based::{Arrow, PredictionVariance, SamplingPoint};
 
 pub mod egui_based;
@@ -21,7 +23,7 @@ pub trait CanvasPainter {
 
 macro_rules! bg_display {
     ($($struct_name: ident),+,) => {
-        #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
+        #[cfg_persistence_derive]
         pub enum BackgroundDisplay {
             $($struct_name($struct_name),)+
         }

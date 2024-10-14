@@ -1,6 +1,7 @@
 use std::{ops::Deref, sync::Arc};
 
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
+use macros::{cfg_educe_debug, cfg_persistence_derive};
 use tokio::sync::{oneshot, watch};
 use tracing::Instrument;
 use wgpu::{
@@ -54,7 +55,7 @@ pub(super) fn get_compute_output_buffer(
     })
 }
 
-#[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
+#[cfg_persistence_derive]
 #[derive(Default)]
 pub struct BDAComputeDiff {}
 
@@ -343,7 +344,7 @@ impl CallbackTrait for RenderCall {
     }
 }
 
-#[cfg_attr(feature = "more_debug_impls", derive(Debug))]
+#[cfg_educe_debug]
 pub struct ComputeTask {
     px_size: [f32; 2],
     algo_state: Arc<Rwmh>,

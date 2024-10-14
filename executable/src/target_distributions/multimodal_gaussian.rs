@@ -1,10 +1,12 @@
 use std::f32::consts::PI;
 
+use macros::cfg_persistence_derive;
+
 use crate::simulation::random_walk_metropolis_hastings::AlgoVec;
 
 use crate::visualizations::shader_based::target_distr::NormalDistribution;
 
-#[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
+#[cfg_persistence_derive]
 #[derive(Clone)]
 pub struct GaussianTargetDistr {
     pub gaussians: Vec<NormalDistribution>,

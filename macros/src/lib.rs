@@ -71,7 +71,7 @@ pub fn cfg_educe_debug(_args: TokenStream, input: TokenStream) -> TokenStream {
     => [feature = "more_debug_impls"] 
         quote! {
             #[derive(::educe::Educe)]
-            #[::educe(Debug)]
+            #[educe(Debug)]
         }
     => [not]
         quote! {
@@ -87,37 +87,7 @@ pub fn cfg_educe_debug(_args: TokenStream, input: TokenStream) -> TokenStream {
 
 /// This 'accepts' educe attributes, and does nothing else.
 /// Its here to avoid compilation errors when educe::Debug is not applied because of conditional compilation
-#[proc_macro_derive(FakeEduce, attributes(serde))]
+#[proc_macro_derive(FakeEduce, attributes(educe))]
 pub fn fake_educe(_: TokenStream) -> TokenStream {
     Default::default()
-}
-
-/// Expands to
-/// 
-/// ```rs
-/// #[expect(clippy::shadow_unrelated, reason = "false positive, is related.")]
-/// ```
-#[proc_macro_attribute]
-pub fn expect_shadow_unrelated(_args: TokenStream, input: TokenStream) -> TokenStream {
-    let input = proc_macro2::TokenStream::from(input);
-    let expanded = quote! {
-        #[expect(clippy::shadow_unrelated, reason = "false positive, is related.")]
-        #input
-    };
-    expanded.into()
-}
-
-/// Expands to
-/// 
-/// ```rs
-/// #[cfg(all(not(target_arch = "wasm32"), feature = "performance_profile"))]
-/// ```
-#[proc_macro_attribute]
-pub fn cfg_performance_profile(_args: TokenStream, input: TokenStream) -> TokenStream {
-    let input = proc_macro2::TokenStream::from(input);
-    let expanded = quote! {
-        #[cfg(all(not(target_arch = "wasm32"), feature = "performance_profile"))]
-        #input
-    };
-    expanded.into()
 }

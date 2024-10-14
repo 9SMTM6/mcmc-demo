@@ -1,6 +1,7 @@
 use std::{borrow::Borrow, fmt::Display};
 
 use egui::Slider;
+use macros::{cfg_educe_debug, cfg_persistence_derive};
 use rand::Rng;
 use rand_distr::{Distribution, Uniform};
 
@@ -40,9 +41,9 @@ macro_rules! declare_rng_wrappers {
             create_rng_wrapper_xorshift!(struct $xorshift_rng);
         )+
 
-        #[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
+        #[cfg_persistence_derive]
         #[derive(Clone)]
-        #[cfg_attr(feature = "more_debug_impls", derive(Debug))]
+        #[cfg_educe_debug]
         pub enum WrappedRng {
             $(
                 #[cfg(feature = "rng_pcg")]
@@ -210,6 +211,8 @@ macro_rules! declare_rng_wrappers {
     reason = "IDK why rust thinks all these variants are never constructed if they're all selectable."
 )]
 mod rng_wrappers {
+    use macros::{cfg_persistence_derive, cfg_educe_debug};
+
     declare_rng_wrappers! {
         pcg:
             Pcg32,
@@ -270,9 +273,9 @@ impl Display for WrappedRngDiscriminants {
 
 // TODO: actually remove the enum in here and use the raw RNG. Should be possible.
 // But I've spend enough time on this for now, so I'll get to it whenever I do.
-#[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
+#[cfg_persistence_derive]
 #[derive(Clone)]
-#[cfg_attr(feature = "more_debug_impls", derive(Debug))]
+#[cfg_educe_debug]
 pub struct RngIter<Distr: Distribution<f32>> {
     pub rng: WrappedRng,
     distr: Distr,
@@ -309,9 +312,9 @@ impl<Distr: Distribution<f32>> RngIter<Distr> {
     }
 }
 
-#[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
+#[cfg_persistence_derive]
 #[derive(Clone, Default)]
-#[cfg_attr(feature = "more_debug_impls", derive(Debug))]
+#[cfg_educe_debug]
 pub struct Percentage;
 
 impl Distribution<f32> for Percentage {
@@ -321,9 +324,9 @@ impl Distribution<f32> for Percentage {
 }
 
 /// Recreated just to implement default
-#[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
+#[cfg_persistence_derive]
 #[derive(Clone, Default)]
-#[cfg_attr(feature = "more_debug_impls", derive(Debug))]
+#[cfg_educe_debug]
 pub struct StandardNormal;
 
 impl Distribution<f32> for StandardNormal {

@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
+use macros::cfg_persistence_derive;
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
     Buffer, BufferDescriptor, BufferUsages, RenderPipeline, RenderPipelineDescriptor,
@@ -28,7 +29,7 @@ use shader_bindings::{
     BindGroupLayout0, BindGroupLayout1, RWMHAcceptRecord, RWMHCountInfo, ResolutionInfo,
 };
 
-#[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
+#[cfg_persistence_derive]
 #[derive(Default)]
 pub struct BDADiff {
     // pub window_radius: f32,

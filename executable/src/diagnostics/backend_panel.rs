@@ -55,7 +55,6 @@ impl Default for RunMode {
 #[derive(Default)]
 #[cfg_persistence_derive]
 #[serde(default)]
-// #[cfg_attr(feature = "persistence", serde(default))]
 pub struct BackendPanel {
     #[serde(skip)]
     // go back to [`RunMode::Reactive`] mode each time we start
