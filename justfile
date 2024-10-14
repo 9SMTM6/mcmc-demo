@@ -73,12 +73,12 @@ fix_ci: fix_ci_unstaged && fix_ci_staged
 fix_full_ci: fix_ci fix_ci_semver_updates
 
 trunk_fat: patch_fat_html
-    just mcmc_demo/trunk_fat
+    just executable/trunk_fat
 
 alias tf := trunk_fat
 
 trunk_slim: patch_fat_html
-    just mcmc_demo/trunk_slim
+    just executable/trunk_slim
 
 alias ts := trunk_slim
 
