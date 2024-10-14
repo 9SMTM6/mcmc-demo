@@ -1,4 +1,4 @@
-# <img src="./assets/favicon.svg" alt="MCMC-Demo-icon" width="50"/> MCMC-Demo
+# <img src="./executable/assets/favicon.svg" alt="MCMC-Demo-icon" width="50"/> MCMC-Demo
 
 This application is still work in progress.
 
