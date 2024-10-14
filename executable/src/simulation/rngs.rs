@@ -211,7 +211,7 @@ macro_rules! declare_rng_wrappers {
     reason = "IDK why rust thinks all these variants are never constructed if they're all selectable."
 )]
 mod rng_wrappers {
-    use macros::{cfg_persistence_derive, cfg_educe_debug};
+    use macros::{cfg_educe_debug, cfg_persistence_derive};
 
     declare_rng_wrappers! {
         pcg:

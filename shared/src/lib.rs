@@ -3,17 +3,15 @@ macro_rules! cfg_if_expr {
     (
         =>[$condition: meta]
         $true_block: expr
-        =>[not] 
+        =>[not]
         $false_block: expr
-    ) => {
-        {
-            #[cfg($condition)]
-            let _return = $true_block;
-            #[cfg(not($condition))]
-            let _return = $false_block;
-            _return
-        }
-    };
+    ) => {{
+        #[cfg($condition)]
+        let _return = $true_block;
+        #[cfg(not($condition))]
+        let _return = $false_block;
+        _return
+    }};
 }
 
 #[allow(unused)]

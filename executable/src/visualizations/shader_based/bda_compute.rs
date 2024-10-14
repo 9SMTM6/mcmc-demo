@@ -3,7 +3,10 @@ use std::{ops::Deref, sync::Arc};
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
 use macros::{cfg_educe_debug, cfg_persistence_derive};
 use shared::cfg_if_expr;
-use tokio::{sync::{oneshot, watch}, task};
+use tokio::{
+    sync::{oneshot, watch},
+    task,
+};
 use tracing::Instrument;
 use wgpu::{
     Buffer, BufferDescriptor, BufferUsages, CommandEncoderDescriptor, ComputePassDescriptor,

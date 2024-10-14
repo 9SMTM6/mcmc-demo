@@ -1,8 +1,8 @@
 use egui::{self, ProgressBar, Shadow, Vec2};
 use macros::cfg_persistence_derive;
 use shared::cfg_if_expr;
-use tokio::task;
 use std::{sync::Arc, time::Duration};
+use tokio::task;
 use type_map::TypeMap;
 
 use crate::{

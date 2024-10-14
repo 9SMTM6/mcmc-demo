@@ -1,5 +1,5 @@
 //! Since proc-macros require a separate crate, this is the crate to hold macros that must be implemented as proc-macros.
-//! 
+//!
 //! Flags im still consiering to add:
 //! cfg_not_wasm:
 //! #[cfg(not(target_arch = "wasm32"))]
@@ -16,7 +16,7 @@
 //!     <attr>
 //! )]
 //! #[cfg(feature = "persistence")]
-//! 
+//!
 //! search replace previous apprarances, including:
 //! #[expect(clippy::shadow_unrelated, reason = "false positive, is related.")] = #[expect(clippy::shadow_unrelated, reason = "false positive")]
 extern crate proc_macro;
@@ -25,11 +25,11 @@ use quote::quote;
 use shared::cfg_if_expr;
 
 /// Expands to
-/// 
+///
 /// ```rs
 /// #[derive(serde::Deserialize, serde::Serialize)]
 /// ```
-/// 
+///
 /// If `feature = "persistence"`, otherwise it creates a fake derive to accept serde non-macro attributes
 #[proc_macro_attribute]
 pub fn cfg_persistence_derive(_args: TokenStream, input: TokenStream) -> TokenStream {
@@ -57,18 +57,18 @@ pub fn fake_serde(_: TokenStream) -> TokenStream {
 }
 
 /// Expands to
-/// 
+///
 /// ```rs
 /// #[derive(educe::Educe)]
 /// #[educe(Debug)]
 /// ```
-/// 
+///
 /// If `feature = "more_debug_impls"`, otherwise it creates a fake derive to accept educe non-macro attributes
 #[proc_macro_attribute]
 pub fn cfg_educe_debug(_args: TokenStream, input: TokenStream) -> TokenStream {
     let input = proc_macro2::TokenStream::from(input);
     let attr = cfg_if_expr!(
-    => [feature = "more_debug_impls"] 
+    => [feature = "more_debug_impls"]
         quote! {
             #[derive(::educe::Educe)]
             #[educe(Debug)]
