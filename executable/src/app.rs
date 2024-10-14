@@ -1,4 +1,5 @@
 use egui::{self, ProgressBar, Shadow, Vec2};
+use macros::cfg_persistence_derive;
 use std::{sync::Arc, time::Duration};
 use type_map::TypeMap;
 
@@ -19,12 +20,8 @@ use crate::{
     },
 };
 
-#[cfg_attr(feature="persistence",
-// We derive Deserialize/Serialize so we can persist app state on shutdown.
-derive(serde::Deserialize, serde::Serialize),
-// if we add new fields, give them default values when deserializing old state
-serde(default),
-)]
+#[cfg_persistence_derive]
+#[serde(default)]
 pub struct McmcDemo {
     // TODO: to make things more modular, switch to a composite struct for the simulation.
     // That struct will hold the algo, the data, the rngs and maybe the display (or an vector of displays, pointdisplay, targetdistr display, diff display).
@@ -37,7 +34,7 @@ pub struct McmcDemo {
     /// This holds resource managers for the main thread.
     ///
     /// If you want to hold copyable temporary ui state, use [`TempStateExtDelegatedToDataMethods`] instead.
-    #[cfg_attr(feature = "persistence", serde(skip))]
+    #[serde(skip)]
     local_resources: TypeMap,
 }
 

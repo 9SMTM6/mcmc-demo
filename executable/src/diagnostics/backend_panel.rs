@@ -7,6 +7,8 @@
     reason = "Copied code, I'm lazy"
 )]
 
+use macros::cfg_persistence_derive;
+
 /// How often we repaint the demo app by default
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum RunMode {
@@ -51,14 +53,15 @@ impl Default for RunMode {
 // ----------------------------------------------------------------------------
 
 #[derive(Default)]
-#[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
-#[cfg_attr(feature = "persistence", serde(default))]
+#[cfg_persistence_derive]
+#[serde(default)]
+// #[cfg_attr(feature = "persistence", serde(default))]
 pub struct BackendPanel {
-    #[cfg_attr(feature = "persistence", serde(skip))]
+    #[serde(skip)]
     // go back to [`RunMode::Reactive`] mode each time we start
     run_mode: RunMode,
 
-    #[cfg_attr(feature = "persistence", serde(skip))]
+    #[serde(skip)]
     frame_history: crate::diagnostics::frame_history::FrameHistory,
 
     egui_windows: EguiWindows,
@@ -365,7 +368,7 @@ fn integration_ui(ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
 
 // ----------------------------------------------------------------------------
 
-#[cfg_attr(feature = "persistence", derive(serde::Deserialize, serde::Serialize))]
+#[cfg_persistence_derive]
 struct EguiWindows {
     // egui stuff:
     settings: bool,
@@ -373,7 +376,7 @@ struct EguiWindows {
     memory: bool,
     output_events: bool,
 
-    #[cfg_attr(feature = "persistence", serde(skip))]
+    #[serde(skip)]
     output_event_history: std::collections::VecDeque<egui::output::OutputEvent>,
 }
 

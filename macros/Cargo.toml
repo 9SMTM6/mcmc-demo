@@ -1,8 +1,23 @@
 [package]
-name = "mcmc_demo_macros"
+name = "macros"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
 
+[lib]
+proc-macro = true
+
 [dependencies]
+proc-macro2 = "1.0.87"
+quote = "1.0.37"
+syn = { version = "2", features = ["full"] }
+shared = { workspace = true }
+
+# required to support non-macro attributes (e.g. #[serde(skip)]) in macros.
+# You're meant to propogate the original flags to this dependency.
+# Then this exports different (or none) attributes depending on the propagated flag.
+[features]
+persistence = []
+tracing = []
+more_debug_impls = []
