@@ -68,6 +68,9 @@ pub fn main() {
         Box::new(|cc| Ok(Box::new(mcmc_demo::McmcDemo::new(cc)))),
     )
     .unwrap();
+    tracing::info!("shutting down");
+    // TODO: This is somewhat inelegant, maybe I can find a better way.
+    tokio_rt.shutdown_timeout(tokio::time::Duration::from_secs(1));
 }
 
 #[cfg(target_arch = "wasm32")]
