@@ -32,7 +32,7 @@ opt-level = 2
 
 # Patches out a polyfill, since I need way more modern browsers anyways.
 # Upstream PR: https://github.com/chemicstry/wasm_thread/pull/26
-wasm_thread = { git = "https://github.com/9SMTM6/wasm_thread", branch = "configurable_polyfill" }
+wasm_thread = { git = "https://github.com/chemicstry/wasm_thread", branch = "main" }
 # wgsl_to_wgpu = { path = "../wgsl_to_wgpu/wgsl_to_wgpu" }
 # wgpu = { git = "https://github.com/9smtm6/wgpu", branch = "patched" }
 

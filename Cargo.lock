@@ -3900,7 +3900,7 @@ dependencies = [
 [[package]]
 name = "wasm_thread"
 version = "0.3.0"
-source = "git+https://github.com/9SMTM6/wasm_thread?branch=configurable_polyfill#ed5127711cff37beb74df5e3336d9bf451ce5b60"
+source = "git+https://github.com/chemicstry/wasm_thread?branch=main#ef852c76465e3c2bd545539a700b88e472f7bdea"
 dependencies = [
  "futures",
  "js-sys",

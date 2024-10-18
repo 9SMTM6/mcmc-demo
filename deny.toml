@@ -4,7 +4,7 @@ unknown-registry = "deny"
 unknown-git = "deny"
 
 allow-git = [
-    "https://github.com/9SMTM6/wasm_thread",
+    "https://github.com/chemicstry/wasm_thread",
 ]
 
 [advisories]
