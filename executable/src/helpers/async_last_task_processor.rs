@@ -114,6 +114,8 @@ mod cond_trait_impl {
 
 pub use cond_trait_impl::*;
 
+use crate::cfg_sleep;
+
 impl<T, C> TaskRunner<T, C>
 where
     T: DebugBoundIfCompiled,
@@ -153,8 +155,7 @@ where
                 break;
             } else {
                 tracing::error!("Unexpected State");
-                #[cfg(feature = "debounce_async_loops")]
-                tokio::time::sleep(std::time::Duration::from_secs(1) / 3).await;
+                cfg_sleep!().await;
             }
         }
     }

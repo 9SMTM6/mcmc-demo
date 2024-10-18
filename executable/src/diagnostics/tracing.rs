@@ -5,10 +5,6 @@ use tracing::{self, Subscriber};
 use tracing_log;
 use tracing_subscriber::{self as tr_sub, fmt::time::UtcTime, Layer};
 
-// trait CfgWasmChain {
-//     fn apply_on_wasm()
-// }
-
 #[cfg(target_arch = "wasm32")]
 pub fn is_chromium() -> bool {
     let user_agent = web_sys::window()
@@ -83,4 +79,19 @@ pub fn set_default_and_redirect_log(subscriber: impl Subscriber + Send + Sync) {
     tracing::subscriber::set_global_default(subscriber).expect("Failed to set subscriber");
     // Redirect all `log`'s events to our subscriber
     tracing_log::LogTracer::init().expect("Failed to set logger");
+}
+
+#[macro_export]
+macro_rules! cfg_sleep {
+    ($duration: expr) => {
+        ::shared::cfg_if_expr!(
+            => [feature = "debounce_async_loops"]
+            ::tokio::time::sleep($duration)
+            => [not]
+            ::std::future::ready(())
+        )
+    };
+    () => {
+        cfg_sleep!(std::time::Duration::from_secs(1) / 3)
+    }
 }
