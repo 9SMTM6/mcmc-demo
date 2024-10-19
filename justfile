@@ -1,3 +1,6 @@
+list:
+    just --list
+
 generate_favicon:
     just executable/generate_favicon
 

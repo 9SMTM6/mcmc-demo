@@ -3,7 +3,7 @@ on: [push, pull_request, workflow_dispatch]
 name: CI
 
 env:
-  RUST_NIGHTLY_TOOLCHAIN_VERSION: "nightly-2024-08-02"
+  RUST_NIGHTLY_TOOLCHAIN_VERSION: "nightly-2024-10-15"
 
 jobs:
   clippy-native:
@@ -37,6 +37,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: stable
+          cache-on-failure: true
       - uses: Swatinem/rust-cache@v2
       - run: cargo +stable --locked test --target x86_64-unknown-linux-gnu --lib
 
@@ -68,7 +69,7 @@ jobs:
         # this is necessary for github pages where the site is deployed to username.github.io/repo_name and all files must be requested
         # relatively as eframe_template/favicon.ico. if we skip public-url option, the href paths will instead request username.github.io/favicon.ico which
         # will obviously return error 404 not found.
-        run: ./trunk build --config ${{ matrix.config_file }} --release --public-url __RENAME_ME__
+        run: cd executable && ../trunk build --config ${{ matrix.config_file }} --release --public-url __RENAME_ME__
       # Cloudflare doesnt respect precompressed artifacts. It just does its own brotli compression, which is pretty shitty.
       # See also ./assets/_headers
       # It might respect gzip artifacts, but these dont reach normal brotli compression levels, and are pretty close the the levels seen with cloudflares brotli.
@@ -78,7 +79,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.name }}-artifacts
-          path: dist
+          path: executable/dist
 
   build-executable:
     runs-on: ${{ matrix.os }}

@@ -1,3 +1,10 @@
+#![cfg_attr(
+    feature = "more_debug_impls",
+    expect(
+        clippy::used_underscore_binding,
+        reason = "Educe is somewhat broken, and I dont feel like putting that derive etc into a separate module. So for now I do this at the top level of this module"
+    )
+)]
 use macros::{cfg_educe_debug, cfg_persistence_derive};
 
 use crate::target_distributions::multimodal_gaussian::GaussianTargetDistr;
@@ -49,6 +56,11 @@ impl IPromiseThisIsNonZeroUsize {
 #[cfg_persistence_derive]
 #[derive(Clone)]
 #[cfg_educe_debug]
+// TODO: properly fix this
+#[allow(
+    clippy::used_underscore_binding,
+    reason = "Should be educe causing this"
+)]
 pub enum ProgressMode {
     Batched { size: IPromiseThisIsNonZeroUsize },
 }

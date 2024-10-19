@@ -1,9 +1,4 @@
 #[macro_export]
-#[allow(unknown_lints, reason = "not a lint on stable...")]
-#[allow(
-    edition_2024_expr_fragment_specifier,
-    reason = "Can't be fixed on stable"
-)]
 macro_rules! profile_scope {
     ($scope_name:expr) => {
         #[cfg(all(feature = "performance_profile", not(target_arch = "wasm32")))]
@@ -32,6 +27,7 @@ pub fn start_puffin_server() {
                     .arg(PUFFIN_URL)
                     .spawn();
 
+                #[allow(clippy::needless_lifetimes, reason = "Nightly stable mismatch")]
                 match viewer_process {
                     Ok(mut viewer_process) => {
                         // TODO: properly handle that stuff, so that puffin closes on exit. TO do that I need to move away from the detached thread workflow.

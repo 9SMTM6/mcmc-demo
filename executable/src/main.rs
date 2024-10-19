@@ -23,6 +23,8 @@ use shared::cfg_if_expr;
     reason = "This is the entry point, noone else calls this."
 )]
 pub fn main() {
+    use std::time::Duration;
+
     use egui::IconData;
     use mcmc_demo::INITIAL_RENDER_SIZE;
 
@@ -70,7 +72,7 @@ pub fn main() {
     .unwrap();
     tracing::info!("shutting down");
     // TODO: This is somewhat inelegant, maybe I can find a better way.
-    tokio_rt.shutdown_timeout(tokio::time::Duration::from_secs(1));
+    tokio_rt.shutdown_timeout(Duration::from_secs(1));
 }
 
 #[cfg(target_arch = "wasm32")]

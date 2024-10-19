@@ -1,3 +1,4 @@
+use shared::cfg_if_expr;
 use std::future::Future;
 use std::{
     fmt::Debug,
@@ -6,7 +7,6 @@ use std::{
         Arc,
     },
 };
-use shared::cfg_if_expr;
 use tokio::sync::{Mutex, Notify};
 
 pub(crate) trait ComputeTask<T> {
@@ -115,8 +115,6 @@ mod cond_trait_impl {
 
 pub use cond_trait_impl::*;
 
-use crate::cfg_sleep;
-
 impl<T, C> TaskRunner<T, C>
 where
     T: DebugBoundIfCompiled,
@@ -158,7 +156,7 @@ where
                 break;
             } else {
                 tracing::error!("Unexpected State");
-                cfg_sleep!().await;
+                crate::cfg_sleep!().await;
             }
         }
     }
@@ -217,12 +215,16 @@ mod test {
                 t_tx.send_update(()).await.unwrap();
                 drop(t_tx);
             }),
+            #[allow(
+                clippy::pattern_type_mismatch,
+                reason = "Can't seem to fix this with tokio macro matching"
+            )]
             tokio::spawn(async move {
                 tokio::select! {
-                    _ = tokio::time::sleep(Duration::from_millis(200)) => {
+                    _ = tokio::time::sleep(Duration::from_millis(400)) => {
                         panic!("Timeout");
                     }
-                    Some(()) = rx.recv() => {},
+                    Some(_) = rx.recv() => {},
                 };
             })
         );

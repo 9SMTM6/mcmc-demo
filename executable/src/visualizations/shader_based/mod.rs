@@ -17,6 +17,7 @@ macro_rules! create_shader_module {
         #[allow(
             unused,
             elided_lifetimes_in_paths,
+            clippy::needless_lifetimes,
             clippy::approx_constant,
             clippy::module_name_repetitions,
             clippy::pattern_type_mismatch,

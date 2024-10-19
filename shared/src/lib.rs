@@ -14,7 +14,11 @@ macro_rules! cfg_if_expr {
     }};
 }
 
-#[allow(unused)]
+#[allow(
+    unused,
+    clippy::missing_const_for_fn,
+    reason = "used as compilation test"
+)]
 fn test() {
     let var = cfg_if_expr!(
     => [target_arch = "wasm32"]

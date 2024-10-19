@@ -15,10 +15,11 @@ pub fn is_chromium() -> bool {
     user_agent.contains("chrom")
 }
 
-#[allow(
+#[expect(
     clippy::missing_panics_doc,
     reason = "Unwrap on &'static str parse should always work"
 )]
+#[expect(impl_trait_overcaptures, reason = "not properly fixable right now")]
 pub fn define_subscriber(
     default_log_level: Option<&str>,
 ) -> impl tracing::Subscriber + Send + Sync {
@@ -79,19 +80,4 @@ pub fn set_default_and_redirect_log(subscriber: impl Subscriber + Send + Sync) {
     tracing::subscriber::set_global_default(subscriber).expect("Failed to set subscriber");
     // Redirect all `log`'s events to our subscriber
     tracing_log::LogTracer::init().expect("Failed to set logger");
-}
-
-#[macro_export]
-macro_rules! cfg_sleep {
-    ($duration: expr) => {
-        ::shared::cfg_if_expr!(
-            => [feature = "debounce_async_loops"]
-            ::tokio::time::sleep($duration)
-            => [not]
-            ::std::future::ready(())
-        )
-    };
-    () => {
-        cfg_sleep!(std::time::Duration::from_secs(1) / 3)
-    }
 }

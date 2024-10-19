@@ -251,44 +251,7 @@ impl CallbackTrait for RenderCall {
         if res_changed || approx_changed {
             // old value is now outdated.
             compute_tx.send(None).unwrap();
-            let (tx, rx) = oneshot::channel::<ComputeBufCpuRepr>();
-            match gpu_tx.send_update_blocking(crate::visualizations::BdaComputeTask {
-                px_size: self.px_size,
-                algo_state: self.algo_state.clone(),
-                result_tx: Some(tx),
-            }) {
-                Ok(_) => {}
-                Err(_err) => {
-                    tracing::warn!("GpuTasks filled");
-                }
-            }
-
-            wasm_thread::spawn({
-                let compute_tx = compute_tx.clone();
-                move || {
-                    use rayon::prelude::*;
-                    // TODO: ensure this doesn't copy when sending over the channel.
-                    // Otherwise I will have to find an alternative.
-                    let Ok(mut prob_buffer) = rx.blocking_recv() else {
-                        tracing::debug!(
-                            "Closing Maxnorm worker main-thread, as sender channel-end closed"
-                        );
-                        return;
-                    };
-
-                    let max = *prob_buffer
-                        .par_iter()
-                        .max_by(|lhs, rhs| lhs.total_cmp(rhs))
-                        .unwrap_or(&1.0);
-                    prob_buffer
-                        .par_iter_mut()
-                        .for_each(|unnorm_prob| *unnorm_prob /= max);
-                    compute_tx
-                        .send(Some(prob_buffer))
-                        .map_err(|_err| "Channel Closed")
-                        .unwrap();
-                }
-            });
+            compute_new_approx(gpu_tx, self, compute_tx);
         }
         if compute_rx
             .has_changed()
@@ -296,9 +259,7 @@ impl CallbackTrait for RenderCall {
         {
             if let &Some(ref val) = compute_rx.borrow().deref() {
                 if compute_output_buffer.size() != (val.as_slice().len() * 4) as u64 {
-                    dbg!(compute_output_buffer.size());
-                    dbg!(val.as_slice().len() * 4);
-                    tracing::error!("TODO: Fix this mismatch. Might just go away when I assure that only the latest render continues");
+                    tracing::error!("Resolution mismatch.");
                 } else {
                     queue.write_buffer(
                         compute_output_buffer,
@@ -354,6 +315,51 @@ impl CallbackTrait for RenderCall {
     }
 }
 
+fn maxnorm_rayon(rx: oneshot::Receiver<Vec<f32>>, compute_tx: &watch::Sender<Option<Vec<f32>>>) {
+    use rayon::prelude::*;
+    // TODO: ensure this doesn't copy when sending over the channel.
+    // Otherwise I will have to find an alternative.
+    let Ok(mut prob_buffer) = rx.blocking_recv() else {
+        tracing::debug!("Closing Maxnorm worker main-thread, as sender channel-end closed");
+        return;
+    };
+
+    let max = *prob_buffer
+        .par_iter()
+        .max_by(|lhs, rhs| lhs.total_cmp(rhs))
+        .unwrap_or(&1.0);
+    prob_buffer
+        .par_iter_mut()
+        .for_each(|unnorm_prob| *unnorm_prob /= max);
+    compute_tx
+        .send(Some(prob_buffer))
+        .map_err(|_err| "Channel Closed")
+        .unwrap();
+}
+
+fn compute_new_approx(
+    gpu_tx: &TaskSender<ComputeTask>,
+    render_call: &RenderCall,
+    compute_tx: &watch::Sender<Option<Vec<f32>>>,
+) {
+    let (tx, rx) = oneshot::channel::<ComputeBufCpuRepr>();
+    match gpu_tx.send_update_blocking(crate::visualizations::BdaComputeTask {
+        px_size: render_call.px_size,
+        algo_state: render_call.algo_state.clone(),
+        result_tx: Some(tx),
+    }) {
+        Ok(_) => {}
+        Err(_err) => {
+            tracing::warn!("GpuTasks filled");
+        }
+    }
+
+    wasm_thread::spawn({
+        let compute_tx = compute_tx.clone();
+        move || maxnorm_rayon(rx, &compute_tx)
+    });
+}
+
 #[cfg_educe_debug]
 pub struct ComputeTask {
     px_size: [f32; 2],
@@ -364,13 +370,11 @@ pub struct ComputeTask {
 impl GpuTask for ComputeTask {
     #[cfg_attr(
         all(feature = "tracing", not(rust_analyzer)),
-        tracing::instrument(name = "BDA GPU Task", skip(device, queue))
+        tracing::instrument(name = "BDA GPU Task", skip(device_arc, queue))
     )]
-    async fn run(&mut self, device: Arc<wgpu::Device>, queue: Arc<wgpu::Queue>) {
+    async fn run(&mut self, device_arc: Arc<wgpu::Device>, queue: Arc<wgpu::Queue>) {
         tracing::info!("Starting");
         let webgpu_debug_name = Some(definition_location!());
-
-        let device_arc = device;
 
         let device = device_arc.as_ref();
         let queue = queue.as_ref();

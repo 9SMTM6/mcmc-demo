@@ -14,5 +14,3 @@ pub use visualizations::INITIAL_RENDER_SIZE;
 
 #[cfg(not(any(feature = "rng_pcg", feature = "rng_xorshift", feature = "rng_xoshiro")))]
 compile_error!("no rng compiled in.");
-
-compile_error!("breaking build to avoid CI deploying");

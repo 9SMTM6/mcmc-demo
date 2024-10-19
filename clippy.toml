@@ -16,6 +16,8 @@ allowed-duplicate-crates = [
     # Redox-OS
     "libredox",
     "redox_syscall",
+    # macos
+    "core-foundation",
 
     # These duplicates were, last time I checked, caused by build dependencies
     "bit-set",
@@ -23,18 +25,13 @@ allowed-duplicate-crates = [
     "bitflags",
     "cfg_aliases",
 
-    # These are all caused by embassy depending on old versions
-    "embedded-hal",
-    # semver-trick
-    "nb",
-    # embassy-time, disabled
-    # "parking_lot",
-    # "parking_lot_core",
-
     # IDK
     "regex-automata",
     "regex-syntax",
     "miniz_oxide",
+
+    # Should be fixed if wgpu pushes an update.
+    "hashbrown",
 
     # yeah, as expected, everyone depends on this, that graph is one big mess.
     # But honestly not that bad with 2 versions. and it SHOULD all be build (proc_macro) time.

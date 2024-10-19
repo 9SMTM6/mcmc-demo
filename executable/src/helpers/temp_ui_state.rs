@@ -40,8 +40,8 @@ macro_rules! delegete_for {
 delegete_for!(egui::Ui);
 delegete_for!(egui::Context);
 
-impl<'a, T: Copy + Clone + Send + Sync + 'static, Del: TempStateExtDelegatedToDataMethods>
-    TempUiState<'a, T, Del>
+impl<T: Copy + Clone + Send + Sync + 'static, Del: TempStateExtDelegatedToDataMethods>
+    TempUiState<'_, T, Del>
 {
     pub const fn with_id(self, id: egui::Id) -> Self {
         Self { id, ..self }
