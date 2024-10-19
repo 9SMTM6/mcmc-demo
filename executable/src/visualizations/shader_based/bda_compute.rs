@@ -361,7 +361,7 @@ pub struct ComputeTask {
 
 impl GpuTask for ComputeTask {
     #[cfg_attr(
-        feature = "tracing",
+        all(feature = "tracing", not(rust_analyzer)),
         tracing::instrument(name = "BDA GPU Task", skip(device, queue))
     )]
     async fn run(&mut self, device: Arc<wgpu::Device>, queue: Arc<wgpu::Queue>) {
