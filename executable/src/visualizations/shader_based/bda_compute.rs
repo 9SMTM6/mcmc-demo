@@ -296,6 +296,8 @@ impl CallbackTrait for RenderCall {
         {
             if let &Some(ref val) = compute_rx.borrow().deref() {
                 if compute_output_buffer.size() != (val.as_slice().len() * 4) as u64 {
+                    dbg!(compute_output_buffer.size());
+                    dbg!(val.as_slice().len() * 4);
                     tracing::error!("TODO: Fix this mismatch. Might just go away when I assure that only the latest render continues");
                 } else {
                     queue.write_buffer(
@@ -368,7 +370,9 @@ impl GpuTask for ComputeTask {
         tracing::info!("Starting");
         let webgpu_debug_name = Some(definition_location!());
 
-        let device = device.as_ref();
+        let device_arc = device;
+
+        let device = device_arc.as_ref();
         let queue = queue.as_ref();
 
         let compute_layout = compute_bindings::create_pipeline_layout(device);
@@ -442,34 +446,57 @@ impl GpuTask for ComputeTask {
         compute_pass.dispatch_workgroups(self.px_size[0] as u32, self.px_size[1] as u32, 1);
         // I dont understand precisely why, but this is required.
         // It must do some management in the drop impl.
+        // The drop impl is in [`wgpu::ComputePassInner`].
         drop(compute_pass);
         let compute_buffer = compute_encoder.finish();
         queue.submit([compute_buffer]);
         // asyncify the callback from read_buffer
-        // Doing this to allow for backpressure.
+        // Doing this to allow for backpressure and to abort when a newer callback was already started
         let (buffer_tx, buffer_rx) = oneshot::channel();
-        // alternative to DownloadBuffer
-        // compute_output_buffer.slice(..).map_async(wgpu::MapMode::Read, callback)
-        wgpu::util::DownloadBuffer::read_buffer(
-            device,
-            queue,
-            &compute_output_buffer.slice(..),
-            |val| {
-                tracing::info!("executed");
+        // Debugging lack of callback getting called:
+        // This does also use queue.submit, however its used before an BufferSlice::map_async.
+        // If one reads BufferSlice::map_async, then it requires either an queue.submit, an instance.poll or an device.poll
+        // afterwards, to complete the callback:
+
+        // > For the callback to complete, either queue.submit(..), instance.poll_all(..), or device.poll(..) must be called elsewhere in the runtime, possibly integrated into an event loop or run on a separate thread.
+        // > The callback will be called on the thread that first calls the above functions after the gpu work has completed. There are no restrictions on the code you can run in the callback, however on native the call to the function will not complete until the callback returns, so prefer keeping callbacks short and used to set flags, send messages, etc.
+
+        // I'm not ENTIRELY sure what 'into an event loop or run on a separate thread.' means, does that mean I cant do that on this very thread that called map_async?
+        // Regarding 'The callback will be called on the thread that first calls the above functions after the gpu work has completed', this, to me, has a different connotation to the original ask.
+        // I get the impression that these functions might be required to be called after the GPU is finished, not at any time.
+        // Re: 'however on native the call to the function will not complete until the callback returns' makes sense, so on native that call would ensure backpressure. But not on the web? That might be annoying...
+        // On the web I might otherwise get a deadlock when using a channel to wait here, while also calling poll here.
+        // So perhaps I have to use some global variable... But thats also annoying, as that might lead to race conditions, if I'm not careful
+        // (should not with how I intend to do things right now, but still).
+        //
+        // Also note that I think I need to submit the compute queue first (as-is), otherwise the encoder.copy_buffer_to_buffer will be in the queue before the compute.
+        wgpu::util::DownloadBuffer::read_buffer(device, queue, &compute_output_buffer.slice(..), {
+            let current_span = tracing::Span::current();
+            move |val| {
+                let _guard = current_span.enter();
+                tracing::info!("Executing callback");
                 let val = val.unwrap();
                 let val: &[f32] = bytemuck::cast_slice(&val);
                 let val = val.to_vec();
                 if let Err(_err) = buffer_tx.send(val) {
-                    tracing::debug!("Failed send on closed channel");
+                    tracing::info!("Failed send on closed channel");
                 }
-            },
-        );
-        tracing::info!("reached");
-        // TODO this is blocking on native for the very first task, and IDK why.
+            }
+        });
+        // run this GPU task.
+        #[cfg(not(target_arch = "wasm32"))]
+        tokio::task::spawn_blocking(move || {
+            // TODO: this will do for now, in the future it might be problematic.
+            // Potential alternatives I considered:
+            // 1. Patching (and upstreaming) changes to DownloadBuffer::read_buffer to return SubmitIndex from the copy op subm_idx. then doing wgpu::Maintain::WaitForSubmissionIndex(subm_idx),
+            // 2. calling poll in an event loop somewhere else, however I don't want that to end in busy waiting, so perhaps add a sleep inbetween, that however increases lag...
+            device_arc.poll(wgpu::Maintain::Wait);
+            // device_arc.poll(wgpu::Maintain::WaitForSubmissionIndex(subm_idx));
+        });
+
         let result_buf = buffer_rx
             .await
             .expect("embedding ought to avoid drop of channel");
-        tracing::info!("reached2");
         self.result_tx
             .take()
             .unwrap()
