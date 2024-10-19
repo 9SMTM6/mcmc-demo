@@ -6,6 +6,7 @@ use std::{
         Arc,
     },
 };
+use shared::cfg_if_expr;
 use tokio::sync::{Mutex, Notify};
 
 pub(crate) trait ComputeTask<T> {
@@ -132,21 +133,23 @@ where
             recorded_notify = false;
             tracing::debug!("looped");
 
-            if let Some(task) = {
+            if let Some(task_data) = {
                 let mut data_guard = self.data.lock().await;
                 data_guard.take()
             } {
-                #[cfg(feature = "more_debug_impls")]
-                tracing::info!(?task, "task received");
-                #[cfg(not(feature = "more_debug_impls"))]
-                tracing::info!("task received");
+                cfg_if_expr!(
+                    => [feature = "more_debug_impls"]
+                    tracing::info!(?task_data, "task received")
+                    => [not]
+                    tracing::info!("task received")
+                );
                 tokio::select! {
                     _ = self.change_notify.notified() => {
                         tracing::debug!("New task arrived, re-enter loop");
                         recorded_notify = true;
                         // New task arrived, re-enter loop
                     },
-                    _ = self.task.run(task) => {
+                    _ = self.task.run(task_data) => {
                         // Process the current task
                     },
                 }
