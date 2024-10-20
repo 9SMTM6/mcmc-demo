@@ -157,11 +157,7 @@ impl BDAComputeDiff {
             let repaint_token = RepaintToken::new(ctx);
             async move {
                 let mut compute_results_rx = compute_results_rx;
-                loop {
-                    let Ok(_) = compute_results_rx.changed().await else {
-                        break;
-                    };
-                    // drop(compute_results_rx.borrow_and_update());
+                while compute_results_rx.changed().await.is_ok() {
                     tracing::info!("Requesting repaint after finish");
                     repaint_token.request_repaint();
                     cfg_sleep!().await;
@@ -211,6 +207,10 @@ struct RenderCall {
 }
 
 impl CallbackTrait for RenderCall {
+    #[expect(
+        clippy::cognitive_complexity,
+        reason = "Honestly I cant seem to find a better way of structuring it without making the actual complexity worse IMO"
+    )]
     fn prepare(
         &self,
         device: &wgpu::Device,
@@ -261,7 +261,7 @@ impl CallbackTrait for RenderCall {
             tracing::info!("resetting compute result");
             compute_results_tx.send(None).unwrap();
             let rx = dispatch_approximation_gpu(gpu_tx, self);
-            wasm_thread::spawn(move || dispatch_maxnorm_rayon(rx, compute_results_tx));
+            wasm_thread::spawn(move || dispatch_maxnorm_rayon(rx, &compute_results_tx));
         }
         if compute_results_rx
             .has_changed()
@@ -327,7 +327,7 @@ impl CallbackTrait for RenderCall {
 
 fn dispatch_maxnorm_rayon(
     rx: oneshot::Receiver<ComputeBufCpuRepr>,
-    compute_results_tx: watch::Sender<Option<ComputeBufCpuRepr>>,
+    compute_results_tx: &watch::Sender<Option<ComputeBufCpuRepr>>,
 ) {
     use rayon::prelude::*;
     // TODO: ensure this doesn't copy when sending over the channel.
