@@ -159,7 +159,8 @@ impl Rwmh {
     pub fn step(&mut self, target_distr: &GaussianTargetDistr) {
         let current = &mut self.current_loc;
         let proposal = self.params.propose(current.position.into());
-        let acceptance_ratio = target_distr.acceptance_ratio(proposal, current.position.into());
+        let acceptance_ratio =
+            target_distr.compute_acceptance_ratio(proposal, current.position.into());
         let accept = self.params.accept.unwrapped_next() <= acceptance_ratio;
         // self.current_loc = if accept { proposal } else { current };
         if accept {

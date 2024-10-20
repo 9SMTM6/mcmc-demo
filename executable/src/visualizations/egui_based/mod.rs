@@ -40,7 +40,7 @@ impl CanvasPainter for Arrow {
             fill: Color32::RED,
             stroke: PathStroke::NONE,
         });
-        let base = Shape::LineSegment {
+        let shaft = Shape::LineSegment {
             points: [start, start + direction],
             stroke: PathStroke {
                 width: 1.5,
@@ -48,22 +48,22 @@ impl CanvasPainter for Arrow {
                 ..Default::default()
             },
         };
-        painter.extend([base, head]);
+        painter.extend([shaft, head]);
     }
 }
 
 pub struct SamplingPoint {
     pos: Pos2,
-    ///shall be the number of samples at this point (=how long it stayed there/ how often a move away was rejected) divided by
+    /// shall be the number of samples at this point (=how long it stayed there/ how often a move away was rejected) divided by
     /// the maximum of that count among all sample points.
-    sample_count_fract: f32,
+    normalized_sample_count: f32,
 }
 
 impl SamplingPoint {
     pub fn new(pos: impl Into<Pos2>, sample_count_fract: f32) -> Self {
         Self {
             pos: pos.into(),
-            sample_count_fract,
+            normalized_sample_count: sample_count_fract,
         }
     }
 }
@@ -72,7 +72,7 @@ impl CanvasPainter for SamplingPoint {
     fn paint(&self, painter: &egui::Painter, _rect: egui::Rect) {
         let Self {
             pos,
-            sample_count_fract,
+            normalized_sample_count: sample_count_fract,
         } = *self;
         painter.circle(
             pos,
@@ -85,24 +85,27 @@ impl CanvasPainter for SamplingPoint {
 
 pub struct PredictionVariance {
     pos: Pos2,
-    radius: f32,
+    variance_radius: f32,
 }
 
 impl PredictionVariance {
-    pub fn new(pos: impl Into<Pos2>, radius: f32) -> Self {
+    pub fn new(pos: impl Into<Pos2>, variance_radius: f32) -> Self {
         Self {
             pos: pos.into(),
-            radius,
+            variance_radius,
         }
     }
 }
 
 impl CanvasPainter for PredictionVariance {
     fn paint(&self, painter: &egui::Painter, _rect: egui::Rect) {
-        let Self { pos, radius } = *self;
+        let Self {
+            pos,
+            variance_radius,
+        } = *self;
         painter.circle(
             pos,
-            radius,
+            variance_radius,
             Color32::TRANSPARENT,
             Stroke {
                 color: Color32::WHITE,

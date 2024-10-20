@@ -7,13 +7,13 @@ use type_map::TypeMap;
 
 use crate::{
     gpu_task::{get_gpu_channels, GpuTaskSenders},
-    helpers::bg_task::{BgCommunicate, BgTaskHandle, Progress},
+    helpers::bg_task::{BackgroundTaskManager, BgTaskHandle, TaskProgress},
     simulation::random_walk_metropolis_hastings::{ProgressMode, Rwmh},
     target_distributions::multimodal_gaussian::GaussianTargetDistr,
     visualizations::{
         egui_based::{
             distrib_settings::{DistrEdit, ElementSettings},
-            point_display::PointDisplay,
+            point_display::SamplePointVisualizer,
         },
         shader_based::{
             bda_compute::BDAComputeDiff, diff_display::BDADiff, target_distr::TargetDistribution,
@@ -30,7 +30,7 @@ pub struct McmcDemo {
     // It'll then implement legal transitions, e.g. changing the target distribution will lead to data reset etc.
     /// Note that this Arc is used in a copy-on-write fashion, with only atomic reassignments.
     algo: Arc<Rwmh>,
-    point_display: Option<PointDisplay>,
+    point_display: Option<SamplePointVisualizer>,
     target_distr: GaussianTargetDistr,
     background_display: BackgroundDisplay,
     /// This holds resource managers for the main thread.
@@ -212,8 +212,8 @@ impl eframe::App for McmcDemo {
                 if let Some(&BatchJob(ref bg_task)) = bg_task {
                     ui.add(
                         ProgressBar::new(match bg_task.get_progress() {
-                            Progress::Pending(progress) => progress,
-                            Progress::Finished => {
+                            TaskProgress::Pending(progress) => progress,
+                            TaskProgress::Finished => {
                                 let params = self.algo.params.clone();
                                 let mut thread_result = self
                                     .local_resources
@@ -245,11 +245,11 @@ impl eframe::App for McmcDemo {
                         let mut algo = self.algo.clone();
                         let target_distr = self.target_distr.clone();
                         BgTaskHandle::new(
-                            move |mut communicate: BgCommunicate| {
+                            move |mut communicate: BackgroundTaskManager| {
                                 let algo_ref = Arc::make_mut(&mut algo);
                                 for curr_step in 0..size {
                                     algo_ref.step(&target_distr);
-                                    if communicate.checkup_bg(curr_step) {
+                                    if communicate.update_progress_and_check_abort(curr_step) {
                                         break;
                                     }
                                 }
@@ -284,27 +284,28 @@ impl eframe::App for McmcDemo {
                             self.point_display = None;
                         } else {
                             let mut accept_color_fullspace =
-                                egui::Rgba::from(point_display.accept_color).to_array();
+                                egui::Rgba::from(point_display.accepted_point_color).to_array();
                             ui.label("set acceptance color");
                             ui.color_edit_button_rgba_unmultiplied(&mut accept_color_fullspace);
-                            point_display.accept_color = egui::Rgba::from_rgba_unmultiplied(
-                                accept_color_fullspace[0],
-                                accept_color_fullspace[1],
-                                accept_color_fullspace[2],
-                                accept_color_fullspace[3],
-                            )
-                            .into();
+                            point_display.accepted_point_color =
+                                egui::Rgba::from_rgba_unmultiplied(
+                                    accept_color_fullspace[0],
+                                    accept_color_fullspace[1],
+                                    accept_color_fullspace[2],
+                                    accept_color_fullspace[3],
+                                )
+                                .into();
                             ui.add(
-                                egui::Slider::new(&mut point_display.radius, 0.5..=5.0)
+                                egui::Slider::new(&mut point_display.point_radius, 0.5..=5.0)
                                     .text("point radius"),
                             );
                             ui.add(
-                                egui::Slider::new(&mut point_display.lowest_alpha, 0.1..=0.9)
+                                egui::Slider::new(&mut point_display.min_opacity, 0.1..=0.9)
                                     .text("minimum point alpha"),
                             );
-                            if let Some(ref mut reject_color) = point_display.reject_display {
+                            if let Some(ref mut reject_color) = point_display.rejected_point_color {
                                 if ui.button("remove display rejections display").clicked() {
-                                    point_display.reject_display = None;
+                                    point_display.rejected_point_color = None;
                                 } else {
                                     let mut reject_color_fullspace =
                                         egui::Rgba::from(*reject_color).to_array();
@@ -321,7 +322,7 @@ impl eframe::App for McmcDemo {
                                     .into();
                                 }
                             } else if ui.button("display rejections").clicked() {
-                                point_display.reject_display = Some(egui::Color32::YELLOW);
+                                point_display.rejected_point_color = Some(egui::Color32::YELLOW);
                             };
                         }
                     } else if ui.button("show point display").clicked() {

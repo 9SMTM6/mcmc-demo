@@ -2,7 +2,7 @@ use egui::Ui;
 
 use crate::{
     app::{canvas_coord_to_ndc, ndc_to_canvas_coord},
-    helpers::temp_ui_state::TempStateExtDelegatedToDataMethods,
+    helpers::temp_ui_state::TempStateDataAccess,
     visualizations::shader_based::target_distr::NormalDistribution,
 };
 

@@ -16,7 +16,7 @@ use wgpu::{
 use crate::{
     create_shader_module,
     gpu_task::{GpuTask, RepaintToken},
-    helpers::async_last_task_processor::TaskSender,
+    helpers::async_last_task_processor::TaskDispatcher,
     simulation::random_walk_metropolis_hastings::Rwmh,
     target_distributions::multimodal_gaussian::GaussianTargetDistr,
     visualizations::AlgoPainter,
@@ -33,7 +33,7 @@ use super::{
 create_shader_module!("binary_distance_approx.compute", compute_bindings);
 create_shader_module!("binary_distance_approx.fragment", fragment_bindings);
 
-pub fn get_compute_buffer_size(resolution: &[f32; 2]) -> u64 {
+pub fn compute_buffer_size_in_bytes(resolution: &[f32; 2]) -> u64 {
     (resolution[0] * resolution[1]) as u64 * size_of::<f32>() as u64
 }
 
@@ -44,7 +44,7 @@ macro_rules! definition_location {
     };
 }
 
-pub(super) fn get_compute_output_buffer(
+pub(super) fn create_compute_output_buffer(
     device: &wgpu::Device,
     current_res: Option<&[f32; 2]>,
 ) -> wgpu::Buffer {
@@ -55,7 +55,7 @@ pub(super) fn get_compute_output_buffer(
         // todo: consider splitting definition, MIGHT improve perf.
         usage: BufferUsages::STORAGE | BufferUsages::COPY_SRC | BufferUsages::COPY_DST,
         mapped_at_creation: false,
-        size: get_compute_buffer_size(res),
+        size: compute_buffer_size_in_bytes(res),
     })
 }
 
@@ -73,10 +73,10 @@ struct PipelineStateHolder {
     compute_output_buffer: Buffer,
     resolution_buffer: Buffer,
     target_buffer: Buffer,
-    gpu_tx: TaskSender<ComputeTask>,
-    compute_tx: watch::Sender<Option<ComputeBufCpuRepr>>,
-    compute_rx: watch::Receiver<Option<ComputeBufCpuRepr>>,
-    last_approx_len: usize,
+    gpu_tx: TaskDispatcher<ComputeTask>,
+    compute_results_tx: watch::Sender<Option<ComputeBufCpuRepr>>,
+    compute_results_rx: watch::Receiver<Option<ComputeBufCpuRepr>>,
+    prev_approx_len: usize,
 }
 
 impl AlgoPainter for BDAComputeDiff {
@@ -91,7 +91,7 @@ impl AlgoPainter for BDAComputeDiff {
             rect,
             RenderCall {
                 algo_state: algo.clone(),
-                px_size: rect.size().into(),
+                px_res: rect.size().into(),
                 target_distr: target.gaussians.clone(),
             },
         ));
@@ -101,7 +101,7 @@ impl AlgoPainter for BDAComputeDiff {
 impl BDAComputeDiff {
     pub fn init_pipeline(
         render_state: &RenderState,
-        gpu_tx: TaskSender<ComputeTask>,
+        gpu_tx: TaskDispatcher<ComputeTask>,
         ctx: egui::Context,
     ) {
         let device = &render_state.device;
@@ -132,7 +132,7 @@ impl BDAComputeDiff {
 
         let target_buffer = get_normaldistr_buffer(device, None);
 
-        let compute_output_buffer = get_compute_output_buffer(device, None);
+        let compute_output_buffer = create_compute_output_buffer(device, None);
 
         let fragment_group_0 = fragment_bindings::BindGroup0::from_bindings(
             device,
@@ -188,9 +188,9 @@ impl BDAComputeDiff {
                 compute_output_buffer,
                 target_buffer,
                 gpu_tx,
-                compute_rx,
-                compute_tx,
-                last_approx_len: 0,
+                compute_results_rx: compute_rx,
+                compute_results_tx: compute_tx,
+                prev_approx_len: 0,
             })
         else {
             unreachable!("pipeline already present?!")
@@ -199,7 +199,7 @@ impl BDAComputeDiff {
 }
 
 struct RenderCall {
-    px_size: [f32; 2],
+    px_res: [f32; 2],
     target_distr: Vec<NormalDistribution>,
     algo_state: Arc<Rwmh>,
 }
@@ -220,9 +220,9 @@ impl CallbackTrait for RenderCall {
             ref mut compute_output_buffer,
             ref mut fragment_group_1,
             ref gpu_tx,
-            ref compute_tx,
-            ref mut compute_rx,
-            ref mut last_approx_len,
+            compute_results_tx: ref compute_tx,
+            compute_results_rx: ref mut compute_rx,
+            prev_approx_len: ref mut last_approx_len,
             ..
         } = callback_resources
             .get_mut()
@@ -232,18 +232,19 @@ impl CallbackTrait for RenderCall {
             let normdistr_buffer = get_normaldistr_buffer(device, Some(target));
             *target_buffer = normdistr_buffer;
         }
-        let approx_accepted = self.algo_state.history.as_slice();
-        let curr_approx_len = approx_accepted.len();
+        let accepted_approx = self.algo_state.history.as_slice();
+        let curr_approx_len = accepted_approx.len();
         let approx_changed = curr_approx_len != *last_approx_len;
         *last_approx_len = curr_approx_len;
-        let res_changed = compute_output_buffer.size() != get_compute_buffer_size(&self.px_size);
+        let res_changed =
+            compute_output_buffer.size() != compute_buffer_size_in_bytes(&self.px_res);
         if res_changed {
-            *compute_output_buffer = get_compute_output_buffer(device, Some(&self.px_size));
+            *compute_output_buffer = create_compute_output_buffer(device, Some(&self.px_res));
             queue.write_buffer(
                 resolution_buffer,
                 0,
                 bytemuck::cast_slice(&[ResolutionInfo {
-                    resolution: self.px_size,
+                    resolution: self.px_res,
                     _pad: [0.0; 2],
                 }]),
             );
@@ -251,7 +252,7 @@ impl CallbackTrait for RenderCall {
         if res_changed || approx_changed {
             // old value is now outdated.
             compute_tx.send(None).unwrap();
-            compute_new_approx(gpu_tx, self, compute_tx);
+            dispatch_new_approximation_task(gpu_tx, self, compute_tx);
         }
         if compute_rx
             .has_changed()
@@ -315,7 +316,10 @@ impl CallbackTrait for RenderCall {
     }
 }
 
-fn maxnorm_rayon(rx: oneshot::Receiver<Vec<f32>>, compute_tx: &watch::Sender<Option<Vec<f32>>>) {
+fn dispatch_maxnorm_rayon(
+    rx: oneshot::Receiver<Vec<f32>>,
+    compute_tx: &watch::Sender<Option<Vec<f32>>>,
+) {
     use rayon::prelude::*;
     // TODO: ensure this doesn't copy when sending over the channel.
     // Otherwise I will have to find an alternative.
@@ -337,14 +341,14 @@ fn maxnorm_rayon(rx: oneshot::Receiver<Vec<f32>>, compute_tx: &watch::Sender<Opt
         .unwrap();
 }
 
-fn compute_new_approx(
-    gpu_tx: &TaskSender<ComputeTask>,
+fn dispatch_new_approximation_task(
+    gpu_tx: &TaskDispatcher<ComputeTask>,
     render_call: &RenderCall,
     compute_tx: &watch::Sender<Option<Vec<f32>>>,
 ) {
     let (tx, rx) = oneshot::channel::<ComputeBufCpuRepr>();
-    match gpu_tx.send_update_blocking(crate::visualizations::BdaComputeTask {
-        px_size: render_call.px_size,
+    match gpu_tx.dispatch_task_blocking(crate::visualizations::BdaComputeTask {
+        px_size: render_call.px_res,
         algo_state: render_call.algo_state.clone(),
         result_tx: Some(tx),
     }) {
@@ -356,7 +360,7 @@ fn compute_new_approx(
 
     wasm_thread::spawn({
         let compute_tx = compute_tx.clone();
-        move || maxnorm_rayon(rx, &compute_tx)
+        move || dispatch_maxnorm_rayon(rx, &compute_tx)
     });
 }
 
@@ -404,7 +408,7 @@ impl GpuTask for ComputeTask {
         let approx_accepted = self.algo_state.history.as_slice();
         let (accept_buffer, info_buffer) = get_approx_buffers(device, Some(approx_accepted));
 
-        let compute_output_buffer = get_compute_output_buffer(device, Some(&self.px_size));
+        let compute_output_buffer = create_compute_output_buffer(device, Some(&self.px_size));
 
         let compute_group_0 = compute_bindings::BindGroup0::from_bindings(
             device,

@@ -8,25 +8,25 @@ use crate::{
 };
 
 #[cfg_persistence_derive]
-pub struct PointDisplay {
-    pub lowest_alpha: f32,
-    pub radius: f32,
-    pub accept_color: Color32,
-    pub reject_display: Option<Color32>,
+pub struct SamplePointVisualizer {
+    pub min_opacity: f32,
+    pub point_radius: f32,
+    pub accepted_point_color: Color32,
+    pub rejected_point_color: Option<Color32>,
 }
 
-impl Default for PointDisplay {
+impl Default for SamplePointVisualizer {
     fn default() -> Self {
         Self {
-            accept_color: Color32::RED,
-            lowest_alpha: 0.3,
-            radius: 3.0,
-            reject_display: None,
+            accepted_point_color: Color32::RED,
+            min_opacity: 0.3,
+            point_radius: 3.0,
+            rejected_point_color: None,
         }
     }
 }
 
-impl PointDisplay {
+impl SamplePointVisualizer {
     pub fn paint(&self, painter: &egui::Painter, rect: egui::Rect, algo: &Rwmh) {
         for &AcceptRecord {
             position,
@@ -36,20 +36,25 @@ impl PointDisplay {
         // skipping the first empty element I added to avoid WebGPU bind exceptions (see shader for explanation!)
         {
             let canvas_loc = ndc_to_canvas_coord(Pos2::new(position[0], position[1]), rect.size());
-            let factor = (remain_count + 1) as f32 / (algo.max_remain_count + 1) as f32;
+            let normalized_lifespan =
+                (remain_count + 1) as f32 / (algo.max_remain_count + 1) as f32;
             // with the above there may be a point where most accepted points are very close to 0, this seeks to always have them above a certain threshold.
-            let log_factor = f32::log2(1.0 + factor) / f32::log2(2.0);
-            let renormalized_factor = log_factor * (1.0 - self.lowest_alpha) + self.lowest_alpha;
+            let log_lifespan = f32::log2(1.0 + normalized_lifespan) / f32::log2(2.0);
+            let point_opacity = log_lifespan * (1.0 - self.min_opacity) + self.min_opacity;
             painter.circle_filled(
                 canvas_loc,
-                self.radius,
-                self.accept_color.gamma_multiply(renormalized_factor),
+                self.point_radius,
+                self.accepted_point_color.gamma_multiply(point_opacity),
             );
         }
-        if let Some(color) = self.reject_display {
+        if let Some(color) = self.rejected_point_color {
             for step in algo.rejected_history.iter() {
                 let step = ndc_to_canvas_coord(Pos2::new(step.x, step.y), rect.size());
-                painter.circle_filled(step, self.radius, color.gamma_multiply(self.lowest_alpha));
+                painter.circle_filled(
+                    step,
+                    self.point_radius,
+                    color.gamma_multiply(self.min_opacity),
+                );
             }
         }
         #[expect(unreachable_code, reason = "I want this to compile")]

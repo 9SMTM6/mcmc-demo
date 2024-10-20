@@ -14,14 +14,14 @@ pub(crate) trait ComputeTask<T> {
 }
 
 /// Do NOT implement clone on this.
-pub struct TaskSender<T> {
+pub struct TaskDispatcher<T> {
     change_notify: Arc<Notify>,
     data: Arc<Mutex<Option<T>>>,
     is_other_end_active: Arc<AtomicBool>,
 }
 
 /// Do NOT implement clone on this.
-pub struct TaskRunner<T, C: ComputeTask<T>> {
+pub struct TaskExecutor<T, C: ComputeTask<T>> {
     change_notify: Arc<Notify>,
     data: Arc<Mutex<Option<T>>>,
     task: C,
@@ -29,18 +29,18 @@ pub struct TaskRunner<T, C: ComputeTask<T>> {
 }
 
 #[must_use]
-/// If you drop this Factory, the Sender will never be notified that the other end is inactive.
+/// If you drop this Factory, the Dispatcher will never be notified that the other end is inactive.
 ///
 /// Can't figure out how to solve that properly. Implementing Drop means I can't move out of this struct.
-pub(crate) struct TaskRunnerFactory<T> {
+pub(crate) struct TaskExecutorFactory<T> {
     change_notify: Arc<Notify>,
     data: Arc<Mutex<Option<T>>>,
     is_other_end_active: Arc<AtomicBool>,
 }
 
-impl<T> TaskRunnerFactory<T> {
-    pub fn bind_task<C: ComputeTask<T>>(self, task: C) -> TaskRunner<T, C> {
-        TaskRunner {
+impl<T> TaskExecutorFactory<T> {
+    pub fn attach_task_executor<C: ComputeTask<T>>(self, task: C) -> TaskExecutor<T, C> {
+        TaskExecutor {
             task,
             change_notify: self.change_notify,
             data: self.data,
@@ -49,7 +49,7 @@ impl<T> TaskRunnerFactory<T> {
     }
 }
 
-impl<T> Drop for TaskSender<T> {
+impl<T> Drop for TaskDispatcher<T> {
     fn drop(&mut self) {
         // Mark sender as inactive
         self.is_other_end_active.store(false, Ordering::SeqCst);
@@ -59,7 +59,7 @@ impl<T> Drop for TaskSender<T> {
     }
 }
 
-impl<T, C: ComputeTask<T>> Drop for TaskRunner<T, C> {
+impl<T, C: ComputeTask<T>> Drop for TaskExecutor<T, C> {
     fn drop(&mut self) {
         // Mark sender as inactive
         self.is_other_end_active.store(false, Ordering::SeqCst);
@@ -67,16 +67,16 @@ impl<T, C: ComputeTask<T>> Drop for TaskRunner<T, C> {
 }
 
 #[derive(Debug)]
-pub enum TaskSendError {
+pub enum TaskDispatchError {
     TaskRunnerDropped,
 }
 
 // Constructor for the sender/runner system
-impl<T> TaskSender<T> {
+impl<T> TaskDispatcher<T> {
     // Sends a task update
-    pub async fn send_update(&self, new_task: T) -> Result<(), TaskSendError> {
+    pub async fn dispatch_task(&self, new_task: T) -> Result<(), TaskDispatchError> {
         if !self.is_other_end_active.load(Ordering::SeqCst) {
-            Err(TaskSendError::TaskRunnerDropped)
+            Err(TaskDispatchError::TaskRunnerDropped)
         } else {
             {
                 let mut data_guard = self.data.lock().await;
@@ -87,8 +87,8 @@ impl<T> TaskSender<T> {
         }
     }
 
-    pub fn send_update_blocking(&self, new_task: T) -> Result<(), TaskSendError> {
-        futures::executor::block_on(self.send_update(new_task))
+    pub fn dispatch_task_blocking(&self, new_task: T) -> Result<(), TaskDispatchError> {
+        futures::executor::block_on(self.dispatch_task(new_task))
     }
 }
 
@@ -115,13 +115,13 @@ mod cond_trait_impl {
 
 pub use cond_trait_impl::*;
 
-impl<T, C> TaskRunner<T, C>
+impl<T, C> TaskExecutor<T, C>
 where
     T: DebugBoundIfCompiled,
     C: ComputeTask<T>,
 {
     /// Initializes the compute loop
-    pub async fn run_compute_loop(self) {
+    pub async fn start_processing_loop(self) {
         // Wait until notified of a task change
         let mut recorded_notify = false;
         loop {
@@ -162,18 +162,18 @@ where
     }
 }
 
-pub fn get<T>() -> (TaskSender<T>, TaskRunnerFactory<T>) {
+pub fn get<T>() -> (TaskDispatcher<T>, TaskExecutorFactory<T>) {
     let change_notify = Arc::new(Notify::new());
     let data = Arc::new(Mutex::new(None));
     let is_other_end_active = Arc::new(AtomicBool::new(true));
 
     (
-        TaskSender {
+        TaskDispatcher {
             change_notify: Arc::clone(&change_notify),
             data: Arc::clone(&data),
             is_other_end_active: Arc::clone(&is_other_end_active),
         },
-        TaskRunnerFactory {
+        TaskExecutorFactory {
             change_notify,
             data,
             is_other_end_active,
@@ -200,19 +200,19 @@ mod test {
 
     #[cfg(feature = "more_debug_impls")]
     #[tokio::test]
-    async fn runs_task_successfully() {
+    async fn executes_task_successfully() {
         let (tx, mut rx) = tokio::sync::mpsc::channel(1);
         let (t_tx, runner) = get();
-        let runner = runner.bind_task(move || {
+        let runner = runner.attach_task_executor(move || {
             let tx = tx.clone();
             |_val: ()| async move {
                 tx.send(()).await.unwrap();
             }
         });
         let (f, g, h) = tokio::join!(
-            tokio::spawn(runner.run_compute_loop()),
+            tokio::spawn(runner.start_processing_loop()),
             tokio::spawn(async move {
-                t_tx.send_update(()).await.unwrap();
+                t_tx.dispatch_task(()).await.unwrap();
                 drop(t_tx);
             }),
             #[allow(
@@ -234,16 +234,16 @@ mod test {
     }
 
     #[tokio::test]
-    async fn cancels_on_sender_drop() {
+    async fn finalizes_on_dispatcher_drop() {
         let (t_tx, runner) = get();
-        let runner = runner.bind_task(move || |_val: ()| async move {});
+        let runner = runner.attach_task_executor(move || |_val: ()| async move {});
         let (f, g) = tokio::join!(
             tokio::spawn(async move {
                 tokio::select! {
                     _ = tokio::time::sleep(Duration::from_millis(200)) => {
                         panic!("Timeout");
                     }
-                    _ = runner.run_compute_loop() => {},
+                    _ = runner.start_processing_loop() => {},
                 }
             }),
             tokio::spawn(async move {
@@ -256,10 +256,10 @@ mod test {
     }
 
     #[tokio::test]
-    async fn errors_on_runner_drop() {
+    async fn errors_on_executor_drop() {
         let (t_tx, runner) = get();
-        let runner = runner.bind_task(move || |_val: ()| async move {});
+        let runner = runner.attach_task_executor(move || |_val: ()| async move {});
         drop(runner);
-        assert!(t_tx.send_update(()).await.is_err());
+        assert!(t_tx.dispatch_task(()).await.is_err());
     }
 }

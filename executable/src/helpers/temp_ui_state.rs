@@ -8,7 +8,7 @@ pub struct TempUiState<'a, T, Del> {
     _phantom: PhantomData<T>,
 }
 
-pub trait TempStateExtDelegatedToDataMethods {
+pub trait TempStateDataAccess {
     fn data_mut<R>(&self, writer: impl FnOnce(&mut egui::util::IdTypeMap) -> R) -> R;
     fn data<R>(&self, reader: impl FnOnce(&egui::util::IdTypeMap) -> R) -> R;
     #[must_use]
@@ -19,7 +19,7 @@ pub trait TempStateExtDelegatedToDataMethods {
 
 macro_rules! delegete_for {
     ($type: ty) => {
-        impl TempStateExtDelegatedToDataMethods for $type {
+        impl TempStateDataAccess for $type {
             fn data<R>(&self, reader: impl FnOnce(&egui::util::IdTypeMap) -> R) -> R {
                 self.data(reader)
             }
@@ -40,9 +40,7 @@ macro_rules! delegete_for {
 delegete_for!(egui::Ui);
 delegete_for!(egui::Context);
 
-impl<T: Copy + Clone + Send + Sync + 'static, Del: TempStateExtDelegatedToDataMethods>
-    TempUiState<'_, T, Del>
-{
+impl<T: Copy + Clone + Send + Sync + 'static, Del: TempStateDataAccess> TempUiState<'_, T, Del> {
     pub const fn with_id(self, id: egui::Id) -> Self {
         Self { id, ..self }
     }
@@ -76,18 +74,3 @@ impl<T: Copy + Clone + Send + Sync + 'static, Del: TempStateExtDelegatedToDataMe
             .data_mut(|type_map| type_map.remove::<T>(self.id));
     }
 }
-
-// pub trait TempStateExt<T> {
-//     fn create(&self, val: T);
-//     fn create_default(&self)
-//     where
-//         T: Default,
-//     {
-//         self.create(Default::default())
-//     }
-//     fn set_or_create(&self, val: T);
-//     fn get_ref(&self) -> Option<&T>;
-//     fn get_mut(&self) -> Option<&mut T>;
-//     fn get(&self) -> Option<T>;
-//     fn remove(&self);
-// }

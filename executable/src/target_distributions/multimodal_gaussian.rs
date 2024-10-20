@@ -48,10 +48,10 @@ impl Default for GaussianTargetDistr {
 }
 
 impl GaussianTargetDistr {
-    pub fn probability(&self, position: AlgoVec) -> f32 {
-        let mut combined_prob_density = 0.0;
+    pub fn calculate_probability_density(&self, position: AlgoVec) -> f32 {
+        let mut total_weighted_density = 0.0;
 
-        let mut normalization = 0.0;
+        let mut scaling_factor = 0.0;
 
         for &NormalDistribution {
             position: ref gauss_pos,
@@ -63,17 +63,17 @@ impl GaussianTargetDistr {
             let gauss_normalize = 1.0 / f32::sqrt(2.0 * PI * variance);
             let sq_dist = f32::powi(position.metric_distance(&gauss_pos), 2);
 
-            let prob_contrib = gauss_normalize * f32::exp(-sq_dist / (2.0 * variance));
-            combined_prob_density += scale * prob_contrib;
-            normalization += scale;
+            let density_contribution = gauss_normalize * f32::exp(-sq_dist / (2.0 * variance));
+            total_weighted_density += scale * density_contribution;
+            scaling_factor += scale;
         }
 
-        combined_prob_density /= normalization;
-        combined_prob_density
+        total_weighted_density /= scaling_factor;
+        total_weighted_density
     }
 
     /// this is NOT limited to legal range, cause its really not required.
-    pub fn acceptance_ratio(&self, proposal: AlgoVec, current: AlgoVec) -> f32 {
-        self.probability(proposal) / self.probability(current)
+    pub fn compute_acceptance_ratio(&self, proposal: AlgoVec, current: AlgoVec) -> f32 {
+        self.calculate_probability_density(proposal) / self.calculate_probability_density(current)
     }
 }

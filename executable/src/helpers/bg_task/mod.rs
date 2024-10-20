@@ -1,6 +1,6 @@
 mod helpers;
 
-pub use helpers::{BgCommunicate, Progress};
+pub use helpers::{BackgroundTaskManager, TaskProgress};
 
 #[expect(clippy::module_name_repetitions, reason = "Eases autoimport")]
 pub struct BgTaskHandle<Final = ()> {
@@ -8,30 +8,30 @@ pub struct BgTaskHandle<Final = ()> {
     /// Cant be saved in temporary storage because of the Copy requirements on IdTypeMap::insert_temp.
     /// Works like this for the moment, since theres only one of these.
     background_thread: wasm_thread::JoinHandle<Final>,
-    pub communicate: BgCommunicate,
+    pub communicate: BackgroundTaskManager,
 }
 
 pub trait BgTask {
     type Final;
 
-    fn execute(self, communicate: BgCommunicate) -> Self::Final
+    fn execute(self, communicate: BackgroundTaskManager) -> Self::Final
     where
         Self: Sized;
 }
 
-impl<Final, F: FnOnce(BgCommunicate) -> Final + Sized> BgTask for F {
+impl<Final, F: FnOnce(BackgroundTaskManager) -> Final + Sized> BgTask for F {
     type Final = Final;
 
-    fn execute(self, communicate: BgCommunicate) -> Self::Final {
+    fn execute(self, communicate: BackgroundTaskManager) -> Self::Final {
         let ret = self(communicate.clone());
-        communicate.finished();
+        communicate.mark_as_finished();
         ret
     }
 }
 
 impl<Final: Send + 'static> BgTaskHandle<Final> {
     pub fn new(task: impl BgTask<Final = Final> + Send + 'static, total_steps: usize) -> Self {
-        let communicate = BgCommunicate::new(total_steps);
+        let communicate = BackgroundTaskManager::new(total_steps);
         let background_thread = wasm_thread::spawn({
             let communicate = communicate.clone();
             move || task.execute(communicate)
@@ -43,8 +43,8 @@ impl<Final: Send + 'static> BgTaskHandle<Final> {
     }
 
     #[must_use]
-    pub fn get_progress(&self) -> Progress {
-        self.communicate.get_progress()
+    pub fn get_progress(&self) -> TaskProgress {
+        self.communicate.current_progress()
     }
 
     /// # Panics
@@ -53,7 +53,7 @@ impl<Final: Send + 'static> BgTaskHandle<Final> {
     #[must_use]
     pub fn get_value(self) -> Final {
         // Not the reason for the breakdown after a panic in thread on web.
-        assert!(matches!(self.get_progress(), Progress::Finished));
+        assert!(matches!(self.get_progress(), TaskProgress::Finished));
         self.background_thread.join().expect(
             "
 While a join on an unfinished task is problematic on the web,
@@ -69,8 +69,8 @@ Also, obvously if the thread panicked, I want to propagate it too.
 
 /// This serves as a proxy for the BgTaskHandle getting dropped.
 /// I can't implement drop on that, otherwise I can join in the JoinHandle, as moving out of a type is forbidden if that type implements drop.
-impl Drop for BgCommunicate {
+impl Drop for BackgroundTaskManager {
     fn drop(&mut self) {
-        self.abort();
+        self.request_abort();
     }
 }

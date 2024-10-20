@@ -6,15 +6,15 @@ pub(crate) trait GpuTask {
 
 use crate::visualizations::shader_based::BdaComputeTask;
 
-use super::async_last_task_processor::{self, TaskRunnerFactory, TaskSender};
+use super::async_last_task_processor::{self, TaskDispatcher, TaskExecutorFactory};
 
 pub(crate) struct GpuTaskReceivers {
-    pub bda_compute: TaskRunnerFactory<BdaComputeTask>,
+    pub bda_compute: TaskExecutorFactory<BdaComputeTask>,
 }
 
 #[allow(clippy::module_name_repetitions, reason = "Easier auto-import")]
 pub struct GpuTaskSenders {
-    pub bda_compute: TaskSender<BdaComputeTask>,
+    pub bda_compute: TaskDispatcher<BdaComputeTask>,
 }
 
 pub(crate) fn get_gpu_channels() -> (GpuTaskSenders, GpuTaskReceivers) {
@@ -88,14 +88,14 @@ pub(crate) async fn gpu_scheduler(rxs: GpuTaskReceivers) {
 
     // Add a tokio::join when more GPU tasks are added.
     rxs.bda_compute
-        .bind_task(|| {
+        .attach_task_executor(|| {
             let compute_device = compute_device.clone();
             let compute_queue = compute_queue.clone();
             |mut task: BdaComputeTask| async move {
                 task.run(compute_device, compute_queue).await;
             }
         })
-        .run_compute_loop()
+        .start_processing_loop()
         .await;
 }
 
