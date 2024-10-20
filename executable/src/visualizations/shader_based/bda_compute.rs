@@ -157,11 +157,10 @@ impl BDAComputeDiff {
             let repaint_token = RepaintToken::new(ctx);
             async move {
                 let mut compute_results_rx = compute_results_rx;
-                while compute_results_rx
-                    .wait_for(|val| val.is_some())
-                    .await
-                    .is_ok()
-                {
+                loop {
+                    let Ok(_) = compute_results_rx.changed().await else {
+                        break;
+                    };
                     // drop(compute_results_rx.borrow_and_update());
                     tracing::info!("Requesting repaint after finish");
                     repaint_token.request_repaint();
