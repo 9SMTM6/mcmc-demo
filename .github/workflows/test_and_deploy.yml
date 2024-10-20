@@ -17,8 +17,9 @@ jobs:
         with:
           toolchain: stable
           components: clippy
-          cache-on-failure: true
       - uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
       - run: cargo +stable --locked clippy --workspace --target x86_64-unknown-linux-gnu --all-features --all-targets -- -D warnings
 
   clippy-web:
@@ -29,8 +30,9 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{env.RUST_NIGHTLY_TOOLCHAIN_VERSION}}
-          cache-on-failure: true
       - uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
       - run: cargo clippy --locked --workspace --target wasm32-unknown-unknown --all-features --all-targets -- -D warnings
 
   test:
@@ -40,8 +42,9 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: stable
-          cache-on-failure: true
       - uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
       - run: cargo +stable --locked test --target x86_64-unknown-linux-gnu --lib
 
   build-webpage:
