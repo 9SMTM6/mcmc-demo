@@ -23,18 +23,14 @@ opt-level = 2 # fast and small wasm
 opt-level = 2
 
 [patch.crates-io]
-# the release on patched branches MUST match the set version above,# otherwise cargo will ignore this (it will warn about it though).
+# the release on patched branches MUST match the set version above, otherwise cargo will ignore this (it will warn about it though).
 
 # If you want to use the bleeding edge version of egui and eframe:
 # The released egui regularly lags behind in wgpu versions, if this is relevant, re-add the patch.
 # egui = { git = "https://github.com/emilk/egui", branch = "master" }
 # eframe = { git = "https://github.com/emilk/egui", branch = "master" }
 
-# Patches out a polyfill, since I need way more modern browsers anyways.
-# Upstream PR: https://github.com/chemicstry/wasm_thread/pull/26
-wasm_thread = { git = "https://github.com/chemicstry/wasm_thread", branch = "main" }
 # wgsl_to_wgpu = { path = "../wgsl_to_wgpu/wgsl_to_wgpu" }
-# wgpu = { git = "https://github.com/9smtm6/wgpu", branch = "patched" }
 
 # If you fork https://github.com/emilk/egui you can test with:
 # egui = { path = "../egui/crates/egui" }

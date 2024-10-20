@@ -1,6 +1,7 @@
 on: [push, pull_request]
 
-name: QA
+# These tests are considered irrelevant for a proper deployment, but sure are nice to have correct most of the time.
+name: QualityAssurance
 
 jobs:
   fmt:

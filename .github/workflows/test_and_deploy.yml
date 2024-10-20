@@ -1,6 +1,7 @@
 on: [push, pull_request, workflow_dispatch]
 
-name: CI
+# These tests check for buildability, tests and lints, and if these check out and its on main, deploys the webpage and artifacts 
+name: ContinuousDeployment
 
 env:
   RUST_NIGHTLY_TOOLCHAIN_VERSION: "nightly-2024-10-15"
@@ -16,6 +17,7 @@ jobs:
         with:
           toolchain: stable
           components: clippy
+          cache-on-failure: true
       - uses: Swatinem/rust-cache@v2
       - run: cargo +stable --locked clippy --workspace --target x86_64-unknown-linux-gnu --all-features --all-targets -- -D warnings
 
@@ -27,6 +29,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{env.RUST_NIGHTLY_TOOLCHAIN_VERSION}}
+          cache-on-failure: true
       - uses: Swatinem/rust-cache@v2
       - run: cargo clippy --locked --workspace --target wasm32-unknown-unknown --all-features --all-targets -- -D warnings
 
@@ -180,7 +183,7 @@ jobs:
       - clippy-web
       - test
     steps:
-      - run: echo "Github, you really should have something for this."
+      - run: echo "Github, you really should have something for this kind of coordination."
 
   upload-executables:
     runs-on: ubuntu-latest

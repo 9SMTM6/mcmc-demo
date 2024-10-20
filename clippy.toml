@@ -20,15 +20,11 @@ allowed-duplicate-crates = [
     "redox_syscall",
 
     # These duplicates were, last time I checked, caused by build dependencies
-    "bit-set",
-    "bit-vec",
     "bitflags",
-    "cfg_aliases",
 
     # IDK
     "regex-automata",
     "regex-syntax",
-    "miniz_oxide",
 
     # Should be fixed if wgpu pushes an update.
     "hashbrown",

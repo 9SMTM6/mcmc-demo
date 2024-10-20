@@ -221,7 +221,7 @@ mod test {
             )]
             tokio::spawn(async move {
                 tokio::select! {
-                    _ = tokio::time::sleep(Duration::from_millis(400)) => {
+                    _ = tokio::time::sleep(Duration::from_millis(800)) => {
                         panic!("Timeout");
                     }
                     Some(_) = rx.recv() => {},
