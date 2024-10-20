@@ -166,7 +166,7 @@ impl BDAComputeDiff {
                     repaint_token.request_repaint();
                     cfg_sleep!().await;
                 }
-                tracing::info!("Refresh loop canceled");
+                tracing::error!("Refresh loop canceled");
             }
         }
         .in_current_span();
