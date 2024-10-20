@@ -63,7 +63,7 @@ benchmark_wasm_size compression_level='4':
     just executable/benchmark_wasm_size {{compression_level}}
 
 tokio_console:
-    RUSTFLAGS="--cfg tokio_unstable" cargo +stable build --features tokio_console --target x86_64-unknown-linux-gnu
+    RUSTFLAGS="--cfg tokio_unstable" cargo +stable build --features tokio_console,debounce_async_loops --target x86_64-unknown-linux-gnu
     ./target/x86_64-unknown-linux-gnu/debug/mcmc-demo &
     # spawn tokio-console in another terminal window
     konsole -e tokio-console

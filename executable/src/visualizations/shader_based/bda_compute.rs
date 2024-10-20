@@ -14,7 +14,7 @@ use wgpu::{
 };
 
 use crate::{
-    create_shader_module,
+    cfg_sleep, create_shader_module,
     gpu_task::{GpuTask, RepaintToken},
     helpers::async_last_task_processor::TaskDispatcher,
     simulation::random_walk_metropolis_hastings::Rwmh,
@@ -150,17 +150,24 @@ impl BDAComputeDiff {
         );
 
         // TODO: This is the actual issue here. I think. I wrote the async_last_task_processor to replace this, why is it still around?
-        let (compute_tx, compute_rx) = watch::channel(None);
+        let (compute_results_tx, compute_results_rx) = watch::channel(None);
 
         let refresh_on_finished = {
-            let mut compute_rx = compute_rx.clone();
+            let compute_results_rx = compute_results_rx.clone();
             let repaint_token = RepaintToken::new(ctx);
             async move {
-                while compute_rx.wait_for(|val| val.is_some()).await.is_ok() {
-                    tracing::debug!("Requesting repaint after finish");
+                let mut compute_results_rx = compute_results_rx;
+                while compute_results_rx
+                    .wait_for(|val| val.is_some())
+                    .await
+                    .is_ok()
+                {
+                    // drop(compute_results_rx.borrow_and_update());
+                    tracing::info!("Requesting repaint after finish");
                     repaint_token.request_repaint();
+                    cfg_sleep!().await;
                 }
-                tracing::debug!("Refresh loop canceled");
+                tracing::info!("Refresh loop canceled");
             }
         }
         .in_current_span();
@@ -188,8 +195,8 @@ impl BDAComputeDiff {
                 compute_output_buffer,
                 target_buffer,
                 gpu_tx,
-                compute_results_rx: compute_rx,
-                compute_results_tx: compute_tx,
+                compute_results_rx,
+                compute_results_tx,
                 prev_approx_len: 0,
             })
         else {
@@ -220,9 +227,9 @@ impl CallbackTrait for RenderCall {
             ref mut compute_output_buffer,
             ref mut fragment_group_1,
             ref gpu_tx,
-            compute_results_tx: ref compute_tx,
-            compute_results_rx: ref mut compute_rx,
-            prev_approx_len: ref mut last_approx_len,
+            ref compute_results_tx,
+            ref mut compute_results_rx,
+            ref mut prev_approx_len,
             ..
         } = callback_resources
             .get_mut()
@@ -234,8 +241,8 @@ impl CallbackTrait for RenderCall {
         }
         let accepted_approx = self.algo_state.history.as_slice();
         let curr_approx_len = accepted_approx.len();
-        let approx_changed = curr_approx_len != *last_approx_len;
-        *last_approx_len = curr_approx_len;
+        let approx_changed = curr_approx_len != *prev_approx_len;
+        *prev_approx_len = curr_approx_len;
         let res_changed =
             compute_output_buffer.size() != compute_buffer_size_in_bytes(&self.px_res);
         if res_changed {
@@ -250,15 +257,18 @@ impl CallbackTrait for RenderCall {
             );
         }
         if res_changed || approx_changed {
+            let compute_results_tx = compute_results_tx.clone();
             // old value is now outdated.
-            compute_tx.send(None).unwrap();
-            dispatch_new_approximation_task(gpu_tx, self, compute_tx);
+            tracing::info!("resetting compute result");
+            compute_results_tx.send(None).unwrap();
+            let rx = dispatch_approximation_gpu(gpu_tx, self);
+            wasm_thread::spawn(move || dispatch_maxnorm_rayon(rx, compute_results_tx));
         }
-        if compute_rx
+        if compute_results_rx
             .has_changed()
             .expect("channel should never be closed")
         {
-            if let &Some(ref val) = compute_rx.borrow().deref() {
+            if let &Some(ref val) = compute_results_rx.borrow().deref() {
                 if compute_output_buffer.size() != (val.as_slice().len() * 4) as u64 {
                     tracing::error!("Resolution mismatch.");
                 } else {
@@ -317,17 +327,17 @@ impl CallbackTrait for RenderCall {
 }
 
 fn dispatch_maxnorm_rayon(
-    rx: oneshot::Receiver<Vec<f32>>,
-    compute_tx: &watch::Sender<Option<Vec<f32>>>,
+    rx: oneshot::Receiver<ComputeBufCpuRepr>,
+    compute_results_tx: watch::Sender<Option<ComputeBufCpuRepr>>,
 ) {
     use rayon::prelude::*;
     // TODO: ensure this doesn't copy when sending over the channel.
     // Otherwise I will have to find an alternative.
     let Ok(mut prob_buffer) = rx.blocking_recv() else {
-        tracing::debug!("Closing Maxnorm worker main-thread, as sender channel-end closed");
+        tracing::info!("Closing Maxnorm worker main-thread, as sender channel-end closed");
         return;
     };
-
+    tracing::info!("calculating maxnorm");
     let max = *prob_buffer
         .par_iter()
         .max_by(|lhs, rhs| lhs.total_cmp(rhs))
@@ -335,17 +345,16 @@ fn dispatch_maxnorm_rayon(
     prob_buffer
         .par_iter_mut()
         .for_each(|unnorm_prob| *unnorm_prob /= max);
-    compute_tx
+    compute_results_tx
         .send(Some(prob_buffer))
         .map_err(|_err| "Channel Closed")
         .unwrap();
 }
 
-fn dispatch_new_approximation_task(
+fn dispatch_approximation_gpu(
     gpu_tx: &TaskDispatcher<ComputeTask>,
     render_call: &RenderCall,
-    compute_tx: &watch::Sender<Option<Vec<f32>>>,
-) {
+) -> oneshot::Receiver<Vec<f32>> {
     let (tx, rx) = oneshot::channel::<ComputeBufCpuRepr>();
     match gpu_tx.dispatch_task_blocking(crate::visualizations::BdaComputeTask {
         px_size: render_call.px_res,
@@ -357,11 +366,7 @@ fn dispatch_new_approximation_task(
             tracing::warn!("GpuTasks filled");
         }
     }
-
-    wasm_thread::spawn({
-        let compute_tx = compute_tx.clone();
-        move || dispatch_maxnorm_rayon(rx, &compute_tx)
-    });
+    rx
 }
 
 #[cfg_educe_debug]
