@@ -36,9 +36,7 @@ pub fn cfg_persistence_derive(_args: TokenStream, input: TokenStream) -> TokenSt
     let input = proc_macro2::TokenStream::from(input);
     let attr = cfg_if_expr!(
         => [feature = "persistence"]
-        quote!(
-            #[derive(::serde::Deserialize, ::serde::Serialize)]
-        )
+        quote!(#[derive(::serde::Deserialize, ::serde::Serialize)])
         => [not]
         quote!(#[derive(::macros::FakeSerde)])
     );
@@ -68,12 +66,12 @@ pub fn fake_serde(_: TokenStream) -> TokenStream {
 pub fn cfg_educe_debug(_args: TokenStream, input: TokenStream) -> TokenStream {
     let input = proc_macro2::TokenStream::from(input);
     let attr = cfg_if_expr!(
-    => [feature = "more_debug_impls"]
+        => [feature = "more_debug_impls"]
         quote! {
             #[derive(::educe::Educe)]
             #[educe(Debug)]
         }
-    => [not]
+        => [not]
         quote! {
             #[derive(::macros::FakeEduce)]
         }
