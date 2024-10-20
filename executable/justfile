@@ -8,7 +8,7 @@ patch_fat_html:
 
 # Generate new patch file from matched `index.html` and `index.fat.html`
 diff_fat_html:
-    diff -u index.html index.fat.html > index.fat.html.patch || 0
+    diff -u index.html index.fat.html > index.fat.html.patch || true
 
 benchmark_wasm_size compression_level='4':
     # ignore files in my global ~/.cargo/config.toml

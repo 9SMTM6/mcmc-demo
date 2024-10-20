@@ -10,14 +10,14 @@ allowed-duplicate-crates = [
     "windows_x86_64_msvc",
     "windows-sys",
     "windows-targets",
+    # macos
+    "core-foundation",
     # The following targets don't get build anyways
     # Android
     "ndk-sys",
     # Redox-OS
     "libredox",
     "redox_syscall",
-    # macos
-    "core-foundation",
 
     # These duplicates were, last time I checked, caused by build dependencies
     "bit-set",
