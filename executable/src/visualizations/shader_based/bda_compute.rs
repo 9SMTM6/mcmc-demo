@@ -267,6 +267,7 @@ impl CallbackTrait for RenderCall {
             .has_changed()
             .expect("channel should never be closed")
         {
+            compute_results_rx.mark_unchanged();
             if let &Some(ref val) = compute_results_rx.borrow().deref() {
                 if compute_output_buffer.size() != (val.as_slice().len() * 4) as u64 {
                     tracing::error!("Resolution mismatch.");
