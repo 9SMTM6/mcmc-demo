@@ -2,11 +2,7 @@ use std::{ops::Deref, sync::Arc};
 
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
 use macros::{cfg_educe_debug, cfg_persistence_derive};
-use shared::cfg_if_expr;
-use tokio::{
-    sync::{oneshot, watch},
-    task,
-};
+use tokio::sync::{oneshot, watch};
 use tracing::Instrument;
 use wgpu::{
     Buffer, BufferDescriptor, BufferUsages, CommandEncoderDescriptor, ComputePassDescriptor,
@@ -16,7 +12,7 @@ use wgpu::{
 use crate::{
     cfg_sleep, create_shader_module,
     gpu_task::{GpuTask, RepaintToken},
-    helpers::async_last_task_processor::TaskDispatcher,
+    helpers::{async_last_task_processor::TaskDispatcher, get_spawner},
     simulation::random_walk_metropolis_hastings::Rwmh,
     target_distributions::multimodal_gaussian::GaussianTargetDistr,
     visualizations::AlgoPainter,
@@ -166,14 +162,8 @@ impl BDAComputeDiff {
             }
         }
         .in_current_span();
-        let spawner = cfg_if_expr!(
-            => [target_arch = "wasm32"]
-            task::spawn_local
-            => [not]
-            task::spawn
-        );
 
-        spawner(refresh_on_finished);
+        get_spawner()(refresh_on_finished);
 
         // Because the graphics pipeline must have the same lifetime as the egui render pass,
         // instead of storing the pipeline in our struct, we insert it into the

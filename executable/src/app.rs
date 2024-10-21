@@ -1,15 +1,13 @@
 use egui::{self, ProgressBar, Shadow, Vec2};
 use macros::cfg_persistence_derive;
-use shared::cfg_if_expr;
 use std::{sync::Arc, time::Duration};
-use tokio::task;
 use type_map::TypeMap;
 
 use crate::{
     gpu_task::{get_gpu_channels, GpuTaskSenders},
     helpers::{
         bg_task::{BackgroundTaskManager, BgTaskHandle, TaskProgress},
-        warn_feature_config,
+        get_spawner, warn_feature_config,
     },
     simulation::random_walk_metropolis_hastings::{ProgressMode, Rwmh},
     target_distributions::multimodal_gaussian::GaussianTargetDistr,
@@ -64,14 +62,7 @@ impl McmcDemo {
 
         let gpu_scheduler = crate::gpu_task::gpu_scheduler(gpu_rx);
 
-        let spawner = cfg_if_expr!(
-            => [target_arch = "wasm32"]
-            task::spawn_local
-            => [not]
-            task::spawn
-        );
-
-        spawner(gpu_scheduler);
+        get_spawner()(gpu_scheduler);
 
         cc.egui_ctx.style_mut(|style| {
             let visuals = &mut style.visuals;

@@ -9,6 +9,8 @@
 
 use macros::cfg_persistence_derive;
 
+use crate::helpers::get_spawner;
+
 /// How often we repaint the demo app by default
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum RunMode {
@@ -165,6 +167,19 @@ impl BackendPanel {
             #[cfg(all(feature = "performance_profile", not(target_arch = "wasm32")))]
             if ui.button("Puffin Profiling").clicked() {
                 crate::diagnostics::puffin::start_puffin_server();
+            }
+            if ui.button("Trigger panic on main thread").clicked() {
+                panic!("manual panic trigger");
+            }
+            if ui.button("Trigger panic on separate thread").clicked() {
+                wasm_thread::spawn(|| {
+                    panic!("manual panic trigger");
+                });
+            }
+            if ui.button("Trigger panic on separate task").clicked() {
+                get_spawner()(async {
+                    panic!("manual panic trigger");
+                });
             }
         }
     }

@@ -1,3 +1,7 @@
+use std::future::Future;
+
+use tokio::task;
+
 pub mod async_last_task_processor;
 pub mod bg_task;
 pub mod gpu_task;
@@ -34,4 +38,21 @@ pub fn warn_feature_config() {
     tracing::warn!(
         r#"Feature "tokio_console" enabled, however other configuration disables this implicitly"#
     );
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub fn get_spawner<U>() -> fn(U) -> task::JoinHandle<U::Output>
+where
+    U: Future + Send + 'static,
+    U::Output: Send,
+{
+    task::spawn
+}
+
+#[cfg(target_arch = "wasm32")]
+pub fn get_spawner<U>() -> fn(U) -> task::JoinHandle<U::Output>
+where
+    U: Future + 'static,
+{
+    task::spawn_local
 }
