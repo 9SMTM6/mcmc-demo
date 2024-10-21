@@ -150,12 +150,30 @@ impl BackendPanel {
             ui.ctx().options_mut(|o| o.screen_reader = screen_reader);
         }
 
-        if cfg!(debug_assertions) && cfg!(target_arch = "wasm32") {
-            ui.separator();
-            // For testing panic handling on web:
-            #[expect(clippy::manual_assert, reason = "This has a sideeffect")]
-            if ui.button("panic!()").clicked() {
-                panic!("intentional panic!");
+        ui.separator();
+        #[expect(clippy::manual_assert, reason = "This has a sideeffect")]
+        {
+            if ui.button("Trigger panic on main thread").clicked() {
+                panic!("manual panic trigger");
+            }
+            if ui.button("Trigger panic on separate thread").clicked() {
+                wasm_thread::spawn(|| {
+                    panic!("manual panic trigger");
+                });
+            }
+            if ui.button("Trigger panic on separate task").clicked() {
+                // For some reason I appear to be "outside of any local set" when running this here.
+                #[cfg(target_arch = "wasm32")]
+                let local_set = tokio::task::LocalSet::new();
+                #[cfg(target_arch = "wasm32")]
+                let _guard = local_set.enter();
+                get_spawner()(async {
+                    panic!("manual panic trigger");
+                });
+                #[cfg(target_arch = "wasm32")]
+                wasm_bindgen_futures::spawn_local(async {
+                    local_set.await;
+                });
             }
         }
 
@@ -167,19 +185,6 @@ impl BackendPanel {
             #[cfg(all(feature = "performance_profile", not(target_arch = "wasm32")))]
             if ui.button("Puffin Profiling").clicked() {
                 crate::diagnostics::puffin::start_puffin_server();
-            }
-            if ui.button("Trigger panic on main thread").clicked() {
-                panic!("manual panic trigger");
-            }
-            if ui.button("Trigger panic on separate thread").clicked() {
-                wasm_thread::spawn(|| {
-                    panic!("manual panic trigger");
-                });
-            }
-            if ui.button("Trigger panic on separate task").clicked() {
-                get_spawner()(async {
-                    panic!("manual panic trigger");
-                });
             }
         }
     }
