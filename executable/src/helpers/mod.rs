@@ -20,7 +20,10 @@ macro_rules! cfg_sleep {
 }
 
 /// This function emits warnings when a feature and/or target configuration is chosen, that will not work as expected.
-#[allow(clippy::missing_const_for_fn, reason = "False positives depending on configuration")]
+#[allow(
+    clippy::missing_const_for_fn,
+    reason = "False positives depending on configuration"
+)]
 pub fn warn_feature_config() {
     #[cfg(not(all(feature = "debounce_async_loops", not(target_arch = "wasm32"))))]
     tracing::warn!(
