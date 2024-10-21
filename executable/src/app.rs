@@ -7,7 +7,7 @@ use type_map::TypeMap;
 
 use crate::{
     gpu_task::{get_gpu_channels, GpuTaskSenders},
-    helpers::bg_task::{BackgroundTaskManager, BgTaskHandle, TaskProgress},
+    helpers::{bg_task::{BackgroundTaskManager, BgTaskHandle, TaskProgress}, warn_feature_config},
     simulation::random_walk_metropolis_hastings::{ProgressMode, Rwmh},
     target_distributions::multimodal_gaussian::GaussianTargetDistr,
     visualizations::{
@@ -56,6 +56,7 @@ impl McmcDemo {
     /// Called once before the first frame.
     #[expect(clippy::missing_panics_doc, reason = "only used once")]
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+        warn_feature_config();
         let (GpuTaskSenders { bda_compute }, gpu_rx) = get_gpu_channels();
 
         let gpu_scheduler = crate::gpu_task::gpu_scheduler(gpu_rx);

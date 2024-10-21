@@ -45,7 +45,7 @@ pub fn main() {
 
     let mut tokio_rt = tokio::runtime::Builder::new_multi_thread();
 
-    #[cfg(feature = "debounce_async_loops")]
+    #[cfg(all(feature = "debounce_async_loops", not(target_arch = "wasm32")))]
     tokio_rt.enable_time();
 
     let tokio_rt = tokio_rt.build().unwrap();

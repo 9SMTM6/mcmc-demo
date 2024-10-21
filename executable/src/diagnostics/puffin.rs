@@ -6,10 +6,10 @@ macro_rules! profile_scope {
     };
 }
 
-#[cfg(all(not(target_arch = "wasm32"), feature = "performance_profile"))]
+#[cfg(all(feature = "performance_profile", not(target_arch = "wasm32")))]
 const PUFFIN_URL: &str = "127.0.0.1:8585";
 
-#[cfg(all(not(target_arch = "wasm32"), feature = "performance_profile"))]
+#[cfg(all(feature = "performance_profile", not(target_arch = "wasm32")))]
 // puffin server doesn't exist on web.
 // On the web we've got tracing_web that installed a tracing subscriber that reports to the [performance api](https://developer.mozilla.org/en-US/docs/Web/API/Performance).
 pub fn start_puffin_server() {
