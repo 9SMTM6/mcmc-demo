@@ -81,7 +81,8 @@
         /* Allow canvas to fill entire web page: */
         html,
         body {
-            overflow: hidden;
+            /* was in the template, but breaks some warnings etc. */
+            /* overflow: hidden; */
             margin: 0 !important;
             padding: 0 !important;
             height: 100%;
@@ -105,17 +106,38 @@
             height: 100%;
         }
 
-        .centered {
-            margin-right: auto;
-            margin-left: auto;
-            display: block;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+        .centered-container {
+            display: flex;
+            flex-direction: column; /* Stack elements vertically */
+            align-items: center; /* Center inner elements */
+            justify-content: center; /* Vertically center the container */
+            min-height: 100vh; /* Full viewport height */
+            padding: 0 20px; /* Default padding */
+            box-sizing: border-box;
             color: #f0f0f0;
             font-size: 24px;
             font-family: Ubuntu-Light, Helvetica, sans-serif;
+        }
+
+        /* Ensure content is responsive */
+        .content {
+            max-width: 600px; /* Optional, control content width */
+            width: 100%; /* Full width but respects max-width */
+            white-space: normal; /* Allows text to wrap onto multiple lines */
+            overflow-wrap: break-word; /* Break long words if necessary to avoid overflow */
+        }
+
+        /* Responsive behavior for larger screens */
+        @media (min-width: 768px) {
+            .centered-container {
+                padding: 0 50px; /* Increase padding for larger screens */
+            }
+        }
+
+        @media (min-width: 1200px) {
+            .centered-container {
+                padding: 0 200px; /* Add even larger side margins */
+            }
         }
 
         a {
@@ -157,14 +179,15 @@
 <body>
     <!-- the id is hardcoded in main.rs . so, make sure both match. -->
     <canvas id="egui_canvas"></canvas>
-    <div class="centered">
-        <div hidden id="no_webgpu">
+    <div class="centered centered-container">
+        <div hidden id="no_webgpu" class="content">
             <p> This application currently requires an WebGPU-enabled browser. </p>
             <p> Alternatively, you can download an executable from the <a
                     href="https://github.com/9SMTM6/mcmc-demo/releases" target="_blank" rel="noopener noreferrer">Github
                     release</a> page. </p>
             <p> At the time of writing, WebGPU-enabled browser means Chrome (or Chromium based browsers). </p>
-            <p style="text-align: left"> On Linux, you also need to:
+            <p> Chromium on modern Android should work. </p>
+            <p> On Linux, you also need to:
             <ul>
                 <li>
                     start Chrome with --enable-unsafe-webgpu or set the appropriate command flag here <u>
@@ -178,10 +201,10 @@
             </ul>
             </p>
         </div>
-        <div hidden id="panic_el">
+        <div hidden id="panic_el" class="content">
             <p> The app has crashed.</p>
             <p style="font-size:12px">
-            <div style="background: black; color:white; font-family: monospace; text-align: left" id="panic_message">
+            <div style="background: black; color:white; font-family: monospace;" id="panic_message">
                 {panic_message}</div>
             </p>
             <p style="font-size:14px">
@@ -191,7 +214,7 @@
                 Reload the page to try again.
             </p>
         </div>
-        <div id="loading_el" , style="text-align: center;">
+        <div id="loading_el" style="text-align: center;" class="content">
             <div class="lds-dual-ring" id="loading_animation"></div>
             Loading...
         </div>
