@@ -1,0 +1,16 @@
+# Sets headers on cloudflare pages as required for wasm_threads, because they rely on SharedArrayBuffer.
+# https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer#security_requirements
+# https://developers.cloudflare.com/pages/configuration/headers/
+/*
+    # Alternatively `credentialless` also works
+    # MDN: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cross-Origin-Embedder-Policy
+    cross-origin-embedder-policy: require-corp
+    cross-origin-opener-policy: same-origin
+    # not strictly required, just allows you to load assets from the same... subdomain IIRC.
+    cross-origin-resource-policy: same-site
+    #  please dont re-encode my brotli compression with your shitty version
+    # Doesn't work:
+    # https://community.cloudflare.com/t/how-to-serve-directly-my-brotli-and-gzip-pre-compressed-css-and-js-instead-of-the-cloudflare-compressed-ones/247288/10
+    # https://community.cloudflare.com/t/serve-precompressed-files-from-cdn-brotli-level-11-zopfli/236752/7
+    # Cache-Control: no-transform
+    # Content-Encoding: br

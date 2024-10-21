@@ -1,0 +1,17 @@
+{
+  "name": "marcov-chain monte carlo demo",
+  "description": "High performance website capable mcmc demonstration built using webgpu and wasm per Rust. This application is also going to be even more performant if installed natively, binaries can be found in the github repository.",
+  "short_name": "mcmc-demo",
+  "icons": [
+    {
+      "src": "./favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "lang": "en-US",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "black",
+  "theme_color": "green"
+}
