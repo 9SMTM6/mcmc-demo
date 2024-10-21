@@ -7,7 +7,10 @@ use type_map::TypeMap;
 
 use crate::{
     gpu_task::{get_gpu_channels, GpuTaskSenders},
-    helpers::{bg_task::{BackgroundTaskManager, BgTaskHandle, TaskProgress}, warn_feature_config},
+    helpers::{
+        bg_task::{BackgroundTaskManager, BgTaskHandle, TaskProgress},
+        warn_feature_config,
+    },
     simulation::random_walk_metropolis_hastings::{ProgressMode, Rwmh},
     target_distributions::multimodal_gaussian::GaussianTargetDistr,
     visualizations::{

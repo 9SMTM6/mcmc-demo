@@ -19,11 +19,15 @@ macro_rules! cfg_sleep {
     }
 }
 
-/// This function emits warnings when a feature and/or target configuration is choosen, that will not work as expected.
+/// This function emits warnings when a feature and/or target configuration is chosen, that will not work as expected.
 pub fn warn_feature_config() {
     #[cfg(not(all(feature = "debounce_async_loops", not(target_arch = "wasm32"))))]
-    tracing::warn!(r#"Feature "debounce_async_loops" enabled, however other configuration disables this implicitly"#);
+    tracing::warn!(
+        r#"Feature "debounce_async_loops" enabled, however other configuration disables this implicitly"#
+    );
 
     #[cfg(not(all(feature = "tokio_console", tokio_unstable, not(target_arch = "wasm32"))))]
-    tracing::warn!(r#"Feature "tokio_console" enabled, however other configuration disables this implicitly"#);
+    tracing::warn!(
+        r#"Feature "tokio_console" enabled, however other configuration disables this implicitly"#
+    );
 }
