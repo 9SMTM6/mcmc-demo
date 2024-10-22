@@ -3,13 +3,13 @@
 //!
 //! While I give my best to keep things unified between web and native, there are a few significant differences between the execution that show in here:
 //!
-//! 1. WebGPU isnt thread safe on the web, and using it from a background thread is even far less well supported then webgpu itself is.
+//! 1. WebGPU isn't currently thread safe on the web, and using it from a background thread is even far less well supported then webgpu itself is.
+//!    Also, on native we have to progress computes with a blocking device.poll, while on the web the browser does this for us.
 //! 2. eframe Initialization APIs differ significantly on web and native.
 //!    On the web it requires async and doesn't block (the main function exits, having spawned an eframe event loop that will keep going),
 //!    on native eframe requires a blocking call that runs the event loop in place.
-//! 3. This, combined with the cooperative multitasking from embassy-rs,
-//!    means that I need to have embassy in a background thread on native (unless I manage to integrate embassy and eframex event loops, unlikely),
-//!    while on the web it can't be in a background thread for compatibility reasons.
+//! 3. the main thread isn't allowed to block on the web.
+//! 4. multitasking from tokio, also isn't super well supported on the web (no multithreaded runtime, no time module (=> no async sleep)
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
 #[cfg(feature = "tracing")]
