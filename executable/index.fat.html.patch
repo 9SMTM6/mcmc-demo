@@ -1,5 +1,5 @@
---- index.html	2024-10-21 19:01:11.639535879 +0200
-+++ index.fat.html	2024-10-21 19:03:40.528105739 +0200
+--- index.html	2024-10-22 11:05:46.590692194 +0200
++++ index.fat.html	2024-10-22 13:10:32.583958404 +0200
 @@ -7,7 +7,7 @@
  
  <head>
@@ -7,9 +7,9 @@
 -    <title>MCMC demo</title>
 +    <title>MCMC demo (debug with all features and unoptimized)</title>
  
-     <script type="module">
-         // check for webgpu compatibility, if not found, display the warning message.
-@@ -36,8 +36,8 @@
+     <!-- setting theme colors with css variables -->
+     <style>
+@@ -80,8 +80,8 @@
              data-keep-debug -->
  
      <!-- THIS WILL BE CHANGED IN A PATCH TO CREATE A FAT WEBPAGE -->
