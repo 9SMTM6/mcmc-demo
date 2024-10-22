@@ -45,7 +45,8 @@ My understanding from the quote is that:
 
 I might be able to create some abstraction that might or might not start the a gpu compute task from a background thread
 
-Consider that moving any (? certainly CommandEncoder, Device, Buffer etc) between threads is forbidden on the web:
+Consider that moving any between threads is forbidden on the web:
+* https://gpuweb.github.io/gpuweb/explainer/#multithreading-transfer
 * https://github.com/gfx-rs/wgpu/issues/2652
 * https://wgpu.rs/doc/wgpu/#other (fragile-send-sync-non-atomic-wasm)
 * kinda conflicts with spec? https://www.w3.org/TR/webgpu/#canvas-hooks
@@ -54,25 +55,7 @@ Consider that moving any (? certainly CommandEncoder, Device, Buffer etc) betwee
 
 Note that a compute shader in a webworker is supposed to work according to [spec](https://www.w3.org/TR/webgpu/#navigator-gpu), but [apparently firefox doesnt support that](https://developer.mozilla.org/en-US/docs/Web/API/WorkerNavigator/gpu), even on nightly. So here's hoping that they will eventually support it when they release.
 
-Uuuuh. Just saw that it apparently explicitly isn't supported on Chromium Linux either...
-
-I've validated that moving Buffers etc over the webworker boundary isn't going to happen anytime soon. Wgpu stance is that its 'not doable' with webgpu objects, and the official specs don't really menthion things in that capacity.
-Even if it were to be doable, in a broadly supported way, it could very well end up being restricted again after the fact, considering e.g. the story with sharedarraybuffer.
-So I'll work under the assumption thats not going to happen.
-If I share buffers etc. over the boundary, itll have to go over CPU, at least on the web.
-
-So the choices are:
-
-* compute cluster on background thread, serialize to CPU to share to main thread
-  * according to official info (linked somewhere in comments) only supported on Chromium
-  * allows full control over the adapter-settings etc, and should use separate resources from egui.
-* find a way to dispatch that work on the main thread.
-  * this is somewhat annoying to integrate in egui
-  * avoids going over the CPU
-  * in App::new the creation_context holds the wgpu device and queue that are also used by egui.
-    I believe that its required to use these to use buffers etc without going over the CPU.
-    I could perhaps immediately stick these references into another object that then receives gpu tasks.
-    This object could dispatch that work from a background thread in native as a later optimization (with tests whether that actually does anything for perf).
+Uuuuh. Just saw that it apparently explicitly isn't supported on Chromium Linux either. So thats not going to happen.
 
 #### WebGPU Synchronization
 
