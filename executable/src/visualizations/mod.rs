@@ -1,7 +1,3 @@
-#![expect(
-    non_camel_case_types,
-    reason = "Disabled because of the DONT_USE prefix currently in front of BDACompute"
-)]
 use std::sync::Arc;
 
 use macros::cfg_persistence_derive;
@@ -12,8 +8,8 @@ pub mod egui_based;
 pub mod shader_based;
 
 pub use shader_based::{
-    bda_compute::BDAComputeDiff as DONTUSE_BDAComputeDiff, diff_display::BDADiff,
-    target_distr::TargetDistribution, BdaComputeTask, INITIAL_RENDER_SIZE,
+    bda_compute::BDAComputeDiff, diff_display::BDADiff, target_distr::TargetDistribution,
+    BdaComputeTask, INITIAL_RENDER_SIZE,
 };
 
 use crate::{
@@ -103,7 +99,7 @@ trait AlgoPainter {
     );
 }
 
-bg_display!(TargetDistribution, DONTUSE_BDAComputeDiff, BDADiff,);
+bg_display!(TargetDistribution, BDAComputeDiff, BDADiff,);
 
 impl Default for BackgroundDisplay {
     fn default() -> Self {
