@@ -4,23 +4,6 @@ This application is still work in progress.
 
 ## TODO:
 
-### Current progress blockers:
-
-* [Fixedish, still needs search-replace code] ~~wgpu pipeline-overridable constants are not supported on glsl-out~~
-  * but that is required via https://github.com/gfx-rs/wgpu/blob/7b4cbc26192d6d56a31f8e67769e656a6627b222/wgpu/Cargo.toml#L148C1-L151C20 (maybe removable via patch?)
-  * issue: https://github.com/gfx-rs/wgpu/issues/3514
-  * this is what I considered for the compute shader to set the compute_group dimensions.
-  * AAActually its a naga issue. The source is in that file: https://github.com/gfx-rs/wgpu/blob/7b4cbc26192d6d56a31f8e67769e656a6627b222/naga/src/back/wgsl/writer.rs#L111 ([commit](https://github.com/gfx-rs/wgpu/commit/2929ec333cee981ef4cbf783c0e33d208c651c4d))
-    * its surfaced via naga_oil
-    * it might be an oversight. In that commit wgsl did not support `pipeline-overridable constants`, but later there was another PR that merged support, but it might've forgotten about these `writer`s. Or it was an accepted shortcoming, since it doesnt seem to be possible to do that stuff entirely without work (all the valid backends added a `pipeline_constant.rs` file).
-    * actually, from my understanding, fixing this for naga wont fix the issue for naga_oil, since naga_oil wants to use naga as a preprocessor.
-  * [wgsl-bindgen issue](https://github.com/Swoorup/wgsl-bindgen/issues/39)
-  * [naga_oil issue](https://github.com/bevyengine/naga_oil/issues/102)
-* [Fixedish] ~~using shared memory multithreading on the web is blocked by https://github.com/emilk/egui/issues/4914~~
-  * currently using a patched version
-  * reverts relevant changes from: https://github.com/emilk/egui/pull/3595/commits/c5746dbd37a31d9a90c8987449b4089eb910ad8c
-
-
 ### Compute shader
 
 I dont know if any of the below ideas for speeding up the diff rendering would work out. And in the end, dont think I'll get much use out of knowing how to do that (meaning I'll forget it anyways).
@@ -42,30 +25,7 @@ I currently envison this approach (lets see how much of this I'll get):
 7. with that I could also consider decoupling calculation resolution and render resolution, but I think for now I'll keep them coupled
 8. In order to avoid numerical stability issues I'll probably add some normalization after N steps. I have to decide on a proper strategy for that. Perhaps I can actually do it based on current maximum instead. Most of these strategies will lead to systemctic errors in the precision, since rounding might happen in different situations, but I'm fine with that.
 
-#### Webgpu background compute
-
-Huh, Just saw this:
-https://docs.rs/tokio/latest/tokio/#wasm-support
-
-That about matches the support from embassy-rs on wasm.
-And tokio is more battle tested and easier to do on native, and has more tooling.
-It will likely be easier in multithreaded environment(?).
-Though it will likely also be heavier, and it looks very unlikely they will ever support properly sleeping in tasks, which MIGHT happen with other RTs.
-
-smol-rs and async-std also have so so support, but I decided to not use these after seeing specific issues, IIRC smol will panic on web workers.
-
-#### Current Plan:
-
-1. ~~test whether its possible to use webgpu in a background thread in chrome linux~~ (embassy-rs, my currently chosen executor - it has synchronization primitives over wasm-bindgen-futures - currently doesnt work on webworkers. [Issue](https://github.com/embassy-rs/embassy/issues/3313)).
-2. if thats possible create 2 features, where exactly ONE of these must be selected (well, if both are selected fallback to... one of them, probably promise stuff, and add an error if no feature was selected, see [reference](https://doc.rust-lang.org/cargo/reference/features.html#mutually-exclusive-features)):
-  * For web: create a promise for each task (I think it needs to be one for each) that builds a device and queue from the adapter and then uses that to submit the work. It'll have to use future_to_promise to avoid blocking the main thread. Hopefully communication is going to be possible over channels or similar.
-  * ~~for native, behind flag for web: create a background thread that receives tasks from the main thread and runs them in a single compute queue.~~
-    * ~~perhaps I can make that stuff cancelable, IDK, would be good.~~ With the synchronization primitives from embassy I can make a persistent background task (web) / thread (native) that sleeps if theres no work.
-3. after the task is done, get the resulting buffer, probably with `wgpu::util::DownloadBuffer::read_buffer`, and sends it over the cpu back to the main thread/gets it somehow out of the promise, where it gets copied to a buffer from its device + queue.
-
-~~The reason for the 2 pronged approach is the issue of the webgpu access for webworkers. Even if this works for chromium on linux, it probably won't in firefox even after their initial release of webgpu.~~
-
-#### Original considerations
+#### Mostly outdated considerations
 
 Also see [semi-official explainer](https://github.com/gpuweb/gpuweb/wiki/The-Multi-Explainer#multi-threading-javascript).
 This concerns and links to official issues about accessing webgpu from multiple wasm threads, as well as having GPU work on multiple queues.
@@ -170,22 +130,6 @@ IDK how to transform that yet while retaining proper low-discrepancy. A normal t
 * https://crates.io/crates/halton
 * https://crates.io/crates/quasirandom
 
-### PWA
-
-* currently not offline capable. I removed the serviceworker:
-  * did not work with the autogenerated file hashes
-  * disabling the file hashes makes the task of actually getting a newer version problematic, I looked into this but eventually gave up.
-* consider the experimental related_applications attribute https://developer.mozilla.org/en-US/docs/Web/Manifest/related_applications
-* specific patch urls dont work:
-  * caused from my solution for installability, which is to provide a static url in the cf build job, instead of `$CLOUDFLARE_URL`.
-  * old notes about solving that issue:
-    * issue is that manifest "specifies the wrong url". What happens (I think) is that the commit url from cloudflare ends up in the index.html/base element, the latest of which also gets served on the main url. This means that the relative URL in the manifest file doesn't specify the correct main url, and chrome doesnt like that.
-    * I tried if I can work around that by inlining the manifest with a data url, but that way it seems that relative urls don't get resolved at all, instead they all error
-    * I could specify the "final" url in the manifest.json, but thats difficult as theres 2 of these right now, the baseline and the fat URL.
-      * I could choose one of these
-      * or I could search replace a stripped version of the url in the manifest file. I cant use that stripped version elsewhere, otherwise all commit pages will actually just load the latest main artifacts.
-      * in any case I don't know whats going to happen when one installs one of the commit pages with these approaches, but honestly it doesnt really matter, as these don't need fancy features.
-
 # eframe template
 
 ### Learning about egui
@@ -215,9 +159,6 @@ We use [Trunk](https://trunkrs.dev/) to build for web target.
 2. Install Trunk with `cargo install --locked trunk`.
 3. Run `trunk serve` to build and serve on `http://127.0.0.1:8080`. Trunk will rebuild automatically if you edit the project.
 4. Open `http://127.0.0.1:8080/index.html#dev` in a browser. See the warning below.
-
-> (DISABLED) `assets/sw.js` script will try to cache our app, and loads the cached version when it cannot connect to server allowing your app to work offline (like PWA).
-> appending `#dev` to `index.html` will skip this caching, allowing us to load the latest builds during development.
 
 You can test the template app at <https://emilk.github.io/eframe_template/>.
 
