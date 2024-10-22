@@ -162,6 +162,9 @@ impl eframe::App for McmcDemo {
                     }
                 }
                 egui::warn_if_debug_build(ui);
+                ui.centered_and_justified(|ui| {
+                    ui.label(concat!(env!("CARGO_PKG_NAME"), " v", env!("CARGO_PKG_VERSION")));
+                });
             });
         });
 
