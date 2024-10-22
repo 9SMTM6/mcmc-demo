@@ -104,8 +104,6 @@ mod cond_trait_impl {
 }
 #[cfg(not(feature = "more_debug_impls"))]
 mod cond_trait_impl {
-    use std::fmt::Debug;
-
     /// A little helper ensuring that the bound type implements debug, if that support was compiled in with `feature = "more_debug_impls"`.
     /// Required since I can't seem to conditionally include a bound.
     pub trait DebugBoundIfCompiled {}
