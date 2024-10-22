@@ -25,7 +25,6 @@ use shared::cfg_if_expr;
 pub fn main() {
     use std::time::Duration;
 
-    use egui::IconData;
     use mcmc_demo::INITIAL_RENDER_SIZE;
 
     // Log or trace to stderr (if you run with `RUST_LOG=debug`).
@@ -56,11 +55,8 @@ pub fn main() {
         viewport: egui::ViewportBuilder::default()
             .with_min_inner_size(INITIAL_RENDER_SIZE)
             .with_icon(
-                // Not keen on converting the svg to a png on top.
-                // Not as if this currently works under wayland anyways.
-                IconData::default(), // NOTE: Adding an icon is optional
-                                     // eframe::icon_data::from_png_bytes(&include_bytes!("../assets/icon-256.png")[..])
-                                     //     .expect("Failed to load icon"),
+                eframe::icon_data::from_png_bytes(&include_bytes!("../assets/favicon-256.png")[..])
+                    .expect("Failed to load icon"),
             ),
         ..Default::default()
     };
