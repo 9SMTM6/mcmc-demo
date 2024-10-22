@@ -99,17 +99,17 @@ jobs:
             TARGET: aarch64-apple-darwin
             pretty_name: macos-arm64
 
-          # - os: macos-latest
-          #   TARGET: x86_64-apple-darwin
-          #   # even though the runner uses arm64, MacOS on arm64 seems to support building for amd64.
-          #   # which makes sense, would be bad for devs otherwise.
-          #   cross: false
-          #   pretty_name: macos-amd64
+          - os: macos-latest
+            TARGET: x86_64-apple-darwin
+            # even though the runner uses arm64, MacOS on arm64 seems to support building for amd64.
+            # which makes sense, would be bad for devs otherwise.
+            cross: false
+            pretty_name: macos-amd64
 
-          # - os: ubuntu-latest
-          #   TARGET: aarch64-unknown-linux-gnu
-          #   cross: true
-          #   pretty_name: linux-gnu-arm64
+          - os: ubuntu-latest
+            TARGET: aarch64-unknown-linux-gnu
+            cross: true
+            pretty_name: linux-gnu-arm64
 
           # who even uses these.
           # - os: ubuntu-latest
@@ -124,10 +124,10 @@ jobs:
           # Alternatively switch away from rust-cache, but it'll still be slower:
           # https://github.com/bukowa/tauri-e2e/issues/3
           # But I might want to explore that when I actually release.
-          # - os: windows-latest
-          #   TARGET: x86_64-pc-windows-msvc
-          #   EXTENSION: .exe
-          #   pretty_name: windows-amd64
+          - os: windows-latest
+            TARGET: x86_64-pc-windows-msvc
+            EXTENSION: .exe
+            pretty_name: windows-amd64
 
     steps:
       - name: Install cross
