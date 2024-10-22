@@ -1,10 +1,12 @@
-pub mod bda_compute;
-pub mod diff_display;
+mod bda_compute;
+mod bda_immediate;
 mod resolution_uniform;
-pub mod target_distr;
+mod target_distr;
 
-pub use bda_compute::ComputeTask as BdaComputeTask;
+pub use bda_compute::{BDAComputeDiff, ComputeTask as BdaComputeTask};
+pub use bda_immediate::{shader_bindings::RWMHAcceptRecord, BDADiff};
 pub use resolution_uniform::INITIAL_RENDER_SIZE;
+pub use target_distr::{NormalDistribution, TargetDistribution};
 
 #[macro_export]
 #[allow(unknown_lints, reason = "not a lint on stable...")]

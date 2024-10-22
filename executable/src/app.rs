@@ -4,22 +4,15 @@ use std::{sync::Arc, time::Duration};
 use type_map::TypeMap;
 
 use crate::{
-    gpu_task::{get_gpu_channels, GpuTaskSenders},
     helpers::{
-        bg_task::{BackgroundTaskManager, BgTaskHandle, TaskProgress},
-        get_spawner, warn_feature_config,
+        get_gpu_channels, gpu_scheduler, task_spawn, warn_feature_config, BackgroundTaskManager,
+        BgTaskHandle, GpuTaskSenders, TaskProgress,
     },
     simulation::random_walk_metropolis_hastings::{ProgressMode, Rwmh},
-    target_distributions::multimodal_gaussian::GaussianTargetDistr,
+    target_distr,
     visualizations::{
-        egui_based::{
-            distrib_settings::{DistrEdit, ElementSettings},
-            point_display::SamplePointVisualizer,
-        },
-        shader_based::{
-            bda_compute::BDAComputeDiff, diff_display::BDADiff, target_distr::TargetDistribution,
-        },
-        BackgroundDisplay, BackgroundDisplayDiscr,
+        BDAComputeDiff, BDADiff, BackgroundDisplay, BackgroundDisplayDiscr, DistrEdit,
+        ElementSettings, SamplePointVisualizer, TargetDistribution,
     },
 };
 
@@ -32,7 +25,7 @@ pub struct McmcDemo {
     /// Note that this Arc is used in a copy-on-write fashion, with only atomic reassignments.
     algo: Arc<Rwmh>,
     point_display: Option<SamplePointVisualizer>,
-    target_distr: GaussianTargetDistr,
+    target_distr: target_distr::Gaussian,
     background_display: BackgroundDisplay,
     /// This holds resource managers for the main thread.
     ///
@@ -60,9 +53,9 @@ impl McmcDemo {
         warn_feature_config();
         let (GpuTaskSenders { bda_compute }, gpu_rx) = get_gpu_channels();
 
-        let gpu_scheduler = crate::gpu_task::gpu_scheduler(gpu_rx);
+        let gpu_scheduler = gpu_scheduler(gpu_rx);
 
-        get_spawner()(gpu_scheduler);
+        task_spawn(gpu_scheduler);
 
         cc.egui_ctx.style_mut(|style| {
             let visuals = &mut style.visuals;

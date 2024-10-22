@@ -1,3 +1,10 @@
+//! This is largely taken from https://github.com/emilk/egui/tree/master/crates/egui_demo_app,
+//! with some modifications for my specific usecase (not necessarily complete):
+//! * only wgpu code
+//! * fixing some easy lints
+//! * adding code to this file that was originally elsewhere
+//! * adding some additional knobs as required by me
+
 #![allow(
     clippy::shadow_unrelated,
     clippy::pattern_type_mismatch,
@@ -9,7 +16,7 @@
 
 use macros::cfg_persistence_derive;
 
-use crate::helpers::get_spawner;
+use crate::helpers::task_spawn;
 
 /// How often we repaint the demo app by default
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -167,7 +174,7 @@ impl BackendPanel {
                 let local_set = tokio::task::LocalSet::new();
                 #[cfg(target_arch = "wasm32")]
                 let _guard = local_set.enter();
-                get_spawner()(async {
+                task_spawn(async {
                     panic!("manual panic trigger");
                 });
                 #[cfg(target_arch = "wasm32")]

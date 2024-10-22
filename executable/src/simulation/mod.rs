@@ -1,4 +1,4 @@
 pub mod random_walk_metropolis_hastings;
-pub mod rngs;
+mod rngs;
 
 pub use rngs::*;

@@ -6,8 +6,7 @@ use wgpu::{
 };
 
 use crate::{
-    simulation::random_walk_metropolis_hastings::Rwmh,
-    target_distributions::multimodal_gaussian::GaussianTargetDistr, visualizations::AlgoPainter,
+    simulation::random_walk_metropolis_hastings::Rwmh, target_distr, visualizations::AlgoPainter,
 };
 
 use super::{fullscreen_quad, resolution_uniform::get_resolution_buffer};
@@ -43,7 +42,7 @@ impl AlgoPainter for TargetDistribution {
         painter: &egui::Painter,
         rect: egui::Rect,
         _algo: std::sync::Arc<Rwmh>,
-        target: &GaussianTargetDistr,
+        target: &target_distr::Gaussian,
     ) {
         painter.add(eframe::egui_wgpu::Callback::new_paint_callback(
             rect,
@@ -206,7 +205,7 @@ impl CallbackTrait for RenderCall {
             0,
             bytemuck::cast_slice(self.elements.as_slice()),
         );
-        // TODO: only reassign of required.
+        // TODO: only reassign if required.
         // If that actually speeds things up, I dunno.
         // See https://github.com/ScanMountGoat/wgsl_to_wgpu/tree/main?tab=readme-ov-file#bind-groups
         // > Note that bind groups store references to their underlying resource bindings,

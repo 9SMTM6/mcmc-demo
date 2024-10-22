@@ -6,7 +6,7 @@ use wgpu::util::DeviceExt;
 //
 // Sadly I could not find a way to structure the files in such a way that I could make this easy to tell.
 // Rusts nominal type-checking is also none-the-wiser, since the generic wgpu types for buffer and bindgroup erase this info.
-use super::diff_display::shader_bindings::ResolutionInfo;
+use super::bda_compute::ResolutionInfo;
 
 pub const INITIAL_RENDER_SIZE: [f32; 2] = [640.0, 480.0];
 

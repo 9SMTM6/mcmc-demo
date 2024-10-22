@@ -7,9 +7,9 @@
 )]
 use macros::{cfg_educe_debug, cfg_persistence_derive};
 
-use crate::target_distributions::multimodal_gaussian::GaussianTargetDistr;
+use crate::target_distr;
 
-use crate::visualizations::shader_based::diff_display::shader_bindings::RWMHAcceptRecord;
+use crate::visualizations::RWMHAcceptRecord;
 
 use super::{Percentage, RngIter, StandardNormal};
 
@@ -156,7 +156,7 @@ impl Default for Rwmh {
 }
 
 impl Rwmh {
-    pub fn step(&mut self, target_distr: &GaussianTargetDistr) {
+    pub fn step(&mut self, target_distr: &target_distr::Gaussian) {
         let current = &mut self.current_loc;
         let proposal = self.params.propose(current.position.into());
         let acceptance_ratio =

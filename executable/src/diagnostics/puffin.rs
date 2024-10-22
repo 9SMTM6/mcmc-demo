@@ -1,3 +1,5 @@
+//! Some parts of this are modified from https://github.com/emilk/egui/tree/master/examples/puffin_profiler
+
 #[macro_export]
 macro_rules! profile_scope {
     ($scope_name:expr) => {

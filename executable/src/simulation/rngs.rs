@@ -5,7 +5,7 @@ use macros::{cfg_educe_debug, cfg_persistence_derive};
 use rand::Rng;
 use rand_distr::{Distribution, Uniform};
 
-use crate::helpers::temp_ui_state::TempStateDataAccess;
+use crate::helpers::TempStateDataAccess;
 
 macro_rules! declare_rng_wrapper_macro {
     ($macro_name: ident, mod $path: tt) => {
@@ -338,9 +338,6 @@ impl Distribution<f32> for StandardNormal {
 impl WrappedRngDiscriminants {
     pub fn selection_ui(&mut self, ui: &mut egui::Ui) {
         for ele in Self::VARIANTS.iter() {
-            // if *ele == WrappedRngDiscriminants::Boxed {
-            //     continue;
-            // }
             ui.selectable_value(self, *ele, ele.display_name())
                 .on_hover_text(ele.explanation());
         }

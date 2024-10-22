@@ -1,3 +1,7 @@
+//! BDA = binary distance approximation, my made up term for the kind of approximation I make based on the RWMH results.
+//!
+//! The diff at the end of the BDA(Compute)Diff is meant to signify that we umtilately look at the difference between the approximation of and the target probability density
+
 use std::{ops::Deref, sync::Arc};
 
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
@@ -11,23 +15,24 @@ use wgpu::{
 
 use crate::{
     cfg_sleep, create_shader_module,
-    gpu_task::{GpuTask, RepaintToken},
-    helpers::{async_last_task_processor::TaskDispatcher, get_spawner},
+    helpers::{task_spawn, GpuTask, RepaintToken, TaskDispatcher},
     simulation::random_walk_metropolis_hastings::Rwmh,
-    target_distributions::multimodal_gaussian::GaussianTargetDistr,
+    target_distr,
     visualizations::AlgoPainter,
 };
 
 use super::{
-    diff_display::{get_approx_buffers, shader_bindings::RWMHCountInfo},
+    bda_immediate::{get_approx_buffers, shader_bindings::RWMHCountInfo},
     fullscreen_quad,
     resolution_uniform::get_resolution_buffer,
-    target_distr::{get_normaldistr_buffer, shader_bindings::ResolutionInfo, NormalDistribution},
+    target_distr::{get_normaldistr_buffer, NormalDistribution},
     INITIAL_RENDER_SIZE,
 };
 
 create_shader_module!("binary_distance_approx.compute", compute_bindings);
 create_shader_module!("binary_distance_approx.fragment", fragment_bindings);
+
+pub use compute_bindings::ResolutionInfo;
 
 pub fn compute_buffer_size_in_bytes(resolution: &[f32; 2]) -> u64 {
     (resolution[0] * resolution[1]) as u64 * size_of::<f32>() as u64
@@ -81,7 +86,7 @@ impl AlgoPainter for BDAComputeDiff {
         painter: &egui::Painter,
         rect: egui::Rect,
         algo: Arc<Rwmh>,
-        target: &GaussianTargetDistr,
+        target: &target_distr::Gaussian,
     ) {
         painter.add(eframe::egui_wgpu::Callback::new_paint_callback(
             rect,
@@ -145,7 +150,6 @@ impl BDAComputeDiff {
             },
         );
 
-        // TODO: This is the actual issue here. I think. I wrote the async_last_task_processor to replace this, why is it still around?
         let (compute_results_tx, compute_results_rx) = watch::channel(None);
 
         let refresh_on_finished = {
@@ -163,7 +167,7 @@ impl BDAComputeDiff {
         }
         .in_current_span();
 
-        get_spawner()(refresh_on_finished);
+        task_spawn(refresh_on_finished);
 
         // Because the graphics pipeline must have the same lifetime as the egui render pass,
         // instead of storing the pipeline in our struct, we insert it into the
@@ -285,7 +289,7 @@ impl CallbackTrait for RenderCall {
             0,
             bytemuck::cast_slice(self.target_distr.as_slice()),
         );
-        // TODO: only reassign of required.
+        // TODO: only reassign if required.
         // If that actually speeds things up, I dunno.
         *fragment_group_1 = fragment_bindings::BindGroup1::from_bindings(
             device,
@@ -432,10 +436,6 @@ impl GpuTask for ComputeTask {
                 total_point_count: self.algo_state.total_point_count,
             }]),
         );
-        // TODO: we need to remove the compute from the render queue.
-        // Unsure how to achieve this. I was hoping having a separate commandencoder would siffice, but evidently not.
-        // AFAIK sharing buffers isnt gonna work with separate queues, as the way to get a queue is bundled with the device creation. Both are created from the adapter.
-        // Aside that, its also annoying, since I either need to coordinate things, or I need to smuggle the new device and queue in here.
         let compute_group_1 = compute_bindings::BindGroup1::from_bindings(
             device,
             compute_bindings::BindGroupLayout1 {

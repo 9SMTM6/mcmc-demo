@@ -1,12 +1,17 @@
+mod async_last_task_processor;
+mod bg_task;
+mod gpu_task;
+pub mod html_bindings;
+mod temp_ui_state;
+
 use std::future::Future;
 
 use tokio::task;
 
-pub mod async_last_task_processor;
-pub mod bg_task;
-pub mod gpu_task;
-pub mod html_bindings;
-pub mod temp_ui_state;
+pub use async_last_task_processor::TaskDispatcher;
+pub use bg_task::{BackgroundTaskManager, BgTaskHandle, TaskProgress};
+pub(crate) use gpu_task::{get_gpu_channels, gpu_scheduler, GpuTask, GpuTaskSenders, RepaintToken};
+pub use temp_ui_state::TempStateDataAccess;
 
 #[macro_export]
 macro_rules! cfg_sleep {
@@ -40,19 +45,20 @@ pub fn warn_feature_config() {
     );
 }
 
+// TODO: Change to taking the future as argument and passing it on
 #[cfg(not(target_arch = "wasm32"))]
-pub fn get_spawner<U>() -> fn(U) -> task::JoinHandle<U::Output>
+pub fn task_spawn<U>(future: U) -> task::JoinHandle<U::Output>
 where
     U: Future + Send + 'static,
     U::Output: Send,
 {
-    task::spawn
+    task::spawn(future)
 }
 
 #[cfg(target_arch = "wasm32")]
-pub fn get_spawner<U>() -> fn(U) -> task::JoinHandle<U::Output>
+pub fn task_spawn<U>(future: U) -> task::JoinHandle<U::Output>
 where
     U: Future + 'static,
 {
-    task::spawn_local
+    task::spawn_local(future)
 }

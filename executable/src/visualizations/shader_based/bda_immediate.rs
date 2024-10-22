@@ -10,7 +10,7 @@ use wgpu::{
 use crate::{
     create_shader_module, profile_scope,
     simulation::random_walk_metropolis_hastings::Rwmh,
-    target_distributions::multimodal_gaussian::GaussianTargetDistr,
+    target_distr,
     visualizations::{
         shader_based::{
             resolution_uniform::get_resolution_buffer,
@@ -83,7 +83,7 @@ impl AlgoPainter for BDADiff {
         painter: &egui::Painter,
         rect: egui::Rect,
         algo: std::sync::Arc<Rwmh>,
-        target: &GaussianTargetDistr,
+        target: &target_distr::Gaussian,
     ) {
         painter.add(eframe::egui_wgpu::Callback::new_paint_callback(
             rect,
@@ -230,7 +230,7 @@ impl CallbackTrait for RenderCall {
             0,
             bytemuck::cast_slice(self.targets.as_slice()),
         );
-        // TODO: only reassign of required.
+        // TODO: only reassign if required.
         // If that actually speeds things up, I dunno.
         *bind_group_1 = BindGroup1::from_bindings(
             device,

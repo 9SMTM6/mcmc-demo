@@ -4,7 +4,7 @@ pub(crate) trait GpuTask {
     async fn run(&mut self, compute_device: Arc<wgpu::Device>, compute_queue: Arc<wgpu::Queue>);
 }
 
-use crate::visualizations::shader_based::BdaComputeTask;
+use crate::visualizations::BdaComputeTask;
 
 use super::async_last_task_processor::{self, TaskDispatcher, TaskExecutorFactory};
 
@@ -42,7 +42,7 @@ impl GpuTask for DebugTask {
     clippy::used_underscore_binding,
     reason = "That lint seems problematic on nightly right now"
 )]
-/// Todo: Consider moving this to be a struct instead, with cancel on drop etc.
+/// TODO: Consider moving this to be a struct instead, with cancel on drop etc.
 /// This being a function was originally required from embassy-rs, which is now replaced with tokio.
 ///
 /// # Panics

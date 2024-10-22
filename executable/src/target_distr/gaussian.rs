@@ -4,15 +4,15 @@ use macros::cfg_persistence_derive;
 
 use crate::simulation::random_walk_metropolis_hastings::AlgoVec;
 
-use crate::visualizations::shader_based::target_distr::NormalDistribution;
+pub use crate::visualizations::NormalDistribution;
 
 #[cfg_persistence_derive]
 #[derive(Clone)]
-pub struct GaussianTargetDistr {
+pub struct Distr {
     pub gaussians: Vec<NormalDistribution>,
 }
 
-impl Default for GaussianTargetDistr {
+impl Default for Distr {
     fn default() -> Self {
         Self {
             gaussians: [
@@ -47,7 +47,7 @@ impl Default for GaussianTargetDistr {
     }
 }
 
-impl GaussianTargetDistr {
+impl Distr {
     pub fn calculate_probability_density(&self, position: AlgoVec) -> f32 {
         let mut total_weighted_density = 0.0;
 

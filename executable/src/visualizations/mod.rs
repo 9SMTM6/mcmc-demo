@@ -1,21 +1,20 @@
+mod egui_based;
+mod shader_based;
+
 use std::sync::Arc;
 
 use macros::cfg_persistence_derive;
 
-pub use egui_based::{Arrow, PredictionVariance, SamplingPoint};
-
-pub mod egui_based;
-pub mod shader_based;
+pub use egui_based::{
+    Arrow, DistrEdit, ElementSettings, PredictionVariance, SamplePointVisualizer, SamplingPoint,
+};
 
 pub use shader_based::{
-    bda_compute::BDAComputeDiff, diff_display::BDADiff, target_distr::TargetDistribution,
-    BdaComputeTask, INITIAL_RENDER_SIZE,
+    BDAComputeDiff, BDADiff, BdaComputeTask, NormalDistribution, RWMHAcceptRecord,
+    TargetDistribution, INITIAL_RENDER_SIZE,
 };
 
-use crate::{
-    simulation::random_walk_metropolis_hastings::Rwmh,
-    target_distributions::multimodal_gaussian::GaussianTargetDistr,
-};
+use crate::{simulation::random_walk_metropolis_hastings::Rwmh, target_distr};
 
 pub trait CanvasPainter {
     fn paint(&self, painter: &egui::Painter, rect: egui::Rect);
@@ -51,7 +50,7 @@ macro_rules! bg_display {
                 painter: &egui::Painter,
                 rect: egui::Rect,
                 algo: Arc<Rwmh>,
-                target: &GaussianTargetDistr,
+                target: &target_distr::Gaussian,
             ) {
                 match self {
                     $(&Self::$struct_name(ref inner) => {
@@ -95,7 +94,7 @@ trait AlgoPainter {
         painter: &egui::Painter,
         rect: egui::Rect,
         algo: Arc<Rwmh>,
-        target: &GaussianTargetDistr,
+        target: &target_distr::Gaussian,
     );
 }
 

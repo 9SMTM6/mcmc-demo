@@ -1,5 +1,8 @@
-pub mod distrib_settings;
-pub mod point_display;
+mod point_display;
+mod target_distrib_settings;
+
+pub use point_display::SamplePointVisualizer;
+pub use target_distrib_settings::{DistrEdit, ElementSettings};
 
 use egui::{
     epaint::{ColorMode, PathShape, PathStroke},

@@ -2,8 +2,8 @@ use egui::Ui;
 
 use crate::{
     app::{canvas_coord_to_ndc, ndc_to_canvas_coord},
-    helpers::temp_ui_state::TempStateDataAccess,
-    visualizations::shader_based::target_distr::NormalDistribution,
+    helpers::TempStateDataAccess,
+    target_distr,
 };
 
 #[derive(Clone, Copy)]
@@ -18,12 +18,8 @@ impl ElementSettings {
         ui.temp_ui_state::<Self>().remove();
     }
 
-    #[expect(
-        clippy::missing_panics_doc,
-        reason = "Ought not to actually panic (only panics assert UI logic)"
-    )]
     pub fn show_if_open(
-        gaussians: &mut Vec<NormalDistribution>,
+        gaussians: &mut Vec<target_distr::NormalDistribution>,
         ui: &egui::Ui,
         rect: egui::Rect,
         ctx: &egui::Context,
@@ -78,11 +74,11 @@ pub enum DistrEdit {
 }
 
 impl DistrEdit {
-    pub fn settings_ui(gaussians: &mut Vec<NormalDistribution>, ui: &mut Ui) {
+    pub fn settings_ui(gaussians: &mut Vec<target_distr::NormalDistribution>, ui: &mut Ui) {
         if DistrEdit::is_present(ui) {
             ui.label("Move Gaussians by dragging their visible (red circle) centers.\nEdit their remaining properties and delete them by clicking that center.");
             if ui.button("Add Gaussian Element").clicked() {
-                gaussians.push(NormalDistribution {
+                gaussians.push(target_distr::NormalDistribution {
                     position: [0.0, 0.0],
                     scale: 0.5,
                     variance: 0.2,
@@ -110,7 +106,7 @@ impl DistrEdit {
     }
 
     pub fn show_if_open(
-        gaussians: &mut [NormalDistribution],
+        gaussians: &mut [target_distr::NormalDistribution],
         ui: &Ui,
         response: &egui::Response,
         rect: egui::Rect,
