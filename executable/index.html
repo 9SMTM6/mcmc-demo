@@ -19,6 +19,7 @@
             :root {
                 --background: #909090;
                 --theme-color: white;
+                --root-text-color: #000000;
             }
         }
         
@@ -26,12 +27,8 @@
             :root {
                 --background: #404040;
                 --theme-color: black;
+                --root-text-color: #f0f0f0;
             }
-        }
-        
-        :root {
-            --root-text-color: #ffffff;
-            --hint-text-color: #f0f0f0;
         }
     </style>
     
@@ -110,6 +107,7 @@
 
         body {
             background: var(--background);
+            color: var(--root-text-color);
         }
 
         /* Allow canvas to fill entire web page: */
@@ -148,7 +146,6 @@
             min-height: 100vh; /* Full viewport height */
             padding: 0 20px; /* Default padding */
             box-sizing: border-box;
-            color: var(--hint-text-color);
             font-size: 24px;
             font-family: Ubuntu-Light, Helvetica, sans-serif;
         }
@@ -219,18 +216,18 @@
             <p> Alternatively, you can download an executable from the <a
                     href="https://github.com/9SMTM6/mcmc-demo/releases" target="_blank" rel="noopener noreferrer">Github
                     release</a> page. </p>
-            <p> At the time of writing, WebGPU-enabled browser means Chrome (or Chromium based browsers). </p>
-            <p> Chromium on modern Android should work. </p>
-            <p> On Linux, you also need to:
-            <ul>
+            <p> At the time of writing, WebGPU-enabled browser means Chrome - or Chromium based browsers: </p>
+            <p style="font-size: 18px;">iOS and iPadOS won't work either because Apple. </p>
+            <p style="font-size: 18px;"> Chrome on modern Android, Windows or MacOS should work. </p>
+            <p style="font-size: 18px;"> On Linux, you also need to:
+            <ul style="font-size: 12px;">
                 <li>
                     start Chrome with --enable-unsafe-webgpu or set the appropriate command flag here <u>
                         chrome://flags/#enable-unsafe-webgpu</u>,
                 </li>
                 <li>
                     as well as having enabled Vulkan (you can see that status at <u />chrome://gpu</u>).
-                    Enabling Vulkan can currently be rather involved if you don't use an Intel GPU (yes, AMD is also
-                    problematic).
+                    Enabling Vulkan can currently be rather involved if you don't use an Intel GPU.
                 </li>
             </ul>
             </p>
