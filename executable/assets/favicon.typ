@@ -44,7 +44,7 @@
 
 #import cetz: canvas
 
-#canvas(length: 1cm, background: none, {
+#canvas(length: 1cm, background: black, {
   import cetz: plot, draw
   import finite: automaton, layout
   // manually extracted from resulting svg. Target (16pt)^2
