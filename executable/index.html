@@ -9,6 +9,32 @@
     <!-- change this to your project name -->
     <title>MCMC demo</title>
 
+    <!-- setting theme colors with css variables -->
+    <style>
+        /* background color for what is not covered by the egui canvas,
+        or where the egui canvas is translucent. 
+        
+        With no set preference light will be used. */
+        @media (prefers-color-scheme: light) {
+            :root {
+                --background: #909090;
+                --theme-color: white;
+            }
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --background: #404040;
+                --theme-color: black;
+            }
+        }
+        
+        :root {
+            --root-text-color: #ffffff;
+            --hint-text-color: #f0f0f0;
+        }
+    </style>
+    
     <script type="module">
         // check for webgpu compatibility, if not found, display the warning message.
         const show_warning = () => {
@@ -28,6 +54,21 @@
                 // don't log errors in console when there's no network connection.
                 .catch(() => {});
         }
+        // Function to update the meta theme-color from CSS variable
+        const updateThemeColor = () => {
+            // Get the CSS variable value
+            const themeColor = getComputedStyle(document.documentElement)
+                .getPropertyValue('--theme-color').trim();
+            
+            // Update the meta tag with the theme color
+            const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+            if (metaThemeColor) {
+                metaThemeColor.setAttribute('content', themeColor);
+            }
+        }
+        
+        // Wait until the document is fully loaded to set the theme color
+        document.addEventListener('DOMContentLoaded', updateThemeColor);
     </script>
 
     <!-- config for our rust wasm binary. go to https://trunkrs.dev/assets/#rust for more customization -->
@@ -58,8 +99,8 @@
     <meta name="description"
         content="High performance website capable mcmc demonstration built using webgpu and wasm per Rust. This application is also going to be even more performant if installed natively, binaries can be found in the github repository.">
     <link rel="manifest" href="manifest.json" />
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content="white" />
-    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#404040" />
+    <!-- should be overwritten in JS -->
+    <meta name="theme-color" content="grey" />
 
     <style>
         html {
@@ -68,17 +109,7 @@
         }
 
         body {
-            /* Light mode background color for what is not covered by the egui canvas,
-            or where the egui canvas is translucent. */
-            background: #909090;
-        }
-
-        @media (prefers-color-scheme: dark) {
-            body {
-                /* Dark mode background color for what is not covered by the egui canvas,
-                or where the egui canvas is translucent. */
-                background: #404040;
-            }
+            background: var(--background);
         }
 
         /* Allow canvas to fill entire web page: */
@@ -117,7 +148,7 @@
             min-height: 100vh; /* Full viewport height */
             padding: 0 20px; /* Default padding */
             box-sizing: border-box;
-            color: #f0f0f0;
+            color: var(--hint-text-color);
             font-size: 24px;
             font-family: Ubuntu-Light, Helvetica, sans-serif;
         }
@@ -144,7 +175,7 @@
         }
 
         a {
-            color: #ffffff;
+            color: var(--root-text-color);
         }
 
         /* ---------------------------------------------- */
@@ -162,8 +193,8 @@
             height: 24px;
             margin: 0px;
             border-radius: 50%;
-            border: 3px solid #fff;
-            border-color: #fff transparent #fff transparent;
+            border: 3px solid --root-text-color;
+            border-color: --root-text-color transparent --root-text-color transparent;
             animation: lds-dual-ring 1.2s linear infinite;
         }
 
