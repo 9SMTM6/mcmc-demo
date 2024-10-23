@@ -34,14 +34,19 @@ macro_rules! cfg_sleep {
     reason = "False positives depending on configuration"
 )]
 pub fn warn_feature_config() {
-    #[cfg(not(all(feature = "debounce_async_loops", not(target_arch = "wasm32"))))]
+    #[cfg(all(feature = "debounce_async_loops", target_arch = "wasm32"))]
     tracing::warn!(
-        r#"Feature "debounce_async_loops" enabled, however other configuration disables this implicitly"#
+        r#"Feature "debounce_async_loops" enabled, however other configuration disables this implicitly. Requires #not(target_arch = "wasm32")."#
     );
 
-    #[cfg(not(all(feature = "tokio_console", tokio_unstable, not(target_arch = "wasm32"))))]
+    #[cfg(all(feature = "tokio_console", not(all(tokio_unstable, not(target_arch = "wasm32")))))]
     tracing::warn!(
-        r#"Feature "tokio_console" enabled, however other configuration disables this implicitly"#
+        r#"Feature "tokio_console" enabled, however other configuration disables this implicitly. Requires #all(tokio_unstable, not(target_arch = "wasm32"))."#
+    );
+
+    #[cfg(all(feature = "wgpu_profile", target_arch = "wasm32"))]
+    tracing::warn!(
+        r#"Feature "wgpu_profile" enabled, however other configuration disables this implicitly. Requires #not(target_arch = "wasm32")."#
     );
 }
 
