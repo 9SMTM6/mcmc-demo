@@ -57,12 +57,15 @@ impl McmcDemo {
 
         let adapter = &wgpu_render_state.adapter;
 
+        // I might end up creating a profiler for every workload.
+        // Reason is that many relevant APIs require mutable access, making sharing annoying.
+        // And, calling end_frame does not actually need to be called at top level, from my current understanding.
+        // just call it at the end of the compute/render in these methods.
         let _cfg_profiler = cfg_gpu_profile::get_profiler(
             adapter.get_info().backend,
             wgpu_render_state.device.as_ref(),
             wgpu_render_state.queue.as_ref(),
         );
-        // call this in get_gpu_scheduler, and send the profiler, or just a callback to end the frame, back with a watch channel.
         // TODO: Also make a profiler for compute (its actually the main purpose).
 
         let (GpuTaskSenders { bda_compute }, gpu_rx) = get_gpu_channels();
