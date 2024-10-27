@@ -33,6 +33,10 @@ macro_rules! cfg_sleep {
     clippy::missing_const_for_fn,
     reason = "False positives depending on configuration"
 )]
+#[expect(
+    clippy::cognitive_complexity,
+    reason = "Yeah I'm not gonna make different functions for all features, just cause this lint seems to consider cfgs to be so difficult"
+)]
 pub fn warn_feature_config() {
     #[cfg(all(feature = "debounce_async_loops", target_arch = "wasm32"))]
     tracing::warn!(
@@ -45,6 +49,11 @@ pub fn warn_feature_config() {
     ))]
     tracing::warn!(
         r#"Feature "tokio_console" enabled, however other configuration disables this implicitly. Requires #all(tokio_unstable, not(target_arch = "wasm32"))."#
+    );
+
+    #[cfg(all(feature = "tracy", target_arch = "wasm32"))]
+    tracing::warn!(
+        r#"Feature "tracy" enabled, however other configuration disables this implicitly. Requires #not(target_arch = "wasm32")."#
     );
 
     #[cfg(all(feature = "wgpu_profile", target_arch = "wasm32"))]

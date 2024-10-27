@@ -10,6 +10,10 @@
 pub type CfgProfiler = wgpu_profiler::GpuProfiler;
 
 /// Comes in parts from https://github.com/Wumpf/wgpu-profiler/blob/main/examples/demo.rs
+///
+/// # Panics
+///
+/// If no profiler (ncluding without tracy) can be created.
 pub fn get_profiler(
     backend: wgpu::Backend,
     device: &wgpu::Device,

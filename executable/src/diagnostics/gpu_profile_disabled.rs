@@ -9,11 +9,10 @@
 
 pub type CfgProfiler = ();
 
-/// Comes in parts from https://github.com/Wumpf/wgpu-profiler/blob/main/examples/demo.rs
+#[expect(clippy::missing_const_for_fn, reason = "Other variant cant be const")]
 pub fn get_profiler(
-    backend: wgpu::Backend,
-    device: &wgpu::Device,
-    queue: &wgpu::Queue,
+    _backend: wgpu::Backend,
+    _device: &wgpu::Device,
+    _queue: &wgpu::Queue,
 ) -> CfgProfiler {
-    ()
 }
