@@ -62,7 +62,6 @@ pub fn warn_feature_config() {
     );
 }
 
-// TODO: Change to taking the future as argument and passing it on
 #[cfg(not(target_arch = "wasm32"))]
 pub fn task_spawn<U>(future: U) -> task::JoinHandle<U::Output>
 where
