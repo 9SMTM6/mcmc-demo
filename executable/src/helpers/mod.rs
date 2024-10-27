@@ -33,7 +33,7 @@ macro_rules! cfg_sleep {
     clippy::missing_const_for_fn,
     reason = "False positives depending on configuration"
 )]
-#[expect(
+#[allow(
     clippy::cognitive_complexity,
     reason = "Yeah I'm not gonna make different functions for all features, just cause this lint seems to consider cfgs to be so difficult"
 )]
