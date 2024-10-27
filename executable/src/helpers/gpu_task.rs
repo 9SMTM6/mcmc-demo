@@ -4,7 +4,7 @@ pub(crate) trait GpuTask {
     async fn run(&mut self, compute_device: Arc<wgpu::Device>, compute_queue: Arc<wgpu::Queue>);
 }
 
-use crate::{definition_location, visualizations::BdaComputeTask};
+use crate::{definition_location, diagnostics::cfg_gpu_profile::required_wgpu_features, visualizations::BdaComputeTask};
 
 use super::async_last_task_processor::{self, TaskDispatcher, TaskExecutorFactory};
 
@@ -46,15 +46,13 @@ impl GpuTask for DebugTask {
 /// This being a function was originally required from embassy-rs, which is now replaced with tokio.
 ///
 /// # Panics
-/// If no wgpu adapter is found, if no wgpu device could be found with the provided settings, if the gpu_task channel was closed.
+/// If no wgpu device could be found with the provided settings, if the gpu_task channel was closed.
 pub(crate) async fn gpu_scheduler(adapter: Arc<wgpu::Adapter>, rxs: GpuTaskReceivers) {
     let (compute_device, compute_queue) = adapter
         .request_device(
             &wgpu::DeviceDescriptor {
                 label: Some(definition_location!()),
-                #[cfg(all(feature = "wgpu_profile", not(target_arch = "wasm32")))]
-                required_features: adapter.features()
-                    & wgpu_profiler::GpuProfiler::ALL_WGPU_TIMER_FEATURES,
+                required_features: required_wgpu_features(adapter.as_ref()),
                 ..Default::default()
             },
             None,
