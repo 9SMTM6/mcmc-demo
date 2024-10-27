@@ -10,6 +10,8 @@ allowed-duplicate-crates = [
     "windows_x86_64_msvc",
     "windows-sys",
     "windows-targets",
+    "windows",
+    "windows-core",
     # macos
     "core-foundation",
     # The following targets don't get build anyways

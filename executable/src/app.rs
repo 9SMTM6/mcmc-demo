@@ -61,6 +61,7 @@ impl McmcDemo {
         // Reason is that many relevant APIs require mutable access, making sharing annoying.
         // And, calling end_frame does not actually need to be called at top level, from my current understanding.
         // just call it at the end of the compute/render in these methods.
+        #[allow(clippy::let_unit_value, reason = "the type is cfg dependent")]
         let _cfg_profiler = cfg_gpu_profile::get_profiler(
             adapter.get_info().backend,
             wgpu_render_state.device.as_ref(),
