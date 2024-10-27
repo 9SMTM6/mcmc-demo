@@ -59,6 +59,12 @@ pub fn define_subscriber(
             Layer::with_filter(used, get_env_filter())
         })
         .with(cfg_if_expr!(
+            => [all(feature = "tracy", not(target_arch = "wasm32"))]
+            tracing_tracy::TracyLayer::default()
+            => [not]
+            tr_sub::layer::Identity::new()
+        ))
+        .with(cfg_if_expr!(
             => [all(feature = "performance_profile", target_arch = "wasm32")]
             tracing_web::performance_layer()
                 .with_details_from_fields(tr_sub::fmt::format::Pretty::default())

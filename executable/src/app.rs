@@ -51,6 +51,12 @@ impl McmcDemo {
     #[expect(clippy::missing_panics_doc, reason = "only used once")]
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         warn_feature_config();
+
+        // needs device and queue from compute..
+        // unless theres a solution found in https://github.com/Wumpf/wgpu-profiler/issues/87,
+        // call this in get_gpu_scheduler, and send the profiler, or just a callback to end the frame, back with a watch channel.
+        // cfg_gpu_profile::get_profiler(backend, device, queue);
+
         let (GpuTaskSenders { bda_compute }, gpu_rx) = get_gpu_channels();
 
         let gpu_scheduler = gpu_scheduler(gpu_rx);
@@ -163,7 +169,11 @@ impl eframe::App for McmcDemo {
                 }
                 egui::warn_if_debug_build(ui);
                 ui.centered_and_justified(|ui| {
-                    ui.label(concat!(env!("CARGO_PKG_NAME"), " v", env!("CARGO_PKG_VERSION")));
+                    ui.label(concat!(
+                        env!("CARGO_PKG_NAME"),
+                        " v",
+                        env!("CARGO_PKG_VERSION")
+                    ));
                 });
             });
         });

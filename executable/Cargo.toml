@@ -96,10 +96,12 @@ tokio_console = ["dep:console-subscriber", "tokio/tracing"]
 # rng_small = ["rand/small_rng"]
 wgpu_profile = [
     "dep:wgpu-profiler",
+    "tracy",
     # Note that this is NOT a tokio-trace trace.
     # "temporarily removed". Reinstatement issue: https://github.com/gfx-rs/wgpu/issues/5974
     # "wgpu/trace",
 ]
+tracy = ["dep:tracing-tracy", "tracing"]
 
 [dependencies]
 bytemuck = { version = "1.16.0" }
@@ -155,6 +157,7 @@ futures = { version = "0.3.30", default-features = false, features = [
 macros = { workspace = true }
 shared = { workspace = true }
 wgpu-profiler = { version = "0.18.2", optional = true, features = ["tracy"] }
+tracing-tracy = { version = "0.11.3", optional = true }
 
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]

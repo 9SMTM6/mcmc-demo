@@ -39,7 +39,10 @@ pub fn warn_feature_config() {
         r#"Feature "debounce_async_loops" enabled, however other configuration disables this implicitly. Requires #not(target_arch = "wasm32")."#
     );
 
-    #[cfg(all(feature = "tokio_console", not(all(tokio_unstable, not(target_arch = "wasm32")))))]
+    #[cfg(all(
+        feature = "tokio_console",
+        not(all(tokio_unstable, not(target_arch = "wasm32")))
+    ))]
     tracing::warn!(
         r#"Feature "tokio_console" enabled, however other configuration disables this implicitly. Requires #all(tokio_unstable, not(target_arch = "wasm32"))."#
     );

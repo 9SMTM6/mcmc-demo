@@ -4,7 +4,7 @@ pub(crate) trait GpuTask {
     async fn run(&mut self, compute_device: Arc<wgpu::Device>, compute_queue: Arc<wgpu::Queue>);
 }
 
-use crate::visualizations::BdaComputeTask;
+use crate::{definition_location, visualizations::BdaComputeTask};
 
 use super::async_last_task_processor::{self, TaskDispatcher, TaskExecutorFactory};
 
@@ -59,7 +59,10 @@ pub(crate) async fn gpu_scheduler(rxs: GpuTaskReceivers) {
     let (compute_device, compute_queue) = adapter
         .request_device(
             &wgpu::DeviceDescriptor {
-                label: Some(file!()),
+                label: Some(definition_location!()),
+                #[cfg(all(feature = "wgpu_profile", not(target_arch = "wasm32")))]
+                required_features: adapter.features()
+                    & wgpu_profiler::GpuProfiler::ALL_WGPU_TIMER_FEATURES,
                 ..Default::default()
             },
             None,
