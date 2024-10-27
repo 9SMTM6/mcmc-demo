@@ -14,6 +14,7 @@
 
 #[cfg(feature = "tracing")]
 const DEFAULT_TRACE_LEVEL: Option<&'static str> = Some("info,wgpu_core=warn,wgpu_hal=warn");
+use mcmc_demo::wgpu_options;
 use shared::cfg_if_expr;
 
 // When compiling natively:
@@ -58,6 +59,7 @@ pub fn main() {
                 eframe::icon_data::from_png_bytes(&include_bytes!("../assets/favicon-256.png")[..])
                     .expect("Failed to load icon"),
             ),
+        wgpu_options: wgpu_options(),
         ..Default::default()
     };
     eframe::run_native(
@@ -99,33 +101,37 @@ fn main() {
     wasm_bindgen_futures::spawn_local(async move {
         let local_set = tokio::task::LocalSet::new();
 
-        wasm_bindgen_futures::JsFuture::from(wasm_bindgen_rayon::init_thread_pool(
-            wasm_thread::available_parallelism().unwrap().into(),
-        ))
-        .await
-        .unwrap();
-
         local_set.spawn_local(async {
-            let web_options = eframe::WebOptions::default();
-
-            eframe::WebRunner::new()
-                .start(
-                    get_egui_canvas(),
-                    web_options,
-                    Box::new(|cc| Ok(Box::new(mcmc_demo::McmcDemo::new(cc)))),
-                )
-                .await
-                .or_else(|err| {
-                    let fmt_err = format!("{err:?}");
-                    if fmt_err.contains("wgpu") {
-                        // should've been handled in js
-                        Ok(())
-                    } else {
-                        Err(err)
-                    }
-                })
-                .unwrap();
-            remove_loading_state();
+            let (result, _) = tokio::join!(
+                wasm_bindgen_futures::JsFuture::from(wasm_bindgen_rayon::init_thread_pool(
+                    wasm_thread::available_parallelism().unwrap().into(),
+                )),
+                async {
+                    let web_options = eframe::WebOptions {
+                        wgpu_options: wgpu_options(),
+                        ..Default::default()
+                    };
+                    eframe::WebRunner::new()
+                        .start(
+                            get_egui_canvas(),
+                            web_options,
+                            Box::new(|cc| Ok(Box::new(mcmc_demo::McmcDemo::new(cc)))),
+                        )
+                        .await
+                        .or_else(|err| {
+                            let fmt_err = format!("{err:?}");
+                            if fmt_err.contains("wgpu") {
+                                // should've been handled in js
+                                Ok(())
+                            } else {
+                                Err(err)
+                            }
+                        })
+                        .unwrap();
+                    remove_loading_state();
+                }
+            );
+            result.unwrap();
         });
         local_set.await;
     });

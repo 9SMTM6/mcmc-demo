@@ -4,6 +4,7 @@ use std::{sync::Arc, time::Duration};
 use type_map::TypeMap;
 
 use crate::{
+    diagnostics::cfg_gpu_profile,
     helpers::{
         get_gpu_channels, gpu_scheduler, task_spawn, warn_feature_config, BackgroundTaskManager,
         BgTaskHandle, GpuTaskSenders, TaskProgress,
@@ -52,13 +53,21 @@ impl McmcDemo {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         warn_feature_config();
 
+        let wgpu_render_state = cc.wgpu_render_state.as_ref().unwrap();
+
+        let _todo_use = cfg_gpu_profile::get_profiler(
+            wgpu_render_state.adapter.get_info().backend,
+            wgpu_render_state.device.as_ref(),
+            wgpu_render_state.queue.as_ref(),
+        );
         // needs device and queue from compute..
         // unless theres a solution found in https://github.com/Wumpf/wgpu-profiler/issues/87,
         // call this in get_gpu_scheduler, and send the profiler, or just a callback to end the frame, back with a watch channel.
-        // cfg_gpu_profile::get_profiler(backend, device, queue);
+        // TODO: Also make a profiler for compute (its actually the main purpose).
 
         let (GpuTaskSenders { bda_compute }, gpu_rx) = get_gpu_channels();
 
+        // TODO: Instead of creating my own instance and adapter, see if I can't use the main adapter, and just create another device and adapter.
         let gpu_scheduler = gpu_scheduler(gpu_rx);
 
         task_spawn(gpu_scheduler);

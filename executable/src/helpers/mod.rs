@@ -4,7 +4,7 @@ mod gpu_task;
 pub mod html_bindings;
 mod temp_ui_state;
 
-use std::future::Future;
+use std::{future::Future, sync::Arc};
 
 use tokio::task;
 
@@ -12,6 +12,8 @@ pub use async_last_task_processor::TaskDispatcher;
 pub use bg_task::{BackgroundTaskManager, BgTaskHandle, TaskProgress};
 pub(crate) use gpu_task::{get_gpu_channels, gpu_scheduler, GpuTask, GpuTaskSenders, RepaintToken};
 pub use temp_ui_state::TempStateDataAccess;
+
+use crate::{definition_location, diagnostics::cfg_gpu_profile};
 
 #[macro_export]
 macro_rules! cfg_sleep {
@@ -77,4 +79,15 @@ where
     U: Future + 'static,
 {
     task::spawn_local(future)
+}
+
+pub fn wgpu_options() -> eframe::egui_wgpu::WgpuConfiguration {
+    eframe::egui_wgpu::WgpuConfiguration {
+        device_descriptor: Arc::new(|adapter| wgpu::DeviceDescriptor {
+            label: Some(definition_location!()),
+            required_features: cfg_gpu_profile::required_wgpu_features(adapter),
+            ..Default::default()
+        }),
+        ..Default::default()
+    }
 }

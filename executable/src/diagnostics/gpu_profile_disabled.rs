@@ -16,3 +16,7 @@ pub fn get_profiler(
     _queue: &wgpu::Queue,
 ) -> CfgProfiler {
 }
+
+pub fn required_wgpu_features(adapter: &wgpu::Adapter) -> wgpu::Features {
+    adapter.features()
+}

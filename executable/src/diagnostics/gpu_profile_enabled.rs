@@ -32,3 +32,7 @@ pub fn get_profiler(
         },
     )
 }
+
+pub fn required_wgpu_features(adapter: &wgpu::Adapter) -> wgpu::Features {
+    adapter.features() & wgpu_profiler::GpuProfiler::ALL_WGPU_TIMER_FEATURES
+}

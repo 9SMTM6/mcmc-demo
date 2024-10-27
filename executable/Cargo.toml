@@ -19,6 +19,7 @@ default = [
     "x11",
     "persistence",
     "dependency_logs",
+    "wgpu_profile",
 ]
 ## Get a backend planel, that reports frametimes, renderer information, and debug settings for egui.
 ## Ported pretty straight from the demo application.
