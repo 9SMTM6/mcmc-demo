@@ -47,15 +47,7 @@ impl GpuTask for DebugTask {
 ///
 /// # Panics
 /// If no wgpu adapter is found, if no wgpu device could be found with the provided settings, if the gpu_task channel was closed.
-pub(crate) async fn gpu_scheduler(rxs: GpuTaskReceivers) {
-    let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
-        #[cfg(target_arch = "wasm32")]
-        backends: wgpu::Backends::BROWSER_WEBGPU,
-        ..Default::default()
-    });
-
-    let adapter = instance.request_adapter(&Default::default()).await.unwrap();
-
+pub(crate) async fn gpu_scheduler(adapter: Arc<wgpu::Adapter>, rxs: GpuTaskReceivers) {
     let (compute_device, compute_queue) = adapter
         .request_device(
             &wgpu::DeviceDescriptor {
