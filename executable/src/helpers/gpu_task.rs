@@ -4,7 +4,10 @@ pub(crate) trait GpuTask {
     async fn run(&mut self, compute_device: Arc<wgpu::Device>, compute_queue: Arc<wgpu::Queue>);
 }
 
-use crate::{definition_location, diagnostics::cfg_gpu_profile::required_wgpu_features, visualizations::BdaComputeTask};
+use crate::{
+    definition_location, diagnostics::cfg_gpu_profile::required_wgpu_features,
+    visualizations::BdaComputeTask,
+};
 
 use super::async_last_task_processor::{self, TaskDispatcher, TaskExecutorFactory};
 

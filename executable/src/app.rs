@@ -57,13 +57,11 @@ impl McmcDemo {
 
         let adapter = &wgpu_render_state.adapter;
 
-        let _todo_use = cfg_gpu_profile::get_profiler(
+        let _cfg_profiler = cfg_gpu_profile::get_profiler(
             adapter.get_info().backend,
             wgpu_render_state.device.as_ref(),
             wgpu_render_state.queue.as_ref(),
         );
-        // needs device and queue from compute..
-        // unless theres a solution found in https://github.com/Wumpf/wgpu-profiler/issues/87,
         // call this in get_gpu_scheduler, and send the profiler, or just a callback to end the frame, back with a watch channel.
         // TODO: Also make a profiler for compute (its actually the main purpose).
 
@@ -94,9 +92,6 @@ impl McmcDemo {
             .wgpu_render_state
             .as_ref()
             .expect("Compiling with WGPU enabled");
-        // I need an abstraction over `pollster::block_on` (native) and `wasm_bindgen_futures::spawn_local` (web).
-        // eframe on web is just async to the top, where I use the latter, on native its using pollster to resolve the future we get from `request_device`.
-        // let laaa = render_state.adapter.request_device(&DeviceDescriptor { label: Some(file!()), required_features: Default::default(), required_limits: Default::default(), memory_hints: Default::default() }, None);
         // TODO: consider dynamically initializing/uninitializing instead.
         TargetDistribution::init_pipeline(render_state);
         BDADiff::init_pipeline(render_state);
