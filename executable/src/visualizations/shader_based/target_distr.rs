@@ -168,25 +168,6 @@ impl CallbackTrait for RenderCall {
             ref mut bind_group_1,
             ..
         } = callback_resources.get_mut().unwrap();
-        // TODO: figure that out
-        // let &mut MultiModalGaussPipeline {
-        //     ref mut resolution_buffer,
-        //     ref mut target_buffer,
-        //     ref mut target_bind_group,
-        //     ..
-        // } = {
-        //     let ret = callback_resources.get_mut::<MultiModalGaussPipeline>();
-        //     if ret.is_none() {
-        //         MultiModalGaussianDisplay::init_gaussian_pipeline(todo!(
-        //             "cant find no way to get this here"
-        //         ));
-        //         callback_resources
-        //             .get_mut::<MultiModalGaussPipeline>()
-        //             .unwrap()
-        //     } else {
-        //         ret.unwrap()
-        //     }
-        // };
         let target = self.elements.as_slice();
         if target_buffer.size() as usize != size_of_val(target) {
             let normdistr_buffer = get_normaldistr_buffer(device, Some(target));

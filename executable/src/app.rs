@@ -250,8 +250,6 @@ impl eframe::App for McmcDemo {
                     ctx.request_repaint_after(Duration::from_millis(16));
                 } else if ui.button("batch step").clicked() {
                     let existing = self.local_resources.insert(BatchJob({
-                        // TODO: HIGHLY problematic!
-                        // This means that the random state doesnt progress
                         let mut algo = self.algo.clone();
                         let target_distr = self.target_distr.clone();
                         BgTaskHandle::new(

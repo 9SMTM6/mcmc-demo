@@ -26,7 +26,7 @@ fn main() -> Result<()> {
         fs::write(file_path, resolved_source).unwrap();
     }
     // first use wgsl_bindgen to get nice errors.
-    // TODO: remove once we find a good alternative
+    // TODO: Could not find a good alternative, but maybe thatll end in the future.
     // TODO: to actually support pipeline overridable constants, these have to be sanitized out.
     bindgen_generation(&resolved_shaders_dir)?;
     let bindings_dir = append_to_last_dir(&out_dir, "_bindings");
@@ -263,11 +263,6 @@ fn wgsl_to_wgpu_generation(resolved_shaders: &HashMap<OsString, String>, binding
         new_path.push(new_filename);
         fs::write(new_path, rust_bindings).unwrap();
     });
-    // // Generate the Rust bindings and write to a file.
-    // let text = create_shader_module_embedded(wgsl_source, WriteOptions::default()).unwrap();
-    // let out_dir = std::env::var("OUT_DIR").unwrap();
-    // std::fs::write(format!("{out_dir}/model.rs"), text.as_bytes()).unwrap();
-    // todo!("will for certain require different shader source files. Doesnt do validation, doesnt do imports. IIRC wanted everything to be in one big shader, which caused me to go to bindgen, in addition to debug labels")
 }
 
 fn append_to_last_dir(directory: &Path, appendage: impl AsRef<OsStr>) -> PathBuf {

@@ -53,7 +53,6 @@ pub(super) fn create_compute_output_buffer(
 
     device.create_buffer(&BufferDescriptor {
         label: Some(definition_location!()),
-        // todo: consider splitting definition, MIGHT improve perf.
         usage: BufferUsages::STORAGE | BufferUsages::COPY_SRC | BufferUsages::COPY_DST,
         mapped_at_creation: false,
         size: compute_buffer_size_in_bytes(res),
@@ -493,6 +492,7 @@ impl GpuTask for ComputeTask {
             // Potential alternatives I considered:
             // 1. Patching (and upstreaming) changes to DownloadBuffer::read_buffer to return SubmitIndex from the copy op subm_idx. then doing wgpu::Maintain::WaitForSubmissionIndex(subm_idx),
             // 2. calling poll in an event loop somewhere else, however I don't want that to end in busy waiting, so perhaps add a sleep inbetween, that however increases lag...
+            // Also see <github link TODO>
             device_arc.poll(wgpu::Maintain::Wait);
             // device_arc.poll(wgpu::Maintain::WaitForSubmissionIndex(subm_idx));
         });

@@ -171,7 +171,12 @@ wgpu-profiler = { version = "0.18.2", optional = true, features = ["tracy"] }
 console_error_panic_hook = "0.1.7"
 tracing-web = { version = "0.1.3", optional = true }
 web-sys = { version = "0.3.69" }
-wasm-bindgen = "0.2.92"
+# TODO: theres a mismatch between the generated init code from trunk wasm-bindgen
+# This causes annoying warnings in the browser for each thread started.
+# Sadly I require this version of wasm bindgen for the up to date egui version.
+# I cant find an easy way to patch the generated JS in the required way,
+# other maybe than adding a hook and patching the file, which is annoying as hell and I dont want to do right now. 
+wasm-bindgen = "0.2.95"
 wasm-bindgen-rayon = { version = "1.2.1", features = ["no-bundler"] }
 
 [build-dependencies]

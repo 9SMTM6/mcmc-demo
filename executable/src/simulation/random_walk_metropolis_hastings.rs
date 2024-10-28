@@ -57,6 +57,7 @@ impl IPromiseThisIsNonZeroUsize {
 #[derive(Clone)]
 #[cfg_educe_debug]
 // TODO: properly fix this
+// See https://github.com/magiclen/educe/issues/34
 #[allow(
     clippy::used_underscore_binding,
     reason = "Should be educe causing this"
