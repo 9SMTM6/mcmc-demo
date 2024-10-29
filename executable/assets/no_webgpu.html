@@ -1,0 +1,21 @@
+<div hidden id="no_webgpu" class="content">
+    <p> This application currently requires an WebGPU-enabled browser. </p>
+    <p> Alternatively, you can download an executable from the <a
+            href="https://github.com/9SMTM6/mcmc-demo/releases" target="_blank" rel="noopener noreferrer">Github
+            release</a> page. </p>
+    <p> At the time of writing, WebGPU-enabled browser means Chrome - or Chromium based browsers: </p>
+    <p style="font-size: 18px;">iOS and iPadOS won't work either because Apple. </p>
+    <p style="font-size: 18px;"> Chrome on modern Android, Windows or MacOS should work. </p>
+    <p style="font-size: 18px;"> On Linux, you also need to:
+    <ul style="font-size: 12px;">
+        <li>
+            start Chrome with --enable-unsafe-webgpu or set the appropriate command flag here <u>
+                chrome://flags/#enable-unsafe-webgpu</u>,
+        </li>
+        <li>
+            as well as having enabled Vulkan (you can see that status at <u />chrome://gpu</u>).
+            Enabling Vulkan can currently be rather involved if you don't use an Intel GPU.
+        </li>
+    </ul>
+    </p>
+</div>

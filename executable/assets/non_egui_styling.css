@@ -1,0 +1,47 @@
+.centered-container {
+    display: flex;
+    flex-direction: column;
+    /* Stack elements vertically */
+    align-items: center;
+    /* Center inner elements */
+    justify-content: center;
+    /* Vertically center the container */
+    min-height: 100vh;
+    /* Full viewport height */
+    padding: 0 20px;
+    /* Default padding */
+    box-sizing: border-box;
+    font-size: 24px;
+    font-family: Ubuntu-Light, Helvetica, sans-serif;
+}
+
+/* Ensure content is responsive */
+.content {
+    max-width: 600px;
+    /* Optional, control content width */
+    width: 100%;
+    /* Full width but respects max-width */
+    white-space: normal;
+    /* Allows text to wrap onto multiple lines */
+    overflow-wrap: break-word;
+    /* Break long words if necessary to avoid overflow */
+}
+
+/* Responsive behavior for larger screens */
+@media (min-width: 768px) {
+    .centered-container {
+        padding: 0 50px;
+        /* Increase padding for larger screens */
+    }
+}
+
+@media (min-width: 1200px) {
+    .centered-container {
+        padding: 0 200px;
+        /* Add even larger side margins */
+    }
+}
+
+a {
+    color: var(--root-text-color);
+}
