@@ -13,8 +13,8 @@
     height: 24px;
     margin: 0px;
     border-radius: 50%;
-    border: 3px solid --root-text-color;
-    border-color: --root-text-color transparent --root-text-color transparent;
+    border: 3px solid var(--root-text-color);
+    border-color: var(--root-text-color) transparent var(--root-text-color) transparent;
     animation: lds-dual-ring 1.2s linear infinite;
 }
 
