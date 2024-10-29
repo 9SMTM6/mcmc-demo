@@ -48,7 +48,7 @@ ci_semver_updates:
 semver_updates:
     cargo +stable generate-lockfile
 
-ci_deploy_tests: patch_fat_html ci_clippy ci_clippy_wasm ci_test
+ci_deploy_tests: patch_fat_html clippy ci_test
 
 ci_typo:
     typos
@@ -68,27 +68,24 @@ tokio_console:
     # spawn tokio-console in another terminal window
     konsole -e tokio-console
 
-ci_unstaged_autofixes:
+ci_easy_autofixes:
+    cargo fmt
     typos --write-changes
+
+alias eaFix := ci_easy_autofixes
 
 ci_staged_autofixes:
     cargo --locked clippy --allow-staged --workspace --target wasm32-unknown-unknown --all-features --all-targets --fix
     cargo +stable --locked clippy --allow-staged --workspace --target x86_64-unknown-linux-gnu --all-features --all-targets --fix
     cargo +stable --locked fmt --all
 
-# Note that this WILL stage current changes
-ci_autofixes: ci_unstaged_autofixes && ci_staged_autofixes
-    git add .
-
-ci_full_autofixes: ci_autofixes semver_updates
-
-trunk_fat: patch_fat_html
-    just executable/trunk_fat
+trunk_fat +cmd="serve":
+    just executable/trunk_fat {{cmd}}
 
 alias tf := trunk_fat
 
-trunk_slim: patch_fat_html
-    just executable/trunk_slim
+trunk_slim +cmd="serve":
+    just executable/trunk_slim {{cmd}}
 
 alias ts := trunk_slim
 

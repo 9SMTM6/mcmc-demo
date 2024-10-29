@@ -16,13 +16,13 @@ benchmark_wasm_size compression_level='4':
     # wont work on other setups!
     export RUSTFLAGS=
     export CARGO_BUILD_INCREMENTAL=false
-    trunk build --release
-    trunk build --config Trunk.fat.toml --release
+    just trunk_fat build --release
+    just trunk_slim build --release
     brotli -q {{compression_level}} -f dist/*/mcmc-demo*_bg.wasm
     lsd -lah dist/*/mcmc-demo*_bg.was*
 
-trunk_fat: patch_fat_html
-    trunk serve --config Trunk.fat.toml
+trunk_fat +cmd="serve": patch_fat_html
+    trunk {{cmd}} --config Trunk.fat.toml
 
-trunk_slim:
-    trunk serve
+trunk_slim +cmd="serve":
+    trunk {{cmd}}

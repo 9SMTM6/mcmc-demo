@@ -36,6 +36,10 @@ opt-level = 2
 # egui = { path = "../egui/crates/egui" }
 # eframe = { path = "../egui/crates/eframe" }
 
+[workspace.dependencies]
+macros = { path = "./macros" }
+shared = { path = "./shared" }
+
 [workspace.lints.rust]
 unsafe-op-in-unsafe-fn = "warn"
 let_underscore_drop = "deny"
@@ -82,7 +86,3 @@ unreadable_literal = "warn"
 # unwrap_used = "warn"
 # "warn_on_ci"
 used_underscore_binding = "warn"
-
-[workspace.dependencies]
-macros = { path = "./macros" }
-shared = { path = "./shared" }
