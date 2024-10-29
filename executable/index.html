@@ -14,9 +14,8 @@
     <link data-trunk rel="inline" href="assets/colors_update_html.mjs" />
 
     <!-- config for our rust wasm binary. go to https://trunkrs.dev/assets/#rust for more customization -->
-    <!-- data-cargo-features="webgl_compat" -->
     <!-- Should the generic approach suggested https://github.com/trunk-rs/trunk/pull/868 be merged, test ffastmath flag for wasm-opt -->
-    <!-- I use reference type ec, since the hard dependency on WebGPU already foregoes any potential for backwards compat -->
+    <!-- I use reference type etc, since the hard dependency on WebGPU already foregoes any potential for backwards compat -->
 
     <!-- THIS WILL BE CHANGED IN A PATCH TO CREATE A FAT WEBPAGE -->
     <link data-trunk rel="rust" data-wasm-opt="2" data-reference-types data-weak-refs data-cargo-no-default-features
