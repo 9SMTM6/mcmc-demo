@@ -6,9 +6,6 @@ const HASHED_FILES = [
     /^\/snippets\/wasm-bindgen-rayon-[a-f0-9]{16}\/src\/workerHelpers\.no-bundler\.js$/,
     /^\/snippets\/wasm-bindgen-rayon-[a-f0-9]{16}\/src\/workerHelpers\.js$/,
     /^\/snippets\/wasm-bindgen-rayon-[a-f0-9]{16}\/src\/workerHelpers\.worker\.js$/,
-    // TODO: really I'd like to have the webpage icon not hashed with how stuff is handled.
-    // But it doesn't seem trunk offers that option.
-    /^\/favicon-[a-f0-9]{16}\.svg$/,
 ];
 const UNHASHED_FILES = [
     "/",
