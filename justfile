@@ -70,7 +70,7 @@ tokio_console:
     # spawn tokio-console in another terminal window
     konsole -e tokio-console
 
-ci_easy_autofixes:
+ci_easy_autofixes: diff_deploy_html diff_fat_html semver_updates
     cargo fmt
     typos --write-changes
 

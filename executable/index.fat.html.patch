@@ -1,5 +1,5 @@
---- index.html	2024-10-29 16:53:39.455696348 +0100
-+++ index.fat.html	2024-10-29 16:54:18.731215104 +0100
+--- index.html	2024-10-30 21:13:36.613156068 +0100
++++ index.fat.html	2024-10-30 21:23:50.301128665 +0100
 @@ -7,7 +7,7 @@
  
  <head>
@@ -9,8 +9,8 @@
  
      <link data-trunk rel="inline" href="assets/serviceworker_register.mjs" />
      <link data-trunk rel="inline" href="assets/no_webgpu.mjs" />
-@@ -19,8 +19,8 @@
-     <!-- I use reference type ec, since the hard dependency on WebGPU already foregoes any potential for backwards compat -->
+@@ -18,8 +18,8 @@
+     <!-- I use reference type etc, since the hard dependency on WebGPU already foregoes any potential for backwards compat -->
  
      <!-- THIS WILL BE CHANGED IN A PATCH TO CREATE A FAT WEBPAGE -->
 -    <link data-trunk rel="rust" data-wasm-opt="2" data-reference-types data-weak-refs data-cargo-no-default-features
