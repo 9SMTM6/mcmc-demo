@@ -1,0 +1,23 @@
+# Generate new matching `index.fat.html` from `index.html` and `index.fat.html.patch`
+patch_deploy_html:
+    patch ../index.html -o index.html < index.deploy.html.patch
+
+# Generate new patch file from matched `index.html` and `index.fat.html`
+diff_deploy_html:
+    diff -u ../index.html index.html > index.deploy.html.patch || true
+
+pre_trunk_deploy:
+    # execute these in parallel
+    #!/usr/bin/env -S parallel --shebang --ungroup --jobs {{ num_cpus() }}
+    just ../trunk_fat  build --release --public-url __RENAME_ME__
+    just ../trunk_slim build --release --public-url __RENAME_ME__
+    just patch_deploy_html
+    cp -r ../assets .
+
+serve_port := "8080"
+
+pre_trunk_deploy_rename:
+    sh ./url_rename.sh http://localhost:{{serve_port}}
+
+trunk_deploy +cmd="serve": pre_trunk_deploy pre_trunk_deploy_rename
+    trunk {{cmd}} --release --public-url http://localhost:{{serve_port}}

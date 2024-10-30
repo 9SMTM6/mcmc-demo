@@ -89,6 +89,11 @@ trunk_slim +cmd="serve":
 
 alias ts := trunk_slim
 
+trunk_deploy +cmd="serve":
+    just executable/trunk_deploy {{cmd}}
+
+alias td := trunk_deploy
+
 # I have yet to find a practical use for this, but how to do this under wayland isn't well documented, so lets keep this around in case it ever becomes helpful.
 renderdoc:
     WAYLAND_DISPLAY="" qrenderdoc renderdoc_settings.cap

@@ -1,0 +1,6 @@
+*
+!index.deploy.html.patch
+!Trunk.toml
+!url_rename.sh
+!.gitignore
+!justfile

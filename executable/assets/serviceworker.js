@@ -19,7 +19,7 @@ self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
     
     if (url.origin === location.origin) {
-        const matchingFilename = UNHASHED_FILES.find(filename => url.pathname === filename);
+        const matchingFilename = UNHASHED_FILES.find(filename => filename === url.pathname);
         const matchingRegexOrFilename = matchingFilename || HASHED_FILES.find(regex => regex.test(url.pathname));
         
         if (matchingRegexOrFilename) {

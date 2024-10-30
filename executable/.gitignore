@@ -1,6 +1,3 @@
-# trunk output folder
-dist/*/
-
 # generated patched fat index.html
 index.fat.html
 
@@ -10,4 +7,3 @@ assets/*.intermediate.*
 
 # https://github.com/lycheeverse/lychee
 .lycheecache
-
