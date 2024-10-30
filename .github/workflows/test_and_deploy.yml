@@ -91,7 +91,7 @@ jobs:
       - name: Download and install Trunk binary
         run: wget -qO- https://github.com/trunk-rs/trunk/releases/latest/download/trunk-x86_64-unknown-linux-gnu.tar.gz | tar -xzf-
       - name: Build combined
-        run: just td build --release
+        run: export PATH=$PATH:$(pwd); just td build --release
       # Cloudflare doesnt respect precompressed artifacts. It just does its own brotli compression, which is pretty shitty.
       # See also ./assets/_headers
       # It might respect gzip artifacts, but these dont reach normal brotli compression levels, and are pretty close the the levels seen with cloudflares brotli.
@@ -237,7 +237,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: 
       - fine-for-deployment
-      - build-webpage
+      - build-combined-webpage
     permissions:
       contents: write # for committing to artifacts/* branch.
     steps:
@@ -250,6 +250,7 @@ jobs:
         with:
           pattern: "*-artifacts"
           path: dist
+          merge-multiple: true
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
