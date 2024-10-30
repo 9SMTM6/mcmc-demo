@@ -29,3 +29,6 @@ trunk_slim +cmd="serve":
 
 trunk_deploy +cmd="serve":
     just dist/trunk_deploy {{cmd}}
+
+diff_deploy_html:
+    just dist/diff_deploy_html

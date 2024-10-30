@@ -94,6 +94,9 @@ trunk_deploy +cmd="serve":
 
 alias td := trunk_deploy
 
+diff_deploy_html:
+    just executable/diff_deploy_html
+
 # I have yet to find a practical use for this, but how to do this under wayland isn't well documented, so lets keep this around in case it ever becomes helpful.
 renderdoc:
     WAYLAND_DISPLAY="" qrenderdoc renderdoc_settings.cap
