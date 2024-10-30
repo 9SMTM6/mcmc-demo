@@ -10,7 +10,7 @@
     }
   ],
   "lang": "en-US",
-  "start_url": "__STABLE_PAGE__/index.html",
+  "start_url": "/index.html",
   "display": "standalone",
   "background_color": "black",
   "theme_color": "green"

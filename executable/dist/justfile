@@ -6,18 +6,11 @@ patch_deploy_html:
 diff_deploy_html:
     diff -u ../index.html index.html > index.deploy.html.patch || true
 
-pre_trunk_deploy:
-    # execute these in parallel
-    #!/usr/bin/env -S parallel --shebang --ungroup --jobs {{ num_cpus() }}
-    just ../trunk_fat  build --release --public-url __SUB_PAGE__
-    just ../trunk_slim build --release --public-url __SUB_PAGE__
+pre_trunk_deploy +flags:
+    just ../trunk_fat  build {{flags}} --public-url /fat/
+    just ../trunk_slim build {{flags}} --public-url /slim/
     just patch_deploy_html
     cp -r ../assets .
 
-serve_port := "8080"
-
-pre_trunk_deploy_rename:
-    sh ./url_rename.sh "http://localhost:{{serve_port}}" "http://localhost:{{serve_port}}"
-
-trunk_deploy +cmd="serve": pre_trunk_deploy pre_trunk_deploy_rename
-    export NEW_RELEASE_URL="http://localhost:{{serve_port}}"; export NEW_STABLE_URL="http://localhost:{{serve_port}}"; trunk {{cmd}} --release --public-url "http://localhost:{{serve_port}}"
+trunk_deploy cmd="serve" *flags="": (pre_trunk_deploy flags)
+    trunk {{cmd}} {{flags}}

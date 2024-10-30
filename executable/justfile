@@ -27,8 +27,8 @@ trunk_fat +cmd="serve": patch_fat_html
 trunk_slim +cmd="serve":
     trunk {{cmd}}
 
-trunk_deploy +cmd="serve":
-    just dist/trunk_deploy {{cmd}}
+trunk_deploy cmd="serve" +flags="":
+    just dist/trunk_deploy {{cmd}} {{flags}}
 
 diff_deploy_html:
     just dist/diff_deploy_html

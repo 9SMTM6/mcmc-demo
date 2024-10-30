@@ -71,11 +71,27 @@ jobs:
       - if: ${{matrix.pre_build}}
         run: ${{matrix.pre_build}}
       - name: Build ${{ matrix.name }}
-        # using --public-url something will allow trunk to modify all the href paths like from favicon.ico to repo_name/favicon.ico .
-        # this is necessary for github pages where the site is deployed to username.github.io/repo_name and all files must be requested
-        # relatively as eframe_template/favicon.ico. if we skip public-url option, the href paths will instead request username.github.io/favicon.ico which
-        # will obviously return error 404 not found.
         run: cd executable && ../trunk build --config ${{ matrix.config_file }} --release --public-url __RENAME_ME__
+      # Cloudflare doesnt respect precompressed artifacts. It just does its own brotli compression, which is pretty shitty.
+      # See also ./assets/_headers
+      # It might respect gzip artifacts, but these dont reach normal brotli compression levels, and are pretty close the the levels seen with cloudflares brotli.
+      # - name: Precompress every file
+      #   run: find ./dist/ -type f -exec brotli -k -f {} \;
+
+  build-combined-webpage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: extractions/setup-just@v2
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{env.RUST_NIGHTLY_TOOLCHAIN_VERSION}}
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+      - name: Download and install Trunk binary
+        run: wget -qO- https://github.com/trunk-rs/trunk/releases/latest/download/trunk-x86_64-unknown-linux-gnu.tar.gz | tar -xzf-
+      - name: Build combined
+        run: just td build --release
       # Cloudflare doesnt respect precompressed artifacts. It just does its own brotli compression, which is pretty shitty.
       # See also ./assets/_headers
       # It might respect gzip artifacts, but these dont reach normal brotli compression levels, and are pretty close the the levels seen with cloudflares brotli.
@@ -84,8 +100,8 @@ jobs:
       - name: Save Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.name }}-artifacts
-          path: executable/dist
+          name: combined-artifacts
+          path: executable/dist/combined
 
   build-executable:
     runs-on: ${{ matrix.os }}
@@ -234,8 +250,6 @@ jobs:
         with:
           pattern: "*-artifacts"
           path: dist
-          merge-multiple: true
-
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:

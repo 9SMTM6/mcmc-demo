@@ -89,8 +89,8 @@ trunk_slim +cmd="serve":
 
 alias ts := trunk_slim
 
-trunk_deploy +cmd="serve":
-    just executable/trunk_deploy {{cmd}}
+trunk_deploy  cmd="serve" +flags="":
+    just executable/trunk_deploy {{cmd}} {{flags}}
 
 alias td := trunk_deploy
 

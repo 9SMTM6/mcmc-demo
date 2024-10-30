@@ -2,7 +2,7 @@
 // It should always get the most up to date files (if connected to the server), but you can Force refresh (Ctrl + F5) to enforce that. 
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker
-        .register('__ROOT_PAGE__/serviceworker.js')
+        .register('/serviceworker.js')
         // update service worker
         .then((registration) => registration.update())
         // don't log errors in console when there's no network connection.
