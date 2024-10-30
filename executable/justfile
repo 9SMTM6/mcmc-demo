@@ -1,3 +1,5 @@
+mod dist
+
 generate_favicon:
     typst compile assets/favicon.typ assets/favicon.intermediate.svg
     svgcleaner assets/favicon.intermediate.svg assets/favicon.svg

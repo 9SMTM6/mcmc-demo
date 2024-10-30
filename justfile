@@ -1,3 +1,5 @@
+mod executable
+
 # this ensures that just running just give a list of commands
 _list:
     just --list
