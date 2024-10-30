@@ -251,7 +251,7 @@ jobs:
           pattern: "*-artifacts"
           path: dist
           merge-multiple: true
-      - name: Deploy to GitHub Pages
+      - name: Deploy to Pages branch
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: dist
