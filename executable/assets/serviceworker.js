@@ -1,11 +1,11 @@
 const CACHE_NAME = 'mmcmc-demo-v1';
 const HASHED_FILES = [
-    /^\/mcmc-demo-[a-f0-9]{16}_bg\.wasm$/,
-    /^\/mcmc-demo-[a-f0-9]{16}\.js$/,
-    /^\/snippets\/wasm-bindgen-futures-[a-f0-9]{16}\/src\/task\/worker\.js$/,
-    /^\/snippets\/wasm-bindgen-rayon-[a-f0-9]{16}\/src\/workerHelpers\.no-bundler\.js$/,
-    /^\/snippets\/wasm-bindgen-rayon-[a-f0-9]{16}\/src\/workerHelpers\.js$/,
-    /^\/snippets\/wasm-bindgen-rayon-[a-f0-9]{16}\/src\/workerHelpers\.worker\.js$/,
+    /^(\/fat|\/slim)?\/mcmc-demo-[a-f0-9]{16}_bg\.wasm$/,
+    /^(\/fat|\/slim)?\/mcmc-demo-[a-f0-9]{16}\.js$/,
+    /^(\/fat|\/slim)?\/snippets\/wasm-bindgen-futures-[a-f0-9]{16}\/src\/task\/worker\.js$/,
+    /^(\/fat|\/slim)?\/snippets\/wasm-bindgen-rayon-[a-f0-9]{16}\/src\/workerHelpers\.no-bundler\.js$/,
+    /^(\/fat|\/slim)?\/snippets\/wasm-bindgen-rayon-[a-f0-9]{16}\/src\/workerHelpers\.js$/,
+    /^(\/fat|\/slim)?\/snippets\/wasm-bindgen-rayon-[a-f0-9]{16}\/src\/workerHelpers\.worker\.js$/,
 ];
 const UNHASHED_FILES = [
     "/",
@@ -19,7 +19,7 @@ self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
     
     if (url.origin === location.origin) {
-        const matchingFilename = UNHASHED_FILES.find(filename => filename === url.pathname);
+        const matchingFilename = UNHASHED_FILES.find(filename => url.pathname.endsWith(filename) );
         const matchingRegexOrFilename = matchingFilename || HASHED_FILES.find(regex => regex.test(url.pathname));
         
         if (matchingRegexOrFilename) {

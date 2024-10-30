@@ -47,13 +47,13 @@
 -                Reload the page to try again.
 -            </p>
 +        <div class="content">
-+            <a href="./fat/index.html">Fat Webpage</a>
++            <a href="fat/index.html">Fat Webpage</a>
          </div>
 -        <div id="loading_el" style="text-align: center;" class="content">
 -            <div class="lds-dual-ring" id="loading_animation"></div>
 -            Loading...
 +        <div class="content">
-+            <a href="./slim/index.html">Slim Webpage</a>
++            <a href="slim/index.html">Slim Webpage</a>
          </div>
 -        <!-- the loading spinner will be removed in main.rs (or not) -->
      </div>

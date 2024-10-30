@@ -9,15 +9,15 @@ diff_deploy_html:
 pre_trunk_deploy:
     # execute these in parallel
     #!/usr/bin/env -S parallel --shebang --ungroup --jobs {{ num_cpus() }}
-    just ../trunk_fat  build --release --public-url __RENAME_ME__
-    just ../trunk_slim build --release --public-url __RENAME_ME__
+    just ../trunk_fat  build --release --public-url __SUB_PAGE__
+    just ../trunk_slim build --release --public-url __SUB_PAGE__
     just patch_deploy_html
     cp -r ../assets .
 
 serve_port := "8080"
 
 pre_trunk_deploy_rename:
-    sh ./url_rename.sh http://localhost:{{serve_port}}
+    sh ./url_rename.sh "http://localhost:{{serve_port}}" "http://localhost:{{serve_port}}"
 
 trunk_deploy +cmd="serve": pre_trunk_deploy pre_trunk_deploy_rename
-    trunk {{cmd}} --release --public-url http://localhost:{{serve_port}}
+    export NEW_RELEASE_URL="http://localhost:{{serve_port}}"; export NEW_STABLE_URL="http://localhost:{{serve_port}}"; trunk {{cmd}} --release --public-url "http://localhost:{{serve_port}}"
