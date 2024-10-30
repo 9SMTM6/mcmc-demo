@@ -1,5 +1,5 @@
---- ../index.html	2024-10-30 18:36:11.403167341 +0100
-+++ index.html	2024-10-30 18:57:04.997905514 +0100
+--- ../index.html	2024-10-30 21:13:36.613156068 +0100
++++ index.html	2024-10-30 21:18:22.097165020 +0100
 @@ -18,8 +18,6 @@
      <!-- I use reference type etc, since the hard dependency on WebGPU already foregoes any potential for backwards compat -->
  
@@ -21,7 +21,11 @@
  
      <meta name="description"
          content="High performance - and website capable - simulation of mcmc built using webGPU and WASM per Rust. This application going to be more performant if installed natively, binaries can be found in the github repository.">
-@@ -43,29 +46,15 @@
+@@ -41,32 +44,19 @@
+     <!-- should be overwritten in JS -->
+     <meta name="theme-color" content="grey" />
+     <link rel="modulepreload" href="/serviceworker.js" crossorigin=anonymous as="serviceworker">
++    <link rel="prefetch" href="/slim/index.html" as="document">
  </head>
  
  <body>
@@ -43,13 +47,13 @@
 -                Reload the page to try again.
 -            </p>
 +        <div class="content">
-+            <a href="/fat/index.html">Fat Webpage</a>
++            <a href="/slim/index.html">Slim Webpage</a>
          </div>
 -        <div id="loading_el" style="text-align: center;" class="content">
 -            <div class="lds-dual-ring" id="loading_animation"></div>
 -            Loading...
 +        <div class="content">
-+            <a href="/slim/index.html">Slim Webpage</a>
++            <a href="/fat/index.html">Fat Webpage</a>
          </div>
 -        <!-- the loading spinner will be removed in main.rs (or not) -->
      </div>
