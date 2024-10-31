@@ -24,7 +24,7 @@
 @@ -41,32 +44,22 @@
      <!-- should be overwritten in JS -->
      <meta name="theme-color" content="grey" />
-     <link rel="modulepreload" href="/serviceworker.js" crossorigin=anonymous as="serviceworker">
+     <link rel="modulepreload" href="/serviceworker.js" crossorigin="anonymous" as="serviceworker">
 +    <!-- local development -->
 +    <link rel="prefetch" href="/slim/index.html" as="document">
 +    <!-- deployed on CF pages -->
