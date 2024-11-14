@@ -94,9 +94,11 @@ alias ts := trunk_slim
 trunk_deploy cmd="serve" +flags="":
     just executable/trunk_deploy {{cmd}} {{flags}}
 
-caddy_serve cmd="serve" +flags="":
+caddy_prepare:
     just trunk_deploy build --release
     just executable/dist/precompress
+
+caddy_serve:
     caddy run
 
 alias td := trunk_deploy
