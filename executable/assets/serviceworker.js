@@ -17,7 +17,7 @@ const UNHASHED_FILES = [
 // Fetch event: Serve cached files, and update old ones / cache new ones
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
-    
+
     if (url.origin === location.origin) {
         const matchingFilename = UNHASHED_FILES.find(filename => url.pathname.endsWith(filename) );
         const matchingRegexOrFilename = matchingFilename || HASHED_FILES.find(regex => regex.test(url.pathname));

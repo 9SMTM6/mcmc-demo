@@ -91,13 +91,21 @@ trunk_slim +cmd="serve":
 
 alias ts := trunk_slim
 
-trunk_deploy  cmd="serve" +flags="":
+trunk_deploy cmd="serve" +flags="":
     just executable/trunk_deploy {{cmd}} {{flags}}
+
+caddy_serve cmd="serve" +flags="":
+    just trunk_deploy build --release
+    just executable/dist/precompress
+    caddy run
 
 alias td := trunk_deploy
 
 diff_deploy_html:
     just executable/diff_deploy_html
+
+patch_deploy_html:
+    just executable/patch_deploy_html
 
 # I have yet to find a practical use for this, but how to do this under wayland isn't well documented, so lets keep this around in case it ever becomes helpful.
 renderdoc:

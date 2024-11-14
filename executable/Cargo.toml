@@ -102,7 +102,7 @@ wgpu_profile = [
     # "temporarily removed". Reinstatement issue: https://github.com/gfx-rs/wgpu/issues/5974
     # "wgpu/trace",
 ]
-tracy = ["dep:tracing-tracy", "tracing"]
+tracy = ["dep:tracing-tracy", "tracing", "dep:tracy-client"]
 
 [dependencies]
 bytemuck = { version = "1.16.0" }
@@ -152,11 +152,10 @@ rayon = "1.10.0"
 educe = { version = "0.6.0", default-features = false, features = [
     "Debug",
 ], optional = true }
-futures = { version = "0.3.30", default-features = false, features = [
-    "executor",
-] }
+futures = { version = "0.3.30", default-features = false, features = ["executor"] }
 macros = { workspace = true }
 shared = { workspace = true }
+tracy-client = { version = "0.17.4", optional = true }
 
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]

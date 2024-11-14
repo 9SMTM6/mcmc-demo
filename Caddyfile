@@ -1,0 +1,25 @@
+# Define the main site block
+# Alternatively:
+# "localhost:8080"
+# Issue is that this causes caddy to request access to port 80 and/or 443 for some reason, meaning it requires root,
+# and also chromium doesn't accept system certificate roots.
+# This means that it doesn't accept the certificate, which seems to disable the serviceworker
+{$PUBLIC_URL:"http://localhost:8080"} {
+	# Serve files from the root folder or subdirectories
+	root executable/dist/combined
+
+	# Set headers for cross-origin isolation (COOP and COEP)
+	header {
+		Cross-Origin-Opener-Policy "same-origin"
+		Cross-Origin-Embedder-Policy "require-corp"
+	}
+
+	# Enable logging for easier debugging
+	# log {
+	# 	output file /var/log/caddy/access.log
+	# }
+
+	file_server {
+		precompressed br
+	}
+}

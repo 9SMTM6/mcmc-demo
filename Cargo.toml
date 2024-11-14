@@ -10,10 +10,14 @@ edition = "2021"
 license = "MIT OR Apache-2.0"
 
 [profile.release]
+# note the override of packages!!!
 opt-level = 2 # fast and small wasm
-# opt-level = "z" #note the override of packages
+# opt-level = 3 # fast
+# opt-level = "s" # small binary
+# opt-level = "z" # small binary + no loop vectorization
 # see: https://fasterthanli.me/articles/why-is-my-rust-build-so-slow#link-time-optimization-lto
 # lto = "thin"
+# lto = "fat"
 # codegen-units = 1
 # panic = "abort"
 # strip = true
@@ -22,6 +26,12 @@ opt-level = 2 # fast and small wasm
 [profile.dev.package."*"]
 opt-level = 2
 
+# Results of some experiments with above options and wasm size on nightly-2024-10-15:
+# Slim compressed version is largely not influenced. 
+# It goes between 1.3 MB and 1.2 MB, 1.2.
+# Fat version is more influenced, it goes between 2.1 MB and 1.7 MB
+# Lowest size generally achieved at opt=z + LTO=fat, though often opt=s comes close too.
+
 [patch.crates-io]
 # the release on patched branches MUST match the set version above, otherwise cargo will ignore this (it will warn about it though).
 
@@ -29,6 +39,7 @@ opt-level = 2
 # The released egui regularly lags behind in wgpu versions, if this is relevant, re-add the patch.
 # egui = { git = "https://github.com/emilk/egui", branch = "master" }
 # eframe = { git = "https://github.com/emilk/egui", branch = "master" }
+wgpu-profiler = { git = "https://github.com/9SMTM6/wgpu-profiler", branch = "support_multi_queue" }
 
 # wgsl_to_wgpu = { path = "../wgsl_to_wgpu/wgsl_to_wgpu" }
 

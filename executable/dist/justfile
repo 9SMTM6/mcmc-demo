@@ -14,3 +14,9 @@ pre_trunk_deploy +flags:
 
 trunk_deploy cmd="serve" *flags="": (pre_trunk_deploy flags)
     trunk {{cmd}} {{flags}}
+
+trunk_build:
+    just trunk_deploy build --release
+
+precompress:
+    find combined/ -type f ! -name '*.br' -print -exec brotli -q 11 -f {} \;

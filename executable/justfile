@@ -34,3 +34,6 @@ trunk_deploy cmd="serve" +flags="":
 
 diff_deploy_html:
     just dist/diff_deploy_html
+
+patch_deploy_html:
+    just dist/patch_deploy_html
