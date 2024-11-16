@@ -1,3 +1,4 @@
+# ignoring directories with most of the data, that is not relevant for this dockerfile.
 .git
 target
 duplicates_tree
