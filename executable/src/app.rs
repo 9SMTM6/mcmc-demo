@@ -1,17 +1,13 @@
 use egui::{self, ProgressBar, Shadow, Vec2};
 use macros::cfg_persistence_derive;
-use std::{sync::Arc, time::Duration};
+use tokio::sync::Notify;
 use type_map::TypeMap;
 
 use crate::{
-    diagnostics::cfg_gpu_profile,
-    helpers::{
-        get_gpu_channels, gpu_scheduler, task_spawn, warn_feature_config, BackgroundTaskManager,
-        BgTaskHandle, GpuTaskSenders, TaskProgress,
-    },
-    simulation::random_walk_metropolis_hastings::{ProgressMode, Rwmh},
-    target_distr,
-    visualizations::{
+    cfg_sleep, helpers::{
+        get_compute_queue, get_gpu_channels, gpu_scheduler, task_spawn,
+        warn_feature_config, BackgroundTaskManager, BgTaskHandle, GpuTaskSenders, TaskProgress,
+    }, simulation::random_walk_metropolis_hastings::{ProgressMode, Rwmh}, target_distr, visualizations::{
         BDAComputeDiff, BDADiff, BackgroundDisplay, BackgroundDisplayDiscr, DistrEdit,
         ElementSettings, SamplePointVisualizer, TargetDistribution,
     },
@@ -96,10 +92,28 @@ impl McmcDemo {
             .wgpu_render_state
             .as_ref()
             .expect("Compiling with WGPU enabled");
+
+        let refresh_token = Arc::new(Notify::new());
+
+        let refresh_on_finished = {
+            let ctx = cc.egui_ctx.clone();
+            let reshresh_token = refresh_token.clone();
+            async move {
+                while Arc::strong_count(&reshresh_token) > 1 {
+                    reshresh_token.notified().await;
+                    tracing::info!("Requesting repaint after finish");
+                    ctx.request_repaint();
+                    cfg_sleep!().await;
+                };
+                tracing::info!("Refresh loop canceled");
+            }
+        };
+
+        task_spawn(refresh_on_finished);
         // TODO: consider dynamically initializing/uninitializing instead.
         TargetDistribution::init_pipeline(render_state);
         BDADiff::init_pipeline(render_state);
-        BDAComputeDiff::init_pipeline(render_state, bda_compute, cc.egui_ctx.clone());
+        BDAComputeDiff::init_pipeline(render_state, bda_compute, refresh_token);
         state
     }
 

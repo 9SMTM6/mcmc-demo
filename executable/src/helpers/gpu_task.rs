@@ -94,18 +94,3 @@ pub(crate) async fn gpu_scheduler(adapter: Arc<wgpu::Adapter>, rxs: GpuTaskRecei
         .start_processing_loop()
         .await;
 }
-
-#[derive(Clone)]
-pub struct RepaintToken {
-    inner: egui::Context,
-}
-
-impl RepaintToken {
-    pub const fn new(inner: egui::Context) -> Self {
-        Self { inner }
-    }
-
-    pub fn request_repaint(&self) {
-        self.inner.request_repaint();
-    }
-}

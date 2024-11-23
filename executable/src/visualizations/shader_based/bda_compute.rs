@@ -6,7 +6,7 @@ use std::{ops::Deref, sync::Arc};
 
 use eframe::egui_wgpu::{CallbackTrait, RenderState};
 use macros::{cfg_educe_debug, cfg_persistence_derive};
-use tokio::sync::{oneshot, watch};
+use tokio::sync::{oneshot, watch, Notify};
 use tracing::Instrument;
 use wgpu::{
     Buffer, BufferDescriptor, BufferUsages, CommandEncoderDescriptor, ComputePassDescriptor,
@@ -14,8 +14,8 @@ use wgpu::{
 };
 
 use crate::{
-    cfg_sleep, create_shader_module,
-    helpers::{task_spawn, GpuTask, RepaintToken, TaskDispatcher},
+    create_shader_module,
+    helpers::{GpuTask, TaskDispatcher},
     simulation::random_walk_metropolis_hastings::Rwmh,
     target_distr,
     visualizations::AlgoPainter,
@@ -77,6 +77,7 @@ struct PipelineStateHolder {
     compute_results_tx: watch::Sender<Option<ComputeBufCpuRepr>>,
     compute_results_rx: watch::Receiver<Option<ComputeBufCpuRepr>>,
     prev_approx_len: usize,
+    refresh_token: Arc<Notify>,
 }
 
 impl AlgoPainter for BDAComputeDiff {
@@ -102,7 +103,7 @@ impl BDAComputeDiff {
     pub fn init_pipeline(
         render_state: &RenderState,
         gpu_tx: TaskDispatcher<ComputeTask>,
-        ctx: egui::Context,
+        refresh_token: Arc<Notify>,
     ) {
         let device = &render_state.device;
 
@@ -151,23 +152,6 @@ impl BDAComputeDiff {
 
         let (compute_results_tx, compute_results_rx) = watch::channel(None);
 
-        let refresh_on_finished = {
-            let compute_results_rx = compute_results_rx.clone();
-            let repaint_token = RepaintToken::new(ctx);
-            async move {
-                let mut compute_results_rx = compute_results_rx;
-                while compute_results_rx.changed().await.is_ok() {
-                    tracing::info!("Requesting repaint after finish");
-                    repaint_token.request_repaint();
-                    cfg_sleep!().await;
-                }
-                tracing::error!("Refresh loop canceled");
-            }
-        }
-        .in_current_span();
-
-        task_spawn(refresh_on_finished);
-
         // Because the graphics pipeline must have the same lifetime as the egui render pass,
         // instead of storing the pipeline in our struct, we insert it into the
         // `callback_resources` type map, which is stored alongside the render pass.
@@ -185,6 +169,7 @@ impl BDAComputeDiff {
                 gpu_tx,
                 compute_results_rx,
                 compute_results_tx,
+                refresh_token,
                 prev_approx_len: 0,
             })
         else {
@@ -222,6 +207,7 @@ impl CallbackTrait for RenderCall {
             ref compute_results_tx,
             ref mut compute_results_rx,
             ref mut prev_approx_len,
+            ref refresh_token,
             ..
         } = callback_resources
             .get_mut()
@@ -250,11 +236,17 @@ impl CallbackTrait for RenderCall {
         }
         if res_changed || approx_changed {
             let compute_results_tx = compute_results_tx.clone();
+            let refresh_token = refresh_token.clone();
             // old value is now outdated.
             tracing::info!("resetting compute result");
             compute_results_tx.send(None).unwrap();
             let rx = dispatch_approximation_gpu(gpu_tx, self);
-            wasm_thread::spawn(move || dispatch_maxnorm_rayon(rx, &compute_results_tx));
+            // TODO: reconsider why this isn't a task
+            // I think it was that this would block on main thread on the web, and making this and a task on native compatible with each other is nasty.
+            wasm_thread::spawn(move || {
+                dispatch_maxnorm_rayon(rx, &compute_results_tx);
+                refresh_token.notify_waiters();
+            });
         }
         if compute_results_rx
             .has_changed()
