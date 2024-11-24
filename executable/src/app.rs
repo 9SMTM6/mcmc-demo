@@ -306,7 +306,8 @@ impl eframe::App for McmcDemo {
                             self.point_display = None;
                         } else {
                             let mut accept_color_fullspace =
-                                egui::Rgba::from(point_display.accepted_point_color).to_array();
+                                egui::Rgba::from(point_display.accepted_point_color)
+                                    .to_rgba_unmultiplied();
                             ui.label("set acceptance color");
                             ui.color_edit_button_rgba_unmultiplied(&mut accept_color_fullspace);
                             point_display.accepted_point_color =
