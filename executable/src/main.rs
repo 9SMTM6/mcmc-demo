@@ -40,7 +40,7 @@ pub fn main() {
         env_logger::init()
     );
     // egui must run on the main thread.
-    // At the same time tokio breaks with a long-running blocking task, and using spawn_blocking will move that task of the main thread.
+    // At the same time tokio is broken when running a long-running blocking task on its executor. The solution - spawn_blocking - will move the execution off the main thread, so also isnt an Option.
     // Thus the manual finangling.
 
     let mut tokio_rt = tokio::runtime::Builder::new_multi_thread();
@@ -50,24 +50,39 @@ pub fn main() {
 
     let tokio_rt = tokio_rt.build().unwrap();
 
-    let _rt_guard = tokio_rt.enter();
-
-    let native_options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default()
-            .with_min_inner_size(INITIAL_RENDER_SIZE)
-            .with_icon(
-                eframe::icon_data::from_png_bytes(&include_bytes!("../assets/favicon-256.png")[..])
+    tokio_rt.block_on(async {
+        // doing blocking IO SHOULD be fine in this future, since it doesn't run on a task executor:
+        // > This runs the given future on the current thread, blocking until it is complete, and yielding its resolved result. Any tasks or timers which the future spawns internally will be executed on the runtime.
+        let native_options = eframe::NativeOptions {
+            viewport: egui::ViewportBuilder::default()
+                .with_min_inner_size(INITIAL_RENDER_SIZE)
+                .with_icon(
+                    eframe::icon_data::from_png_bytes(
+                        &include_bytes!("../assets/favicon-256.png")[..],
+                    )
                     .expect("Failed to load icon"),
-            ),
-        wgpu_options: wgpu_options(),
-        ..Default::default()
-    };
-    eframe::run_native(
-        "mcmc-demo",
-        native_options,
-        Box::new(|cc| Ok(Box::new(mcmc_demo::McmcDemo::new(cc)))),
-    )
-    .unwrap();
+                ),
+            wgpu_options: wgpu_options(),
+            ..Default::default()
+        };
+        eframe::run_native(
+            "mcmc-demo",
+            native_options,
+            // this abomination is simply what eframe requires for app_creator
+            Box::new(|cc| {
+                Ok(Box::new(
+                    // this abomination is required to re-enter an async context in the callback.
+                    // I need an async context, because I need the compute device and queue,
+                    // which I can only get with an async call.
+                    tokio::task::block_in_place(|| {
+                        tokio_rt.block_on(async { mcmc_demo::McmcDemo::new(cc).await })
+                    }),
+                ))
+            }),
+        )
+        .unwrap();
+    });
+
     tracing::info!("shutting down");
     // TODO: This is somewhat inelegant, maybe I can find a better way.
     tokio_rt.shutdown_timeout(Duration::from_secs(1));
@@ -102,35 +117,41 @@ fn main() {
         let local_set = tokio::task::LocalSet::new();
 
         local_set.spawn_local(async {
-            let (result, _) = tokio::join!(
+            // Assembling these futures inside of tokio_join breaks rust-analyzer, so I create them outside and only assign them in the end.
+            let rayon_threadpool =
                 wasm_bindgen_futures::JsFuture::from(wasm_bindgen_rayon::init_thread_pool(
                     wasm_thread::available_parallelism().unwrap().into(),
-                )),
-                async {
-                    let web_options = eframe::WebOptions {
-                        wgpu_options: wgpu_options(),
-                        ..Default::default()
-                    };
-                    eframe::WebRunner::new()
-                        .start(
-                            get_egui_canvas(),
-                            web_options,
-                            Box::new(|cc| Ok(Box::new(mcmc_demo::McmcDemo::new(cc)))),
-                        )
-                        .await
-                        .or_else(|err| {
-                            let fmt_err = format!("{err:?}");
-                            if fmt_err.contains("wgpu") {
-                                // should've been handled in js
-                                Ok(())
-                            } else {
-                                Err(err)
-                            }
-                        })
-                        .unwrap();
-                    remove_loading_state();
-                }
-            );
+                ));
+            let webapp_init = async {
+                let web_options = eframe::WebOptions {
+                    wgpu_options: wgpu_options(),
+                    ..Default::default()
+                };
+                eframe::WebRunner::new()
+                    .start(
+                        get_egui_canvas(),
+                        web_options,
+                        Box::new(|cc| {
+                            futures::executor::block_on(async {
+                                Ok(Box::new(mcmc_demo::McmcDemo::new(cc).await)
+                                    as Box<dyn eframe::App>)
+                            })
+                        }),
+                    )
+                    .await
+                    .or_else(|err| {
+                        let fmt_err = format!("{err:?}");
+                        if fmt_err.contains("wgpu") {
+                            // should've been handled in js
+                            Ok(())
+                        } else {
+                            Err(err)
+                        }
+                    })
+                    .unwrap();
+                remove_loading_state();
+            };
+            let (result, _) = tokio::join!(rayon_threadpool, webapp_init,);
             result.unwrap();
         });
         local_set.await;

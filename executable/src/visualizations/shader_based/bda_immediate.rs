@@ -1,10 +1,11 @@
 use std::sync::Arc;
 
-use eframe::egui_wgpu::{CallbackTrait, RenderState};
+use eframe::egui_wgpu::CallbackTrait;
 use macros::cfg_persistence_derive;
+use tokio::sync::Notify;
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
-    Buffer, BufferDescriptor, BufferUsages, RenderPipeline, RenderPipelineDescriptor,
+    Buffer, BufferDescriptor, BufferUsages, Device, RenderPipeline, RenderPipelineDescriptor,
 };
 
 use crate::{
@@ -67,7 +68,7 @@ pub fn get_approx_buffers(
     (accept_buffer, info_buffer)
 }
 
-struct PipelineStateHolder {
+pub struct PipelineStateHolder {
     pipeline: RenderPipeline,
     bind_group_0: shader_bindings::bind_groups::BindGroup0,
     bind_group_1: shader_bindings::bind_groups::BindGroup1,
@@ -96,10 +97,12 @@ impl AlgoPainter for BDADiff {
     }
 }
 
-impl BDADiff {
-    pub fn init_pipeline(render_state: &RenderState) {
-        let device = &render_state.device;
-
+impl PipelineStateHolder {
+    pub fn create(
+        device: &Device,
+        target_format: wgpu::ColorTargetState,
+        _refresh_token: Arc<Notify>,
+    ) -> Self {
         let webgpu_debug_name = Some(file!());
 
         let layout = shader_bindings::create_pipeline_layout(device);
@@ -111,7 +114,7 @@ impl BDADiff {
             ),
             fragment: Some(shader_bindings::fragment_state(
                 &shader_bindings::create_shader_module(device),
-                &shader_bindings::fs_main_entry([Some(render_state.target_format.into())]),
+                &shader_bindings::fs_main_entry([Some(target_format)]),
             )),
             label: webgpu_debug_name,
             layout: Some(&layout),
@@ -147,22 +150,15 @@ impl BDADiff {
         // Because the graphics pipeline must have the same lifetime as the egui render pass,
         // instead of storing the pipeline in our struct, we insert it into the
         // `callback_resources` type map, which is stored alongside the render pass.
-        let None = render_state
-            .renderer
-            .write()
-            .callback_resources
-            .insert(PipelineStateHolder {
-                pipeline,
-                bind_group_0,
-                bind_group_1,
-                resolution_buffer,
-                target_buffer: normdistr_buffer,
-                approx_accepted_buffer,
-                approx_info_buffer,
-            })
-        else {
-            unreachable!("pipeline already present?!")
-        };
+        Self {
+            pipeline,
+            bind_group_0,
+            bind_group_1,
+            resolution_buffer,
+            target_buffer: normdistr_buffer,
+            approx_accepted_buffer,
+            approx_info_buffer,
+        }
     }
 }
 

@@ -1,12 +1,16 @@
-use eframe::egui_wgpu::{CallbackTrait, RenderState};
+use std::sync::Arc;
+
+use eframe::egui_wgpu::CallbackTrait;
 use macros::cfg_persistence_derive;
+use tokio::sync::Notify;
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
-    Buffer, BufferDescriptor, BufferUsages, RenderPipeline, RenderPipelineDescriptor,
+    Buffer, BufferDescriptor, BufferUsages, Device, RenderPipeline, RenderPipelineDescriptor,
 };
 
 use crate::{
-    simulation::random_walk_metropolis_hastings::Rwmh, target_distr, visualizations::AlgoPainter,
+    definition_location, simulation::random_walk_metropolis_hastings::Rwmh, target_distr,
+    visualizations::AlgoPainter,
 };
 
 use super::{fullscreen_quad, resolution_uniform::get_resolution_buffer};
@@ -22,7 +26,7 @@ use shader_bindings::{
 
 pub use shader_bindings::NormalDistribution;
 
-struct MultiModalGaussPipeline {
+pub struct PipelineStateHolder {
     pipeline: RenderPipeline,
     bind_group_0: BindGroup0,
     bind_group_1: BindGroup1,
@@ -77,11 +81,13 @@ pub(super) fn get_normaldistr_buffer(
     }
 }
 
-impl TargetDistribution {
-    pub fn init_pipeline(render_state: &RenderState) {
-        let device = &render_state.device;
-
-        let webgpu_debug_name = Some(file!());
+impl PipelineStateHolder {
+    pub fn create(
+        device: &Device,
+        target_format: wgpu::ColorTargetState,
+        _refresh_token: Arc<Notify>,
+    ) -> Self {
+        let webgpu_debug_name = Some(definition_location!());
 
         let layout = shader_bindings::create_pipeline_layout(device);
 
@@ -97,7 +103,7 @@ impl TargetDistribution {
             ),
             fragment: Some(shader_bindings::fragment_state(
                 &shader_bindings::create_shader_module(device),
-                &shader_bindings::fs_main_entry([Some(render_state.target_format.into())]),
+                &shader_bindings::fs_main_entry([Some(target_format)]),
             )),
             label: webgpu_debug_name,
             layout: Some(&layout),
@@ -125,25 +131,13 @@ impl TargetDistribution {
                 gauss_bases: normdistr_buffer.as_entire_buffer_binding(),
             },
         );
-
-        // Because the graphics pipeline must have the same lifetime as the egui render pass,
-        // instead of storing the pipeline in our struct, we insert it into the
-        // `callback_resources` type map, which is stored alongside the render pass.
-        let None =
-            render_state
-                .renderer
-                .write()
-                .callback_resources
-                .insert(MultiModalGaussPipeline {
-                    pipeline,
-                    bind_group_0,
-                    bind_group_1,
-                    resolution_buffer,
-                    target_buffer: normdistr_buffer,
-                })
-        else {
-            unreachable!("pipeline already present?!")
-        };
+        Self {
+            pipeline,
+            bind_group_0,
+            bind_group_1,
+            resolution_buffer,
+            target_buffer: normdistr_buffer,
+        }
     }
 }
 
@@ -162,7 +156,7 @@ impl CallbackTrait for RenderCall {
         _egui_encoder: &mut wgpu::CommandEncoder,
         callback_resources: &mut eframe::egui_wgpu::CallbackResources,
     ) -> Vec<wgpu::CommandBuffer> {
-        let &mut MultiModalGaussPipeline {
+        let &mut PipelineStateHolder {
             ref mut resolution_buffer,
             ref mut target_buffer,
             ref mut bind_group_1,
@@ -207,7 +201,7 @@ impl CallbackTrait for RenderCall {
         render_pass: &mut wgpu::RenderPass<'static>,
         callback_resources: &'a eframe::egui_wgpu::CallbackResources,
     ) {
-        let &MultiModalGaussPipeline {
+        let &PipelineStateHolder {
             ref pipeline,
             ref bind_group_0,
             ref bind_group_1,

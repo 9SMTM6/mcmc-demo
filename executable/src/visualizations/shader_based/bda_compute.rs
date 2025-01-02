@@ -4,13 +4,12 @@
 
 use std::{ops::Deref, sync::Arc};
 
-use eframe::egui_wgpu::{CallbackTrait, RenderState};
+use eframe::egui_wgpu::CallbackTrait;
 use macros::{cfg_educe_debug, cfg_persistence_derive};
 use tokio::sync::{oneshot, watch, Notify};
-use tracing::Instrument;
 use wgpu::{
     Buffer, BufferDescriptor, BufferUsages, CommandEncoderDescriptor, ComputePassDescriptor,
-    ComputePipelineDescriptor, RenderPipeline, RenderPipelineDescriptor,
+    ComputePipelineDescriptor, Device, RenderPipeline, RenderPipelineDescriptor,
 };
 
 use crate::{
@@ -29,8 +28,8 @@ use super::{
     INITIAL_RENDER_SIZE,
 };
 
-create_shader_module!("binary_distance_approx.compute", compute_bindings);
-create_shader_module!("binary_distance_approx.fragment", fragment_bindings);
+create_shader_module!("binary_distance_approx.compute", mod compute_bindings);
+create_shader_module!("binary_distance_approx.fragment", mod fragment_bindings);
 
 pub use compute_bindings::ResolutionInfo;
 
@@ -66,7 +65,7 @@ pub struct BDAComputeDiff {}
 // I dont need to read this properly on the CPU right now
 type ComputeBufCpuRepr = Vec<f32>;
 
-struct PipelineStateHolder {
+pub struct PipelineStateHolder {
     fragment_pipeline: RenderPipeline,
     fragment_group_0: fragment_bindings::BindGroup0,
     fragment_group_1: fragment_bindings::BindGroup1,
@@ -99,14 +98,13 @@ impl AlgoPainter for BDAComputeDiff {
     }
 }
 
-impl BDAComputeDiff {
-    pub fn init_pipeline(
-        render_state: &RenderState,
+impl PipelineStateHolder {
+    pub fn create(
+        device: &Device,
+        target_format: wgpu::ColorTargetState,
         gpu_tx: TaskDispatcher<ComputeTask>,
         refresh_token: Arc<Notify>,
-    ) {
-        let device = &render_state.device;
-
+    ) -> Self {
         let webgpu_debug_name = Some(definition_location!());
 
         let fragment_layout = fragment_bindings::create_pipeline_layout(device);
@@ -118,7 +116,7 @@ impl BDAComputeDiff {
             ),
             fragment: Some(fragment_bindings::fragment_state(
                 &fragment_bindings::create_shader_module(device),
-                &fragment_bindings::fs_main_entry([Some(render_state.target_format.into())]),
+                &fragment_bindings::fs_main_entry([Some(target_format)]),
             )),
             label: webgpu_debug_name,
             layout: Some(&fragment_layout),
@@ -152,29 +150,19 @@ impl BDAComputeDiff {
 
         let (compute_results_tx, compute_results_rx) = watch::channel(None);
 
-        // Because the graphics pipeline must have the same lifetime as the egui render pass,
-        // instead of storing the pipeline in our struct, we insert it into the
-        // `callback_resources` type map, which is stored alongside the render pass.
-        let None = render_state
-            .renderer
-            .write()
-            .callback_resources
-            .insert(PipelineStateHolder {
-                fragment_group_0,
-                fragment_group_1,
-                fragment_pipeline,
-                resolution_buffer,
-                compute_output_buffer,
-                target_buffer,
-                gpu_tx,
-                compute_results_rx,
-                compute_results_tx,
-                refresh_token,
-                prev_approx_len: 0,
-            })
-        else {
-            unreachable!("pipeline already present?!")
-        };
+        Self {
+            fragment_group_0,
+            fragment_group_1,
+            fragment_pipeline,
+            resolution_buffer,
+            compute_output_buffer,
+            target_buffer,
+            gpu_tx,
+            compute_results_rx,
+            compute_results_tx,
+            refresh_token,
+            prev_approx_len: 0,
+        }
     }
 }
 

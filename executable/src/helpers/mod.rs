@@ -10,7 +10,9 @@ use tokio::task;
 
 pub use async_last_task_processor::TaskDispatcher;
 pub use bg_task::{BackgroundTaskManager, BgTaskHandle, TaskProgress};
-pub(crate) use gpu_task::{get_gpu_channels, gpu_scheduler, GpuTask, GpuTaskSenders, RepaintToken};
+pub(crate) use gpu_task::{
+    get_compute_queue, get_gpu_channels, gpu_scheduler, GpuTask, GpuTaskSenders,
+};
 pub use temp_ui_state::TempStateDataAccess;
 
 use crate::{definition_location, diagnostics::cfg_gpu_profile};

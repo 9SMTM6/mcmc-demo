@@ -3,10 +3,14 @@ mod bda_immediate;
 mod resolution_uniform;
 mod target_distr;
 
-pub use bda_compute::{BDAComputeDiff, ComputeTask as BdaComputeTask};
-pub use bda_immediate::{shader_bindings::RWMHAcceptRecord, BDADiff};
+pub use bda_compute::{
+    BDAComputeDiff, ComputeTask as BdaComputeTask, PipelineStateHolder as BdaComputeState,
+};
+pub use bda_immediate::{
+    shader_bindings::RWMHAcceptRecord, BDADiff, PipelineStateHolder as BDADiffState,
+};
 pub use resolution_uniform::INITIAL_RENDER_SIZE;
-pub use target_distr::{NormalDistribution, TargetDistribution};
+pub use target_distr::{NormalDistribution, PipelineStateHolder as MMGState, TargetDistribution};
 
 #[macro_export]
 #[allow(unknown_lints, reason = "not a lint on stable...")]
@@ -15,7 +19,7 @@ pub use target_distr::{NormalDistribution, TargetDistribution};
     reason = "Can't be fixed on stable"
 )]
 macro_rules! create_shader_module {
-    ($shader_name:expr, $module_name: ident) => {
+    ($shader_name:expr, mod $module_name: ident) => {
         #[allow(
             unused,
             elided_lifetimes_in_paths,
@@ -37,7 +41,7 @@ macro_rules! create_shader_module {
             pub use bind_groups::*;
         }
     };
-    ($shader_name:expr, $module_name: ident; no redefine) => {
+    ($shader_name:expr, mod $module_name: ident; no redefine) => {
         #[allow(
             unused,
             elided_lifetimes_in_paths,
@@ -58,8 +62,8 @@ macro_rules! create_shader_module {
         }
     };
     ($shader_name:expr) => {
-        create_shader_module!($shader_name, shader_bindings);
+        create_shader_module!($shader_name, mod shader_bindings);
     };
 }
 
-create_shader_module!("fullscreen_quad.vertex", fullscreen_quad; no redefine);
+create_shader_module!("fullscreen_quad.vertex", mod fullscreen_quad; no redefine);

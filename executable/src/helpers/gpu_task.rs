@@ -41,17 +41,10 @@ impl GpuTask for DebugTask {
     }
 }
 
-#[allow(
-    clippy::used_underscore_binding,
-    reason = "That lint seems problematic on nightly right now"
-)]
-/// TODO: Consider moving this to be a struct instead, with cancel on drop etc.
-/// This being a function was originally required from embassy-rs, which is now replaced with tokio.
-///
 /// # Panics
 /// If no wgpu device could be found with the provided settings, if the gpu_task channel was closed.
-pub(crate) async fn gpu_scheduler(adapter: Arc<wgpu::Adapter>, rxs: GpuTaskReceivers) {
-    let (compute_device, compute_queue) = adapter
+pub(crate) async fn get_compute_queue(adapter: Arc<wgpu::Adapter>) -> (wgpu::Device, wgpu::Queue) {
+    adapter
         .request_device(
             &wgpu::DeviceDescriptor {
                 label: Some(definition_location!()),
@@ -61,8 +54,19 @@ pub(crate) async fn gpu_scheduler(adapter: Arc<wgpu::Adapter>, rxs: GpuTaskRecei
             None,
         )
         .await
-        .unwrap();
+        .unwrap()
+}
 
+#[allow(
+    clippy::used_underscore_binding,
+    reason = "That lint seems problematic on nightly right now"
+)]
+/// TODO: Consider moving this to be a struct instead, with cancel on drop etc.
+/// This being a function was originally required from embassy-rs, which is now replaced with tokio.
+pub(crate) async fn gpu_scheduler(
+    (compute_device, compute_queue): (wgpu::Device, wgpu::Queue),
+    rxs: GpuTaskReceivers,
+) {
     // compute_device.start_capture();
 
     #[cfg_attr(

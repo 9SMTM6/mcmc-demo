@@ -1,15 +1,20 @@
 use egui::{self, ProgressBar, Shadow, Vec2};
 use macros::cfg_persistence_derive;
+use std::{rc::Rc, sync::Arc, time::Duration};
 use tokio::sync::Notify;
 use type_map::TypeMap;
 
 use crate::{
-    cfg_sleep, helpers::{
-        get_compute_queue, get_gpu_channels, gpu_scheduler, task_spawn,
-        warn_feature_config, BackgroundTaskManager, BgTaskHandle, GpuTaskSenders, TaskProgress,
-    }, simulation::random_walk_metropolis_hastings::{ProgressMode, Rwmh}, target_distr, visualizations::{
-        BDAComputeDiff, BDADiff, BackgroundDisplay, BackgroundDisplayDiscr, DistrEdit,
-        ElementSettings, SamplePointVisualizer, TargetDistribution,
+    cfg_sleep,
+    helpers::{
+        get_compute_queue, get_gpu_channels, gpu_scheduler, task_spawn, warn_feature_config,
+        BackgroundTaskManager, BgTaskHandle, GpuTaskSenders, TaskProgress,
+    },
+    simulation::random_walk_metropolis_hastings::{ProgressMode, Rwmh},
+    target_distr,
+    visualizations::{
+        BDADiffState, BackgroundDisplay, BackgroundDisplayDiscr, BdaComputeState, DistrEdit,
+        ElementSettings, MMGState, SamplePointVisualizer,
     },
 };
 
@@ -43,31 +48,61 @@ impl Default for McmcDemo {
     }
 }
 
+struct ComputeProfiler(Arc<wgpu_profiler::GpuProfiler>);
+struct GUIProfiler(Rc<wgpu_profiler::GpuProfiler>);
+
+macro_rules! assert_none {
+    ($expr:expr) => {
+        assert!(matches!($expr, None));
+    };
+}
+
 impl McmcDemo {
     /// Called once before the first frame.
     #[expect(clippy::missing_panics_doc, reason = "only used once")]
-    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+    pub async fn new(cc: &eframe::CreationContext<'_>) -> Self {
         warn_feature_config();
 
         let wgpu_render_state = cc.wgpu_render_state.as_ref().unwrap();
 
         let adapter = &wgpu_render_state.adapter;
 
+        let (GpuTaskSenders { bda_compute }, gpu_rx) = get_gpu_channels();
+
+        let (compute_device, compute_queue) = get_compute_queue(adapter.clone()).await;
+
         // I might end up creating a profiler for every workload.
         // Reason is that many relevant APIs require mutable access, making sharing annoying.
         // And, calling end_frame does not actually need to be called at top level, from my current understanding.
         // just call it at the end of the compute/render in these methods.
-        #[allow(clippy::let_unit_value, reason = "the type is cfg dependent")]
-        let _cfg_profiler = cfg_gpu_profile::get_profiler(
+        let msg = "Settings are statically choosen, I only build the profiler with the purpose to target tracy - together with tracing - and if the wgpu handles are invalid nothing else is gonna work either way";
+        let shared_tracy_context = wgpu_profiler::GpuProfiler::create_tracy_context(
             adapter.get_info().backend,
-            wgpu_render_state.device.as_ref(),
-            wgpu_render_state.queue.as_ref(),
+            &wgpu_render_state.device,
+            &wgpu_render_state.queue,
+        )
+        .expect(msg);
+
+        let cfg_profiler_gui = Rc::new(
+            wgpu_profiler::GpuProfiler::new_with_shared_tracy_context(
+                Default::default(),
+                shared_tracy_context.clone(),
+            )
+            .expect(msg),
         );
+
+        let cfg_profiler_compute = Arc::new(
+            wgpu_profiler::GpuProfiler::new_with_shared_tracy_context(
+                Default::default(),
+                shared_tracy_context.clone(),
+            )
+            .expect(msg),
+        );
+
+        // _cfg_profiler_gui.scope("target_distr", encoder_or_pass, device)
         // TODO: Also make a profiler for compute (its actually the main purpose).
 
-        let (GpuTaskSenders { bda_compute }, gpu_rx) = get_gpu_channels();
-
-        let gpu_scheduler = gpu_scheduler(adapter.clone(), gpu_rx);
+        let gpu_scheduler = gpu_scheduler((compute_device, compute_queue), gpu_rx);
 
         task_spawn(gpu_scheduler);
 
@@ -87,7 +122,13 @@ impl McmcDemo {
             visuals.window_shadow = Shadow::NONE;
         });
 
-        let state = Self::get_state(cc);
+        let mut state = Self::get_state(cc);
+
+        state
+            .local_resources
+            .insert(ComputeProfiler(cfg_profiler_compute));
+        state.local_resources.insert(GUIProfiler(cfg_profiler_gui));
+
         let render_state = cc
             .wgpu_render_state
             .as_ref()
@@ -104,16 +145,53 @@ impl McmcDemo {
                     tracing::info!("Requesting repaint after finish");
                     ctx.request_repaint();
                     cfg_sleep!().await;
-                };
+                }
                 tracing::info!("Refresh loop canceled");
             }
         };
 
         task_spawn(refresh_on_finished);
+
+        // let _callback_resources = state_guard
+        //     .callback_resources
+        //     .entry::<PipelineStateHolder>();
+
+        // matches!(callback_resources, Entry::Vacant(_));
+
+        // callback_resources.or_insert_with(|| {
+        //     todo!();
+        // });
+
         // TODO: consider dynamically initializing/uninitializing instead.
-        TargetDistribution::init_pipeline(render_state);
-        BDADiff::init_pipeline(render_state);
-        BDAComputeDiff::init_pipeline(render_state, bda_compute, refresh_token);
+
+        {
+            let mut state_guard = render_state.renderer.write();
+            let callback_resources = &mut state_guard.callback_resources;
+
+            let render_state = cc.wgpu_render_state.as_ref().unwrap();
+            let device = &render_state.device;
+            let target_format: wgpu::ColorTargetState = render_state.target_format.into();
+
+            assert_none!(callback_resources.insert(BdaComputeState::create(
+                device.as_ref(),
+                target_format.clone(),
+                bda_compute,
+                refresh_token.clone(),
+            )));
+
+            assert_none!(callback_resources.insert(MMGState::create(
+                device.as_ref(),
+                target_format.clone(),
+                refresh_token.clone(),
+            )));
+
+            assert_none!(callback_resources.insert(BDADiffState::create(
+                device.as_ref(),
+                target_format.clone(),
+                refresh_token.clone(),
+            )));
+        }
+
         state
     }
 
@@ -157,6 +235,7 @@ impl eframe::App for McmcDemo {
         )]
         frame: &mut eframe::Frame,
     ) {
+        // frame.wgpu_render_state().as_ref().expect("Compiling with WGPU enabled")
         // Put your widgets into a `SidePanel`, `TopBottomPanel`, `CentralPanel`, `Window` or `Area`.
         // For inspiration and more examples, go to https://egui.rs
 
@@ -310,14 +389,9 @@ impl eframe::App for McmcDemo {
                                     .to_rgba_unmultiplied();
                             ui.label("set acceptance color");
                             ui.color_edit_button_rgba_unmultiplied(&mut accept_color_fullspace);
+                            let [r, g, b, a] = accept_color_fullspace;
                             point_display.accepted_point_color =
-                                egui::Rgba::from_rgba_unmultiplied(
-                                    accept_color_fullspace[0],
-                                    accept_color_fullspace[1],
-                                    accept_color_fullspace[2],
-                                    accept_color_fullspace[3],
-                                )
-                                .into();
+                                egui::Rgba::from_rgba_unmultiplied(r, g, b, a).into();
                             ui.add(
                                 egui::Slider::new(&mut point_display.point_radius, 0.5..=5.0)
                                     .text("point radius"),
@@ -336,13 +410,9 @@ impl eframe::App for McmcDemo {
                                     ui.color_edit_button_rgba_unmultiplied(
                                         &mut reject_color_fullspace,
                                     );
-                                    *reject_color = egui::Rgba::from_rgba_unmultiplied(
-                                        reject_color_fullspace[0],
-                                        reject_color_fullspace[1],
-                                        reject_color_fullspace[2],
-                                        reject_color_fullspace[3],
-                                    )
-                                    .into();
+                                    let [r, g, b, a] = reject_color_fullspace;
+                                    *reject_color =
+                                        egui::Rgba::from_rgba_unmultiplied(r, g, b, a).into();
                                 }
                             } else if ui.button("display rejections").clicked() {
                                 point_display.rejected_point_color = Some(egui::Color32::YELLOW);
@@ -408,6 +478,8 @@ impl eframe::App for McmcDemo {
                         },
                     );
             });
+        let ComputeProfiler(_compute_profiler) = self.local_resources.get().expect("blah");
+        let GUIProfiler(_gui_profiler) = self.local_resources.get().expect("blah");
     }
 }
 
