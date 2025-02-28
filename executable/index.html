@@ -44,8 +44,9 @@
 </head>
 
 <body>
-    <!-- the id is hardcoded in main.rs . so, make sure both match. -->
+    <!-- This is where egui renders. The ID is used to match the correct element -->
     <canvas id="egui_canvas"></canvas>
+    <!-- These elements will be shown depending on - mostly JS - logic -->
     <div class="centered centered-container">
         <link data-trunk rel="inline" href="assets/no_webgpu.html" />
 
@@ -66,7 +67,6 @@
             <div class="lds-dual-ring" id="loading_animation"></div>
             Loading...
         </div>
-        <!-- the loading spinner will be removed in main.rs (or not) -->
     </div>
 </body>
 
