@@ -1,5 +1,5 @@
 [toolchain]
 # If you change this, adjust the toolchain in the pipeline accordingly, otherwise the pipelines will end up very slow.
-channel = "nightly-2024-10-15"
+channel = "nightly-2025-03-25"
 components = ["rust-src", "rustfmt", "clippy"]
 targets = ["wasm32-unknown-unknown"]

@@ -1,6 +1,6 @@
 use egui::{self, ProgressBar, Shadow, Vec2};
 use macros::cfg_persistence_derive;
-use std::{rc::Rc, sync::Arc, time::Duration};
+use std::{sync::Arc, time::Duration};
 use tokio::sync::Notify;
 use type_map::TypeMap;
 
@@ -48,12 +48,12 @@ impl Default for McmcDemo {
     }
 }
 
-struct ComputeProfiler(Arc<wgpu_profiler::GpuProfiler>);
-struct GUIProfiler(Rc<wgpu_profiler::GpuProfiler>);
+// struct ComputeProfiler(Arc<wgpu_profiler::GpuProfiler>);
+// struct GUIProfiler(Rc<wgpu_profiler::GpuProfiler>);
 
 macro_rules! assert_none {
     ($expr:expr) => {
-        assert!(matches!($expr, None));
+        assert!($expr.is_none());
     };
 }
 
@@ -75,29 +75,29 @@ impl McmcDemo {
         // Reason is that many relevant APIs require mutable access, making sharing annoying.
         // And, calling end_frame does not actually need to be called at top level, from my current understanding.
         // just call it at the end of the compute/render in these methods.
-        let msg = "Settings are statically choosen, I only build the profiler with the purpose to target tracy - together with tracing - and if the wgpu handles are invalid nothing else is gonna work either way";
-        let shared_tracy_context = wgpu_profiler::GpuProfiler::create_tracy_context(
-            adapter.get_info().backend,
-            &wgpu_render_state.device,
-            &wgpu_render_state.queue,
-        )
-        .expect(msg);
+        // let msg = "Settings are statically choosen, I only build the profiler with the purpose to target tracy - together with tracing - and if the wgpu handles are invalid nothing else is gonna work either way";
+        // let shared_tracy_context = wgpu_profiler::GpuProfiler::create_tracy_context(
+        //     adapter.get_info().backend,
+        //     &wgpu_render_state.device,
+        //     &wgpu_render_state.queue,
+        // )
+        // .expect(msg);
 
-        let cfg_profiler_gui = Rc::new(
-            wgpu_profiler::GpuProfiler::new_with_shared_tracy_context(
-                Default::default(),
-                shared_tracy_context.clone(),
-            )
-            .expect(msg),
-        );
+        // let cfg_profiler_gui = Rc::new(
+        //     wgpu_profiler::GpuProfiler::new_with_shared_tracy_context(
+        //         Default::default(),
+        //         shared_tracy_context.clone(),
+        //     )
+        //     .expect(msg),
+        // );
 
-        let cfg_profiler_compute = Arc::new(
-            wgpu_profiler::GpuProfiler::new_with_shared_tracy_context(
-                Default::default(),
-                shared_tracy_context.clone(),
-            )
-            .expect(msg),
-        );
+        // let cfg_profiler_compute = Arc::new(
+        //     wgpu_profiler::GpuProfiler::new_with_shared_tracy_context(
+        //         Default::default(),
+        //         shared_tracy_context.clone(),
+        //     )
+        //     .expect(msg),
+        // );
 
         // _cfg_profiler_gui.scope("target_distr", encoder_or_pass, device)
         // TODO: Also make a profiler for compute (its actually the main purpose).
@@ -122,12 +122,12 @@ impl McmcDemo {
             visuals.window_shadow = Shadow::NONE;
         });
 
-        let mut state = Self::get_state(cc);
+        let state = Self::get_state(cc);
 
-        state
-            .local_resources
-            .insert(ComputeProfiler(cfg_profiler_compute));
-        state.local_resources.insert(GUIProfiler(cfg_profiler_gui));
+        // state
+        //     .local_resources
+        //     .insert(ComputeProfiler(cfg_profiler_compute));
+        // state.local_resources.insert(GUIProfiler(cfg_profiler_gui));
 
         let render_state = cc
             .wgpu_render_state
@@ -168,7 +168,6 @@ impl McmcDemo {
             let mut state_guard = render_state.renderer.write();
             let callback_resources = &mut state_guard.callback_resources;
 
-            let render_state = cc.wgpu_render_state.as_ref().unwrap();
             let device = &render_state.device;
             let target_format: wgpu::ColorTargetState = render_state.target_format.into();
 
@@ -240,7 +239,6 @@ impl eframe::App for McmcDemo {
         // For inspiration and more examples, go to https://egui.rs
 
         egui::TopBottomPanel::bottom("footer").show(ctx, |ui| {
-            #[expect(clippy::shadow_unrelated, reason = "false positive, is related.")]
             ui.horizontal(|ui| {
                 if ui.button("Reset State").clicked() {
                     // We keep local_resources, as thats not really data.
@@ -452,7 +450,6 @@ impl eframe::App for McmcDemo {
                     .outer_margin(egui::Margin::default())
                     .show(
                         ui,
-                        #[expect(clippy::shadow_unrelated, reason = "false positive, is related.")]
                         |ui| {
                             let px_size = ui.available_size();
                             let (rect, response) =
@@ -478,8 +475,8 @@ impl eframe::App for McmcDemo {
                         },
                     );
             });
-        let ComputeProfiler(_compute_profiler) = self.local_resources.get().expect("blah");
-        let GUIProfiler(_gui_profiler) = self.local_resources.get().expect("blah");
+        // let ComputeProfiler(_compute_profiler) = self.local_resources.get().expect("blah");
+        // let GUIProfiler(_gui_profiler) = self.local_resources.get().expect("blah");
     }
 }
 

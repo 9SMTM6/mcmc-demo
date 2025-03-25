@@ -44,7 +44,7 @@ impl IPromiseThisIsNonZeroUsize {
         }
     }
 
-    pub unsafe fn get_inner_mut(&mut self) -> &mut usize {
+    pub const unsafe fn get_inner_mut(&mut self) -> &mut usize {
         &mut self.0
     }
 

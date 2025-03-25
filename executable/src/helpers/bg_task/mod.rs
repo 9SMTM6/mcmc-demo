@@ -2,7 +2,6 @@ mod helpers;
 
 pub use helpers::{BackgroundTaskManager, TaskProgress};
 
-#[expect(clippy::module_name_repetitions, reason = "Eases autoimport")]
 pub struct BgTaskHandle<Final = ()> {
     /// Needs to be saved to keep the thread alive on web (?),
     /// Cant be saved in temporary storage because of the Copy requirements on IdTypeMap::insert_temp.

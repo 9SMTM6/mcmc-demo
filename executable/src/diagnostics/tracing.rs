@@ -19,10 +19,9 @@ pub fn is_chromium() -> bool {
     clippy::missing_panics_doc,
     reason = "Unwrap on &'static str parse should always work"
 )]
-#[expect(impl_trait_overcaptures, reason = "not properly fixable right now")]
 pub fn define_subscriber(
     default_log_level: Option<&str>,
-) -> impl tracing::Subscriber + Send + Sync {
+) -> impl tracing::Subscriber + Send + Sync + use<> {
     // spawn the console server in the background,
     // returning a `Layer`:
     #[cfg(all(feature = "tokio_console", tokio_unstable, not(target_arch = "wasm32")))]
