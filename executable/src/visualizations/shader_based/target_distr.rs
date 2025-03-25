@@ -4,8 +4,8 @@ use eframe::egui_wgpu::CallbackTrait;
 use macros::cfg_persistence_derive;
 use tokio::sync::Notify;
 use wgpu::{
-    util::{BufferInitDescriptor, DeviceExt},
     Buffer, BufferDescriptor, BufferUsages, Device, RenderPipeline, RenderPipelineDescriptor,
+    util::{BufferInitDescriptor, DeviceExt},
 };
 
 use crate::{
@@ -20,8 +20,8 @@ use crate::create_shader_module;
 create_shader_module!("multimodal_gaussian.fragment");
 
 use shader_bindings::{
-    bind_groups::{BindGroup0, BindGroup1},
     BindGroupLayout0, BindGroupLayout1, ResolutionInfo,
+    bind_groups::{BindGroup0, BindGroup1},
 };
 
 pub use shader_bindings::NormalDistribution;

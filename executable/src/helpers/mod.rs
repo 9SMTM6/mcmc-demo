@@ -11,7 +11,7 @@ use tokio::task;
 pub use async_last_task_processor::TaskDispatcher;
 pub use bg_task::{BackgroundTaskManager, BgTaskHandle, TaskProgress};
 pub(crate) use gpu_task::{
-    get_compute_queue, get_gpu_channels, gpu_scheduler, GpuTask, GpuTaskSenders,
+    GpuTask, GpuTaskSenders, get_compute_queue, get_gpu_channels, gpu_scheduler,
 };
 pub use temp_ui_state::TempStateDataAccess;
 

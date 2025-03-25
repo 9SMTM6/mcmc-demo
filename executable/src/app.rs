@@ -7,8 +7,8 @@ use type_map::TypeMap;
 use crate::{
     cfg_sleep,
     helpers::{
-        get_compute_queue, get_gpu_channels, gpu_scheduler, task_spawn, warn_feature_config,
-        BackgroundTaskManager, BgTaskHandle, GpuTaskSenders, TaskProgress,
+        BackgroundTaskManager, BgTaskHandle, GpuTaskSenders, TaskProgress, get_compute_queue,
+        get_gpu_channels, gpu_scheduler, task_spawn, warn_feature_config,
     },
     simulation::random_walk_metropolis_hastings::{ProgressMode, Rwmh},
     target_distr,
@@ -448,32 +448,29 @@ impl eframe::App for McmcDemo {
                     // remove margins here too
                     .inner_margin(egui::Margin::default())
                     .outer_margin(egui::Margin::default())
-                    .show(
-                        ui,
-                        |ui| {
-                            let px_size = ui.available_size();
-                            let (rect, response) =
-                                ui.allocate_exact_size(px_size, egui::Sense::hover());
-                            // last painted element wins.
-                            let painter = ui.painter();
-                            self.background_display.paint(
-                                painter,
-                                rect * ctx.pixels_per_point(),
-                                self.algo.clone(),
-                                &self.target_distr,
-                            );
+                    .show(ui, |ui| {
+                        let px_size = ui.available_size();
+                        let (rect, response) =
+                            ui.allocate_exact_size(px_size, egui::Sense::hover());
+                        // last painted element wins.
+                        let painter = ui.painter();
+                        self.background_display.paint(
+                            painter,
+                            rect * ctx.pixels_per_point(),
+                            self.algo.clone(),
+                            &self.target_distr,
+                        );
 
-                            if let Some(ref point_display) = self.point_display {
-                                point_display.paint(painter, rect, &self.algo);
-                            }
+                        if let Some(ref point_display) = self.point_display {
+                            point_display.paint(painter, rect, &self.algo);
+                        }
 
-                            let gaussians = &mut self.target_distr.gaussians;
+                        let gaussians = &mut self.target_distr.gaussians;
 
-                            DistrEdit::show_if_open(gaussians, ui, &response, rect, painter);
+                        DistrEdit::show_if_open(gaussians, ui, &response, rect, painter);
 
-                            ElementSettings::show_if_open(gaussians, ui, rect, ctx);
-                        },
-                    );
+                        ElementSettings::show_if_open(gaussians, ui, rect, ctx);
+                    });
             });
         // let ComputeProfiler(_compute_profiler) = self.local_resources.get().expect("blah");
         // let GUIProfiler(_gui_profiler) = self.local_resources.get().expect("blah");

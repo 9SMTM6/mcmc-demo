@@ -3,7 +3,7 @@ use shared::cfg_if_expr;
 use tr_sub::layer::SubscriberExt as _;
 use tracing::{self, Subscriber};
 use tracing_log;
-use tracing_subscriber::{self as tr_sub, fmt::time::UtcTime, Layer};
+use tracing_subscriber::{self as tr_sub, Layer, fmt::time::UtcTime};
 
 #[cfg(target_arch = "wasm32")]
 pub fn is_chromium() -> bool {

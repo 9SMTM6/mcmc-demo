@@ -243,23 +243,35 @@ impl WrappedRngDiscriminants {
             #[cfg(feature = "rng_pcg")]
             D::Pcg32 => "Works okay pretty much everywhere",
             #[cfg(feature = "rng_pcg")]
-            D::Pcg64 => "AFAIK strictly inferior to Pcg64Mcg except on 32bit platforms when generating f64, but since we generate f32, not helpful. Mostly here for completeness",
+            D::Pcg64 => {
+                "AFAIK strictly inferior to Pcg64Mcg except on 32bit platforms when generating f64, but since we generate f32, not helpful. Mostly here for completeness"
+            }
             #[cfg(feature = "rng_pcg")]
-            D::Pcg64Mcg => "Better than Pcg32 on 64 bit platforms (which does NOT currently include the web!)",
+            D::Pcg64Mcg => {
+                "Better than Pcg32 on 64 bit platforms (which does NOT currently include the web!)"
+            }
             #[cfg(feature = "rng_xoshiro")]
             D::Xoshiro128Plus => "Recommended for f32 generation.",
             #[cfg(feature = "rng_xoshiro")]
             D::Xoshiro256Plus => "Recommended for f64 generation (which is not what we do).",
             #[cfg(feature = "rng_xoshiro")]
-            D::Xoroshiro128Plus => "Recommended for f64 generation (which is not what we do). Smaller state than Xoshiro256Plus",
+            D::Xoroshiro128Plus => {
+                "Recommended for f64 generation (which is not what we do). Smaller state than Xoshiro256Plus"
+            }
             #[cfg(feature = "rng_xoshiro")]
-            D::Xoroshiro128StarStar => "Recommended for f64 generation (which is not what we do). Smaller state than Xoshiro256Plus. Better scrambling than Plus variant, but more expensive",
+            D::Xoroshiro128StarStar => {
+                "Recommended for f64 generation (which is not what we do). Smaller state than Xoshiro256Plus. Better scrambling than Plus variant, but more expensive"
+            }
             #[cfg(feature = "rng_xoshiro")]
             D::Xoroshiro64Star => "Recommended for f32 generation. Smaller state.",
             #[cfg(feature = "rng_xoshiro")]
-            D::Xoroshiro64StarStar => "Recommended for f32 generation. Smaller state. Better scrambling than Plus variant, but more expensive",
+            D::Xoroshiro64StarStar => {
+                "Recommended for f32 generation. Smaller state. Better scrambling than Plus variant, but more expensive"
+            }
             #[cfg(feature = "rng_xorshift")]
-            D::XorShiftRng => "Better than Pcg32 on 64 bit platforms (which does NOT currently include the web!)",
+            D::XorShiftRng => {
+                "Better than Pcg32 on 64 bit platforms (which does NOT currently include the web!)"
+            }
             // _ => "Look for this in the Rust Rand book/documentation",
         }
     }

@@ -10,8 +10,8 @@ pub use egui_based::{
 };
 
 pub use shader_based::{
-    BDAComputeDiff, BDADiff, BDADiffState, BdaComputeState, BdaComputeTask, MMGState,
-    NormalDistribution, RWMHAcceptRecord, TargetDistribution, INITIAL_RENDER_SIZE,
+    BDAComputeDiff, BDADiff, BDADiffState, BdaComputeState, BdaComputeTask, INITIAL_RENDER_SIZE,
+    MMGState, NormalDistribution, RWMHAcceptRecord, TargetDistribution,
 };
 
 use crate::{simulation::random_walk_metropolis_hastings::Rwmh, target_distr};

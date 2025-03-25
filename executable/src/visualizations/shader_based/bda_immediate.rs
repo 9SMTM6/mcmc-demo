@@ -4,8 +4,8 @@ use eframe::egui_wgpu::CallbackTrait;
 use macros::cfg_persistence_derive;
 use tokio::sync::Notify;
 use wgpu::{
-    util::{BufferInitDescriptor, DeviceExt},
     Buffer, BufferDescriptor, BufferUsages, Device, RenderPipeline, RenderPipelineDescriptor,
+    util::{BufferInitDescriptor, DeviceExt},
 };
 
 use crate::{
@@ -13,11 +13,11 @@ use crate::{
     simulation::random_walk_metropolis_hastings::Rwmh,
     target_distr,
     visualizations::{
+        AlgoPainter,
         shader_based::{
             resolution_uniform::get_resolution_buffer,
             target_distr::{get_normaldistr_buffer, shader_bindings::NormalDistribution},
         },
-        AlgoPainter,
     },
 };
 
@@ -26,8 +26,8 @@ use super::fullscreen_quad;
 create_shader_module!("diff_display.fragment");
 
 use shader_bindings::{
-    bind_groups::{BindGroup0, BindGroup1},
     BindGroupLayout0, BindGroupLayout1, RWMHAcceptRecord, RWMHCountInfo, ResolutionInfo,
+    bind_groups::{BindGroup0, BindGroup1},
 };
 
 #[cfg_persistence_derive]

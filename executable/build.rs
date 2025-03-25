@@ -4,7 +4,7 @@ use std::ffi::{OsStr, OsString};
 use std::fs;
 use std::path::{Path, PathBuf};
 use wgsl_bindgen::{RustWgslTypeMap, WgslBindgenOptionBuilder, WgslTypeSerializeStrategy};
-use wgsl_to_wgpu::{create_shader_module_embedded, WriteOptions};
+use wgsl_to_wgpu::{WriteOptions, create_shader_module_embedded};
 
 fn main() -> Result<()> {
     let start = std::time::Instant::now();

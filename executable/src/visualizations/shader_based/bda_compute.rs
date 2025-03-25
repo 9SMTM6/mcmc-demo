@@ -6,7 +6,7 @@ use std::{ops::Deref, sync::Arc};
 
 use eframe::egui_wgpu::CallbackTrait;
 use macros::{cfg_educe_debug, cfg_persistence_derive};
-use tokio::sync::{oneshot, watch, Notify};
+use tokio::sync::{Notify, oneshot, watch};
 use wgpu::{
     Buffer, BufferDescriptor, BufferUsages, CommandEncoderDescriptor, ComputePassDescriptor,
     ComputePipelineDescriptor, Device, RenderPipeline, RenderPipelineDescriptor,
@@ -21,11 +21,11 @@ use crate::{
 };
 
 use super::{
+    INITIAL_RENDER_SIZE,
     bda_immediate::{get_approx_buffers, shader_bindings::RWMHCountInfo},
     fullscreen_quad,
     resolution_uniform::get_resolution_buffer,
-    target_distr::{get_normaldistr_buffer, NormalDistribution},
-    INITIAL_RENDER_SIZE,
+    target_distr::{NormalDistribution, get_normaldistr_buffer},
 };
 
 create_shader_module!("binary_distance_approx.compute", mod compute_bindings);

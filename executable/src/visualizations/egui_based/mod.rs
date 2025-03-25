@@ -5,8 +5,8 @@ pub use point_display::SamplePointVisualizer;
 pub use target_distrib_settings::{DistrEdit, ElementSettings};
 
 use egui::{
-    epaint::{ColorMode, PathShape, PathStroke},
     Color32, Pos2, Shape, Stroke, Vec2,
+    epaint::{ColorMode, PathShape, PathStroke},
 };
 
 use super::CanvasPainter;

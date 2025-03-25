@@ -7,7 +7,7 @@ pub use bda_compute::{
     BDAComputeDiff, ComputeTask as BdaComputeTask, PipelineStateHolder as BdaComputeState,
 };
 pub use bda_immediate::{
-    shader_bindings::RWMHAcceptRecord, BDADiff, PipelineStateHolder as BDADiffState,
+    BDADiff, PipelineStateHolder as BDADiffState, shader_bindings::RWMHAcceptRecord,
 };
 pub use resolution_uniform::INITIAL_RENDER_SIZE;
 pub use target_distr::{NormalDistribution, PipelineStateHolder as MMGState, TargetDistribution};

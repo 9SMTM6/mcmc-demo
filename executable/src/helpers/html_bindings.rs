@@ -1,6 +1,6 @@
 #![cfg(target_arch = "wasm32")]
 
-use web_sys::{wasm_bindgen::JsCast, Element};
+use web_sys::{Element, wasm_bindgen::JsCast};
 
 const CANVAS_ID: &str = "egui_canvas";
 
