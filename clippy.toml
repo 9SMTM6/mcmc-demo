@@ -14,6 +14,8 @@ allowed-duplicate-crates = [
     "windows-core",
     # macos
     "core-foundation",
+    "objc2",
+    "objc-foundation",
     # The following targets don't get build anyways
     # Android
     "ndk-sys",
@@ -30,6 +32,11 @@ allowed-duplicate-crates = [
 
     # Should be fixed if wgpu pushes an update.
     "hashbrown",
+
+    # temporary
+    "tracy-client",
+    "zerocopy",
+    "zerocopy-derive",
 
     # yeah, as expected, everyone depends on this, that graph is one big mess.
     # But honestly not that bad with 2 versions. and it SHOULD all be build (proc_macro) time.

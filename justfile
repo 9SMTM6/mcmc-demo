@@ -50,6 +50,8 @@ ci_semver_updates:
 semver_updates:
     cargo +stable generate-lockfile
 
+alias semver := semver_updates
+
 ci_deploy_tests: patch_fat_html clippy ci_test
 
 ci_typo:

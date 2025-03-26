@@ -75,7 +75,7 @@ impl McmcDemo {
         // Reason is that many relevant APIs require mutable access, making sharing annoying.
         // And, calling end_frame does not actually need to be called at top level, from my current understanding.
         // just call it at the end of the compute/render in these methods.
-        // let msg = "Settings are statically choosen, I only build the profiler with the purpose to target tracy - together with tracing - and if the wgpu handles are invalid nothing else is gonna work either way";
+        // let msg = "Settings are statically chosen, I only build the profiler with the purpose to target tracy - together with tracing - and if the wgpu handles are invalid nothing else is gonna work either way";
         // let shared_tracy_context = wgpu_profiler::GpuProfiler::create_tracy_context(
         //     adapter.get_info().backend,
         //     &wgpu_render_state.device,

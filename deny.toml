@@ -3,9 +3,8 @@
 unknown-registry = "deny"
 unknown-git = "deny"
 
-# leaving this here for reference. Http links please.
 allow-git = [
-    # "https://github.com/chemicstry/wasm_thread",
+    "https://github.com/9SMTM6/wgpu-profiler?branch=support_multi_queue"
 ]
 
 [advisories]
@@ -28,15 +27,12 @@ allow = [
     "BSL-1.0",
     "ISC",
     "Zlib",
+    "Unicode-3.0",
 ]
 
 [[licenses.exceptions]]
 allow = ["LicenseRef-UFL-1.0", "OFL-1.1"]
 name = "epaint_default_fonts"
-
-[[licenses.exceptions]]
-allow = ["Unicode-DFS-2016"]
-name = "unicode-ident"
 
 [[licenses.exceptions]]
 allow = ["CC0-1.0"]

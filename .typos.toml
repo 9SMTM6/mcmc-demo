@@ -3,4 +3,4 @@
 # run:      typos
 
 [default.extend-words]
-egui = "egui" # Example for how to ignore a false positive
+typ = "typ" # Don't change the File-Ending of typst files on me

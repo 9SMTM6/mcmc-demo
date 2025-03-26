@@ -26,7 +26,7 @@ self.addEventListener('fetch', (event) => {
             event.respondWith((async () => {
                 const cachedResponse = await caches.match(event.request);
                 if (cachedResponse) {
-                    // if its a hashed file, returning it is (pretty much, exclusing hash conflicts which I'll ignore) save to just serve the cached file.
+                    // if its a hashed file, returning it is (pretty much, excluding hash conflicts which I'll ignore) save to just serve the cached file.
                     if (!matchingFilename) {
                         return cachedResponse;
                     } 
