@@ -1,4 +1,6 @@
 allowed-duplicate-crates = [
+    # TODO: reevaluate all these  OS backends, since wgpu changed how native dependencies are pulled
+
     # OS Crates, I'm never gonna get these unified
     # Windows
     "windows_aarch64_gnullvm",
@@ -39,6 +41,10 @@ allowed-duplicate-crates = [
     "zerocopy-derive",
     "thiserror",
     "thiserror-impl",
+    "base64",
+    "getrandom",
+    "indexmap",
+    "wasi",
 
     # yeah, as expected, everyone depends on this, that graph is one big mess.
     # But honestly not that bad with 2 versions. and it SHOULD all be build (proc_macro) time.

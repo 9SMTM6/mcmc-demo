@@ -8,6 +8,8 @@ rustflags = ["--cfg", "tokio_unstable"]
 rustflags = [
     "-C",
     "target-feature=+atomics,+bulk-memory,+mutable-globals",
+    '--cfg', 
+    'getrandom_backend="wasm_js"',
 ]
 
 # Only kicks in if actually compiled with unstable compiler.

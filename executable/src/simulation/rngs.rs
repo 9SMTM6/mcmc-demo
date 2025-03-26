@@ -76,8 +76,6 @@ macro_rules! declare_rng_wrappers {
             )+
         }
 
-        const RNG_CORE_UNIMPLEMENTED: &'static str = "I'm too lazy to do this properly without need, and unwilling to use the provided less efficient methods";
-
         impl rand::RngCore for WrappedRng {
             fn next_u32(&mut self) -> u32 {
                 use WrappedRng as T;
@@ -118,12 +116,7 @@ macro_rules! declare_rng_wrappers {
             }
 
             fn fill_bytes(&mut self, _dest: &mut [u8]) {
-                unimplemented!("{RNG_CORE_UNIMPLEMENTED}")
-            }
-
-
-            fn try_fill_bytes(&mut self, _dest: &mut [u8]) -> Result<(), rand::Error> {
-                unimplemented!("{RNG_CORE_UNIMPLEMENTED}")
+                unimplemented!("I'm too lazy to do this properly without need, and unwilling to use the provided less efficient methods")
             }
         }
 
@@ -271,8 +264,7 @@ impl WrappedRngDiscriminants {
             #[cfg(feature = "rng_xorshift")]
             D::XorShiftRng => {
                 "Better than Pcg32 on 64 bit platforms (which does NOT currently include the web!)"
-            }
-            // _ => "Look for this in the Rust Rand book/documentation",
+            } // _ => "Look for this in the Rust Rand book/documentation",
         }
     }
 }
@@ -331,7 +323,7 @@ pub struct Percentage;
 
 impl Distribution<f32> for Percentage {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f32 {
-        rng.sample(Uniform::new_inclusive(0.0, 1.0))
+        rng.sample(Uniform::new_inclusive(0.0, 1.0).unwrap())
     }
 }
 

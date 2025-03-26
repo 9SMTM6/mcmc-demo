@@ -31,9 +31,17 @@ allow = [
 ]
 
 [[licenses.exceptions]]
-allow = ["LicenseRef-UFL-1.0", "OFL-1.1"]
+allow = ["LicenseRef-UFL-1.0", "OFL-1.1", "Ubuntu-font-1.0"]
 name = "epaint_default_fonts"
 
 [[licenses.exceptions]]
 allow = ["CC0-1.0"]
 name = "hexf-parse"
+
+[[advisories.ignore]]
+id = "RUSTSEC-2024-0388"
+reason = "I hope wgsl_bindgen will address this at some point, there are maintained alternatives"
+
+[[advisories.ignore]]
+id = "RUSTSEC-2024-0436"
+reason = "This comes in via wgpu-hal and nalgebra, both of which are well maintained. Thus I'm fairly certain these will be addressed."
