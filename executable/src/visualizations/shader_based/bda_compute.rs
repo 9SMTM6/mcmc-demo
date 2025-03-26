@@ -365,7 +365,7 @@ impl GpuTask for ComputeTask {
 
         let compute_pipeline = device.create_compute_pipeline(&ComputePipelineDescriptor {
             module: &compute_bindings::create_shader_module(device),
-            entry_point: "cs_main",
+            entry_point: None,
             compilation_options: Default::default(),
             label: webgpu_debug_name,
             layout: Some(&compute_layout),

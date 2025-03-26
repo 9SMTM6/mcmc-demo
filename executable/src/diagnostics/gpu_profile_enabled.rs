@@ -15,24 +15,25 @@ pub type CfgProfiler = wgpu_profiler::GpuProfiler;
 ///
 /// If no profiler (including without tracy) can be created.
 pub fn get_profiler(
-    backend: wgpu::Backend,
-    device: &wgpu::Device,
-    queue: &wgpu::Queue,
+    _backend: wgpu::Backend,
+    _device: &wgpu::Device,
+    _queue: &wgpu::Queue,
 ) -> CfgProfiler {
     // let Ok(gpu_context) = wgpu_profiler::create_tracy_gpu_client(backend, device, queue);
     // CfgProfiler::new_with_tracy_client_v2(Default::default(), gpu_context);
-    CfgProfiler::new_with_tracy_client(Default::default(), backend, device, queue).unwrap_or_else(
-        |err| match err {
-            wgpu_profiler::CreationError::TracyClientNotRunning
-            | wgpu_profiler::CreationError::TracyGpuContextCreationError(_) => {
-                tracing::warn!("Failed to connect to Tracy. Continuing without Tracy integration.");
-                CfgProfiler::new(Default::default()).expect("Failed to create fallback profiler")
-            }
-            _ => {
-                panic!("Failed to create profiler: {}", err);
-            }
-        },
-    )
+    // CfgProfiler::new_with_tracy_client(Default::default(), backend, device, queue).unwrap_or_else(
+    //     |err| match err {
+    //         wgpu_profiler::CreationError::TracyClientNotRunning
+    //         | wgpu_profiler::CreationError::TracyGpuContextCreationError(_) => {
+    //             tracing::warn!("Failed to connect to Tracy. Continuing without Tracy integration.");
+    //             CfgProfiler::new(Default::default()).expect("Failed to create fallback profiler")
+    //         }
+    //         _ => {
+    //             panic!("Failed to create profiler: {}", err);
+    //         }
+    //     },
+    // )
+    unimplemented!()
 }
 
 pub fn required_wgpu_features(adapter: &wgpu::Adapter) -> wgpu::Features {

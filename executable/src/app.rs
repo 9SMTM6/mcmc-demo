@@ -69,7 +69,7 @@ impl McmcDemo {
 
         let (GpuTaskSenders { bda_compute }, gpu_rx) = get_gpu_channels();
 
-        let (compute_device, compute_queue) = get_compute_queue(adapter.clone()).await;
+        let (compute_device, compute_queue) = get_compute_queue(adapter).await;
 
         // I might end up creating a profiler for every workload.
         // Reason is that many relevant APIs require mutable access, making sharing annoying.
@@ -172,20 +172,20 @@ impl McmcDemo {
             let target_format: wgpu::ColorTargetState = render_state.target_format.into();
 
             assert_none!(callback_resources.insert(BdaComputeState::create(
-                device.as_ref(),
+                device,
                 target_format.clone(),
                 bda_compute,
                 refresh_token.clone(),
             )));
 
             assert_none!(callback_resources.insert(MMGState::create(
-                device.as_ref(),
+                device,
                 target_format.clone(),
                 refresh_token.clone(),
             )));
 
             assert_none!(callback_resources.insert(BDADiffState::create(
-                device.as_ref(),
+                device,
                 target_format.clone(),
                 refresh_token.clone(),
             )));

@@ -15,7 +15,7 @@ allowed-duplicate-crates = [
     # macos
     "core-foundation",
     "objc2",
-    "objc-foundation",
+    "objc2-foundation",
     # The following targets don't get build anyways
     # Android
     "ndk-sys",
@@ -37,6 +37,8 @@ allowed-duplicate-crates = [
     "tracy-client",
     "zerocopy",
     "zerocopy-derive",
+    "thiserror",
+    "thiserror-impl",
 
     # yeah, as expected, everyone depends on this, that graph is one big mess.
     # But honestly not that bad with 2 versions. and it SHOULD all be build (proc_macro) time.

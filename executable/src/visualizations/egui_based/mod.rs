@@ -6,7 +6,7 @@ pub use target_distrib_settings::{DistrEdit, ElementSettings};
 
 use egui::{
     Color32, Pos2, Shape, Stroke, Vec2,
-    epaint::{ColorMode, PathShape, PathStroke},
+    epaint::{PathShape, PathStroke},
 };
 
 use super::CanvasPainter;
@@ -45,10 +45,9 @@ impl CanvasPainter for Arrow {
         });
         let shaft = Shape::LineSegment {
             points: [start, start + direction],
-            stroke: PathStroke {
+            stroke: Stroke {
                 width: 1.5,
-                color: ColorMode::Solid(Color32::RED),
-                ..Default::default()
+                color: Color32::RED,
             },
         };
         painter.extend([shaft, head]);
