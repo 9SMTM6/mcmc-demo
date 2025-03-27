@@ -65,46 +65,48 @@ impl McmcDemo {
 
         let wgpu_render_state = cc.wgpu_render_state.as_ref().unwrap();
 
-        let adapter = &wgpu_render_state.adapter;
+        let adapter = wgpu_render_state.adapter.clone();
 
         let (GpuTaskSenders { bda_compute }, gpu_rx) = get_gpu_channels();
 
-        let (compute_device, compute_queue) = get_compute_queue(adapter).await;
+        task_spawn(async move {
+            let (compute_device, compute_queue) = get_compute_queue(&adapter).await;
 
-        // I might end up creating a profiler for every workload.
-        // Reason is that many relevant APIs require mutable access, making sharing annoying.
-        // And, calling end_frame does not actually need to be called at top level, from my current understanding.
-        // just call it at the end of the compute/render in these methods.
-        // let msg = "Settings are statically chosen, I only build the profiler with the purpose to target tracy - together with tracing - and if the wgpu handles are invalid nothing else is gonna work either way";
-        // let shared_tracy_context = wgpu_profiler::GpuProfiler::create_tracy_context(
-        //     adapter.get_info().backend,
-        //     &wgpu_render_state.device,
-        //     &wgpu_render_state.queue,
-        // )
-        // .expect(msg);
+            // I might end up creating a profiler for every workload.
+            // Reason is that many relevant APIs require mutable access, making sharing annoying.
+            // And, calling end_frame does not actually need to be called at top level, from my current understanding.
+            // just call it at the end of the compute/render in these methods.
+            // let msg = "Settings are statically chosen, I only build the profiler with the purpose to target tracy - together with tracing - and if the wgpu handles are invalid nothing else is gonna work either way";
+            // let shared_tracy_context = wgpu_profiler::GpuProfiler::create_tracy_context(
+            //     adapter.get_info().backend,
+            //     &wgpu_render_state.device,
+            //     &wgpu_render_state.queue,
+            // )
+            // .expect(msg);
 
-        // let cfg_profiler_gui = Rc::new(
-        //     wgpu_profiler::GpuProfiler::new_with_shared_tracy_context(
-        //         Default::default(),
-        //         shared_tracy_context.clone(),
-        //     )
-        //     .expect(msg),
-        // );
+            // let cfg_profiler_gui = Rc::new(
+            //     wgpu_profiler::GpuProfiler::new_with_shared_tracy_context(
+            //         Default::default(),
+            //         shared_tracy_context.clone(),
+            //     )
+            //     .expect(msg),
+            // );
 
-        // let cfg_profiler_compute = Arc::new(
-        //     wgpu_profiler::GpuProfiler::new_with_shared_tracy_context(
-        //         Default::default(),
-        //         shared_tracy_context.clone(),
-        //     )
-        //     .expect(msg),
-        // );
+            // let cfg_profiler_compute = Arc::new(
+            //     wgpu_profiler::GpuProfiler::new_with_shared_tracy_context(
+            //         Default::default(),
+            //         shared_tracy_context.clone(),
+            //     )
+            //     .expect(msg),
+            // );
 
-        // _cfg_profiler_gui.scope("target_distr", encoder_or_pass, device)
-        // TODO: Also make a profiler for compute (its actually the main purpose).
+            // _cfg_profiler_gui.scope("target_distr", encoder_or_pass, device)
+            // TODO: Also make a profiler for compute (its actually the main purpose).
 
-        let gpu_scheduler = gpu_scheduler((compute_device, compute_queue), gpu_rx);
+            let gpu_scheduler = gpu_scheduler((compute_device, compute_queue), gpu_rx);
 
-        task_spawn(gpu_scheduler);
+            gpu_scheduler.await;
+        });
 
         cc.egui_ctx.style_mut(|style| {
             let visuals = &mut style.visuals;
