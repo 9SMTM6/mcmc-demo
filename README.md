@@ -7,6 +7,10 @@ There is still next to no documentation, both for the users, as well as potentia
 
 ## TODO:
 
+### Update / Fix Profiling
+
+GPU Profiling with wgpu-profiler did not work out yet, and profiling egui required use of puffin until now. But now egui uses the profiling crate, allowing usage of other profilers. So try and unify these profilers, if possible, and then check back with wgpu-profiler.
+
 ### Compute shader
 
 I dont know if any of the below ideas for speeding up the diff rendering would work out. And in the end, dont think I'll get much use out of knowing how to do that (meaning I'll forget it anyways).
