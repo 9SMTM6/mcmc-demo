@@ -40,18 +40,21 @@ Aside the Rust toolchain (inclusive `rust-analyzer`, `clippy`, `rustfmt`, most w
 
 * [`trunk-rs`](https://github.com/trunk-rs/trunk) as asset bundler for the web deployment
     * it will also download `wasm-bindgen`, `wasm-opt` etc. on demand - on most OS's
+* Default posix `diff`, `patch` and `find` eg. to avoid code duplication for some files
 * [`just`](https://github.com/casey/just) as command runner, similar to `make`
-* `lldb` for debugging CPU code on native
 * [`typst`](https://github.com/typst/typst) for the logo - yeah its a bit overkill
     * and [`svgcleaner`](https://github.com/RazrFalcon/svgcleaner) and
     * `rsvg-convert` for deployment of said logo
-* [`tokio-console`](https://github.com/tokio-rs/console) for debugging of async on native
 * [`cargo-deny`](https://github.com/EmbarkStudios/cargo-deny) for dependency linting and cleanup
 * [`typos`](https://github.com/crate-ci/typos) for spell-checking
-* Default posix `diff`, `patch` and `find` eg. to avoid code duplication for some files
-* `brotli` for compression on the web.
+* Additional tools you'll probably never use yourself:
+    * `lldb` for debugging CPU code on native (usually distributed alongside `clang` or `llvm`)
+    * `brotli` for compression on the web.
+    * [`tokio-console`](https://github.com/tokio-rs/console) for debugging of async on native
+        * The related just task uses `konsole` to open the tokio-console in a separate terminal emulator
+    * I've got some experiments with `qrenderdoc`, `caddy` and `podman` (`docker`)
 
-Most of the time though you should get away with just installing `trunk-rs` to test on the web by executing `trunk serve --config Trunk.fat.toml` in [./executable/](./executable/).
+Most of the time though you should get away with just installing `trunk-rs` to test on the web by executing `trunk serve --config Trunk.fat.toml` in [./executable/](./executable/), or also install `just` and run `just trunk_fat` at the top level.
 
 ### Project structure
 
