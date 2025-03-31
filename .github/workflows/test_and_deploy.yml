@@ -153,7 +153,7 @@ jobs:
         # Ref: https://github.com/cross-rs/cross/issues/1510
         if: matrix.cross
         run: |
-          cargo +stable --locked install cross --git https://github.com/cross-rs/cross --rev 1b8cf50d20180c1a394099e608141480f934b7f7
+          cargo +stable --locked install cross --git https://github.com/cross-rs/cross --rev c1eb2c8d331e345cbad92fe6c8882256ac0820ab
 
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@master
