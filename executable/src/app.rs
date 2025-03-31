@@ -120,6 +120,8 @@ impl McmcDemo {
             // ] {
             //     *fill_color = fill_color.gamma_multiply(0.40);
             // }
+            // TODO: make both themes work
+            *visuals = egui::Visuals::dark();
             visuals.interact_cursor = Some(egui::CursorIcon::PointingHand);
             visuals.window_shadow = Shadow::NONE;
         });

@@ -5,9 +5,13 @@ or where the egui canvas is translucent.
 With no set preference light will be used. */
 @media (prefers-color-scheme: light) {
     :root {
-        --background: #909090;
+        /* --background: #909090;
         --theme-color: white;
-        --root-text-color: #000000;
+        --root-text-color: #000000; */
+        /* TODO: make both themes work */
+        --background: #404040;
+        --theme-color: black;
+        --root-text-color: #f0f0f0;
     }
 }
 
