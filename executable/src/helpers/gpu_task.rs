@@ -33,14 +33,6 @@ pub(crate) fn get_gpu_channels() -> (GpuTaskSenders, GpuTaskReceivers) {
     )
 }
 
-pub struct DebugTask;
-
-impl GpuTask for DebugTask {
-    async fn run(&mut self, _compute_device: Arc<wgpu::Device>, _compute_queue: Arc<wgpu::Queue>) {
-        tracing::info!("I'm actually running");
-    }
-}
-
 /// # Panics
 /// If no wgpu device could be found with the provided settings, if the gpu_task channel was closed.
 pub(crate) async fn get_compute_queue(adapter: &wgpu::Adapter) -> (wgpu::Device, wgpu::Queue) {

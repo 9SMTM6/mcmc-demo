@@ -119,6 +119,10 @@ where
     C: ComputeTask<T>,
 {
     /// Initializes the compute loop
+    #[expect(
+        clippy::cognitive_complexity,
+        reason = "Doesn't seem THAT complex to me, most of the complexity comes from features and/or debugging"
+    )]
     pub async fn start_processing_loop(self) {
         // Wait until notified of a task change
         let mut recorded_notify = false;

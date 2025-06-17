@@ -14,10 +14,18 @@ allowed-duplicate-crates = [
     "windows-targets",
     "windows",
     "windows-core",
+    "windows-implement",
+    "windows-interface",
+    "windows-result",
+    "windows-strings",
+    "windows_i686_gnullvm",
     # macos
     "core-foundation",
     "objc2",
     "objc2-foundation",
+    "objc2-app-kit",
+    # Linux
+    "linux-raw-sys",
     # The following targets don't get build anyways
     # Android
     "ndk-sys",
@@ -31,6 +39,8 @@ allowed-duplicate-crates = [
     # IDK
     "regex-automata",
     "regex-syntax",
+    "rustc-hash",
+    "rustix",
 
     # Should be fixed if wgpu pushes an update.
     "hashbrown",
