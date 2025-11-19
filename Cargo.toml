@@ -39,9 +39,9 @@ opt-level = 2
 
 # If you want to use the bleeding edge version of egui and eframe:
 # The released egui regularly lags behind in wgpu versions, if this is relevant, re-add the patch.
-# egui = { git = "https://github.com/emilk/egui", branch = "master" }
-# eframe = { git = "https://github.com/emilk/egui", branch = "master" }
-wgpu-profiler = { git = "https://github.com/9SMTM6/wgpu-profiler", branch = "support_multi_queue" }
+# egui = { git = "https://github.com/emilk/egui", branch = "main" }
+# eframe = { git = "https://github.com/emilk/egui", branch = "main" }
+# wgpu-profiler = { git = "https://github.com/9SMTM6/wgpu-profiler", branch = "support_multi_queue" }
 
 # wgsl_to_wgpu = { path = "../wgsl_to_wgpu/wgsl_to_wgpu" }
 

@@ -43,7 +43,6 @@ pub(crate) async fn get_compute_queue(adapter: &wgpu::Adapter) -> (wgpu::Device,
                 required_features: required_wgpu_features(adapter),
                 ..Default::default()
             },
-            None,
         )
         .await
         .unwrap()
