@@ -4,7 +4,7 @@ on: [push, pull_request, workflow_dispatch]
 name: ContinuousDeployment
 
 env:
-  RUST_NIGHTLY_TOOLCHAIN_VERSION: "nightly-2025-06-16"
+  RUST_NIGHTLY_TOOLCHAIN_VERSION: "nightly-2025-11-19"
 
 jobs:
   clippy-native:
