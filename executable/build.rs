@@ -1,10 +1,9 @@
-use miette::{ErrReport, IntoDiagnostic, Result};
+use miette::Result;
 use std::collections::{HashMap, HashSet};
 use std::ffi::{OsStr, OsString};
 use std::fs;
 use std::path::{Path, PathBuf};
-use wgsl_bindgen::{RustWgslTypeMap, WgslBindgenOptionBuilder, WgslTypeSerializeStrategy};
-use wgsl_to_wgpu::{WriteOptions, create_shader_module_embedded};
+use wgsl_to_wgpu::{WriteOptions, create_shader_modules, demangle_identity};
 
 fn main() -> Result<()> {
     let start = std::time::Instant::now();
@@ -25,10 +24,6 @@ fn main() -> Result<()> {
         file_path.push(file_name);
         fs::write(file_path, resolved_source).unwrap();
     }
-    // first use wgsl_bindgen to get nice errors.
-    // TODO: Could not find a good alternative, but maybe thatll end in the future.
-    // TODO: to actually support pipeline overridable constants, these have to be sanitized out.
-    bindgen_generation(&resolved_shaders_dir)?;
     let bindings_dir = append_to_last_dir(&out_dir, "_bindings");
 
     fs::create_dir_all(&bindings_dir).unwrap();
@@ -205,36 +200,6 @@ fn handle_c_pragma_once_style_imports(
     Ok(resolved_wgsl)
 }
 
-fn bindgen_generation(resolved_shaders_dir: &Path) -> Result<(), ErrReport> {
-    let shader_entries = [
-        "multimodal_gaussian.fragment",
-        "fullscreen_quad.vertex",
-        "diff_display.fragment",
-        "binary_distance_approx.compute",
-        "binary_distance_approx.fragment",
-        // "max_norm.compute",
-    ];
-
-    let mut bindgen = WgslBindgenOptionBuilder::default();
-    bindgen
-        .workspace_root(resolved_shaders_dir)
-        .serialization_strategy(WgslTypeSerializeStrategy::Bytemuck)
-        .derive_serde(cfg!(feature = "persistence"))
-        .type_map(RustWgslTypeMap);
-    for source in shader_entries {
-        bindgen.add_entry_point(format!(
-            "{resolved_shaders_dir}/{source}.wgsl",
-            resolved_shaders_dir = resolved_shaders_dir.to_string_lossy()
-        ));
-    }
-    let mut out_file = PathBuf::from(std::env::var("OUT_DIR").unwrap());
-    out_file.push("wgsl_bindgen_generated.rs");
-
-    let bindgen = bindgen.output(out_file).build().unwrap();
-
-    bindgen.generate().into_diagnostic()
-}
-
 fn wgsl_to_wgpu_generation(resolved_shaders: &HashMap<OsString, String>, bindings_dir: &Path) {
     let shader_entries = [
         "multimodal_gaussian.fragment",
@@ -248,14 +213,17 @@ fn wgsl_to_wgpu_generation(resolved_shaders: &HashMap<OsString, String>, binding
 
     shader_entries.into_iter().for_each(|entrypoint| {
         let wgsl_source = resolved_shaders.get(&entrypoint).unwrap();
-        let rust_bindings = create_shader_module_embedded(
+        let rust_bindings = create_shader_modules(
             wgsl_source,
             WriteOptions {
                 derive_bytemuck_host_shareable: true,
                 derive_serde: cfg!(feature = "persistence"),
+                validate: Some(Default::default()),
                 ..Default::default()
             },
+            demangle_identity,
         )
+        .map_err(|err| err.emit_to_stderr_with_path(wgsl_source, &entrypoint))
         .unwrap();
         let mut new_filename = entrypoint.clone();
         new_filename.push(".rs");

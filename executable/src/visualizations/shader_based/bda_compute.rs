@@ -473,7 +473,7 @@ impl GpuTask for ComputeTask {
             // 1. Patching (and upstreaming) changes to DownloadBuffer::read_buffer to return SubmitIndex from the copy op subm_idx. then doing wgpu::Maintain::WaitForSubmissionIndex(subm_idx),
             // 2. calling poll in an event loop somewhere else, however I don't want that to end in busy waiting, so perhaps add a sleep inbetween, that however increases lag...
             // Also see <github link TODO>
-            device_arc.poll(wgpu::PollType::Wait).unwrap();
+            device_arc.poll(wgpu::PollType::wait_indefinitely()).unwrap();
             // device_arc.poll(wgpu::Maintain::WaitForSubmissionIndex(subm_idx));
         });
 
