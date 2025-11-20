@@ -63,13 +63,16 @@ impl McmcDemo {
     pub async fn new(cc: &eframe::CreationContext<'_>) -> Self {
         warn_feature_config();
 
-        let wgpu_render_state = cc.wgpu_render_state.as_ref().unwrap();
-
-        let adapter = wgpu_render_state.adapter.clone();
-
         let (GpuTaskSenders { bda_compute }, gpu_rx) = get_gpu_channels();
 
         task_spawn(async move {
+            let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor{
+                ..Default::default()
+            });
+            let adapter = instance
+                .request_adapter(&Default::default())
+                .await
+                .unwrap();
             let (compute_device, compute_queue) = get_compute_queue(&adapter).await;
 
             // I might end up creating a profiler for every workload.
