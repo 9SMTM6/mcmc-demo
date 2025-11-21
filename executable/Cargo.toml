@@ -129,7 +129,7 @@ tracing = { version = "0.1.40", features = [
     "log",
 ] }
 tracing-log = { version = "0.2.0", optional = true }
-tracing-subscriber = { version = "0.3.18", optional = true, features = [
+tracing-subscriber = { version = "0.3.20", optional = true, features = [
     "env-filter",
     "fmt",
     "time",
@@ -139,7 +139,7 @@ wasm_thread = { version = "0.3.1", default-features = false, features = [
     "es_modules",
 ] }
 wgpu = { version = "27", features = ["webgpu", "dx12", "vulkan", "metal", "wgsl", "std", "parking_lot"], default-features = false }
-tokio = { version = "1.40.0", default-features = false, features = [
+tokio = { version = "1.48.0", default-features = false, features = [
     "sync",
     "macros",
     "rt",
