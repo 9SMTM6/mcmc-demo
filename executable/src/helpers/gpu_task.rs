@@ -37,13 +37,11 @@ pub(crate) fn get_gpu_channels() -> (GpuTaskSenders, GpuTaskReceivers) {
 /// If no wgpu device could be found with the provided settings, if the gpu_task channel was closed.
 pub(crate) async fn get_compute_queue(adapter: &wgpu::Adapter) -> (wgpu::Device, wgpu::Queue) {
     adapter
-        .request_device(
-            &wgpu::DeviceDescriptor {
-                label: Some(definition_location!()),
-                required_features: required_wgpu_features(adapter),
-                ..Default::default()
-            },
-        )
+        .request_device(&wgpu::DeviceDescriptor {
+            label: Some(definition_location!()),
+            required_features: required_wgpu_features(adapter),
+            ..Default::default()
+        })
         .await
         .unwrap()
 }

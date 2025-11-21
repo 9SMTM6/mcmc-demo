@@ -14,6 +14,7 @@
     reason = "Copied code, I'm lazy"
 )]
 
+use egui::UiKind;
 use macros::cfg_persistence_derive;
 
 use crate::helpers::task_spawn;
@@ -101,7 +102,7 @@ impl BackendPanel {
                 .clicked()
             {
                 ui.ctx().memory_mut(|mem| *mem = Default::default());
-                ui.close_menu();
+                ui.close_kind(UiKind::Menu);
             }
         });
     }
@@ -384,7 +385,7 @@ fn integration_ui(ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
                     .send_viewport_cmd(egui::ViewportCommand::InnerSize(size));
                 ui.ctx()
                     .send_viewport_cmd(egui::ViewportCommand::Fullscreen(false));
-                ui.close_menu();
+                ui.close_kind(UiKind::Menu);
             }
         });
     }

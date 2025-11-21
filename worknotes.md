@@ -103,7 +103,7 @@ Maybe also with history navigation, if that actually fits the workflow (atm I do
 
 Note that theres a fundamental difference in low-discrepancy RNGs compared to `normal` RNGs.
 They have to be aware of the output distribution they're supposed to resemble. 
-Concretly this means that (to work properly) they need to sample in 2D space immediately.
+Concretely this means that (to work properly) they need to sample in 2D space immediately.
 The implementations also are all uniform samplers. 
 IDK how to transform that yet while retaining proper low-discrepancy. A normal transformation probably suffices, but that is to be explored.
 

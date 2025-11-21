@@ -57,7 +57,7 @@ impl SamplePointVisualizer {
                 );
             }
         }
-        #[expect(unreachable_code, reason = "I want this to compile")]
+        #[expect(unused, reason = "I want this to compile")]
         if false {
             todo!();
             let current_spot: Pos2 = [300.0, 400.0].into();

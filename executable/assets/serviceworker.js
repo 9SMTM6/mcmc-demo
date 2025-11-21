@@ -37,7 +37,7 @@ self.addEventListener('fetch', (event) => {
                     }
                     // we leave the cache update dangling, no need to wait for that.
                     caches.open(CACHE_NAME).then((cache) => {
-                        // I don't clone here as, from my undersanding, this should reliably be executed after the return of the function.
+                        // I don't clone here as, from my understanding, this should reliably be executed after the return of the function.
                         // So after the original request was already cloned successfully.
                         cache.put(event.request, networkResponse);
                     });

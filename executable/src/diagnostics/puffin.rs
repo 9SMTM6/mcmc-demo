@@ -22,7 +22,7 @@ pub fn start_puffin_server() {
     match puffin_http::Server::new(PUFFIN_URL) {
         Ok(puffin_server) => {
             // I could go through the trouble of managing to hold this in temporary storage somewhere, but frankly I dont think its worth the effort.
-            // Having a detached thread somewhere that maanges it should be fine.
+            // Having a detached thread somewhere that manages it should be fine.
             wasm_thread::spawn(|| {
                 let viewer_process = std::process::Command::new("puffin_viewer")
                     .arg("--url")
