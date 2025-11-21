@@ -15,7 +15,6 @@ pub(crate) struct GpuTaskReceivers {
     pub bda_compute: TaskExecutorFactory<BdaComputeTask>,
 }
 
-#[allow(clippy::module_name_repetitions, reason = "Easier auto-import")]
 pub struct GpuTaskSenders {
     pub bda_compute: TaskDispatcher<BdaComputeTask>,
 }
@@ -46,10 +45,6 @@ pub(crate) async fn get_compute_queue(adapter: &wgpu::Adapter) -> (wgpu::Device,
         .unwrap()
 }
 
-#[allow(
-    clippy::used_underscore_binding,
-    reason = "That lint seems problematic on nightly right now"
-)]
 /// TODO: Consider moving this to be a struct instead, with cancel on drop etc.
 /// This being a function was originally required from embassy-rs, which is now replaced with tokio.
 pub(crate) async fn gpu_scheduler(

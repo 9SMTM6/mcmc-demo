@@ -218,7 +218,7 @@ mod test {
                 t_tx.dispatch_task(()).await.unwrap();
                 drop(t_tx);
             }),
-            #[allow(
+            #[expect(
                 clippy::pattern_type_mismatch,
                 reason = "Can't seem to fix this with tokio macro matching"
             )]

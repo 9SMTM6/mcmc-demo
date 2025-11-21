@@ -5,7 +5,7 @@
 //! * adding code to this file that was originally elsewhere
 //! * adding some additional knobs as required by me
 
-#![allow(
+#![expect(
     clippy::shadow_unrelated,
     clippy::pattern_type_mismatch,
     clippy::struct_excessive_bools,

@@ -56,12 +56,12 @@ impl IPromiseThisIsNonZeroUsize {
 #[cfg_persistence_derive]
 #[derive(Clone)]
 #[cfg_educe_debug]
-// TODO: properly fix this
-// See https://github.com/magiclen/educe/issues/34
-#[allow(
-    clippy::used_underscore_binding,
-    reason = "Should be educe causing this"
-)]
+// // TODO: properly fix this
+// // See https://github.com/magiclen/educe/issues/34
+// #[expect(
+//     clippy::used_underscore_binding,
+//     reason = "Should be educe causing this"
+// )]
 pub enum ProgressMode {
     Batched { size: IPromiseThisIsNonZeroUsize },
 }

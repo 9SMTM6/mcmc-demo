@@ -14,7 +14,7 @@ macro_rules! cfg_if_expr {
     }};
 }
 
-#[allow(
+#[expect(
     unused,
     clippy::missing_const_for_fn,
     reason = "used as compilation test"

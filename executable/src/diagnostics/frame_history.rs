@@ -1,12 +1,5 @@
 //! This is largely taken from https://github.com/emilk/egui/tree/master/crates/egui_demo_app.
 //! Its largely unmodified, except the changes required to compile in my application.
-#![allow(
-    clippy::shadow_unrelated,
-    clippy::pattern_type_mismatch,
-    clippy::struct_excessive_bools,
-    clippy::missing_panics_doc,
-    reason = "Copied code, I'm lazy"
-)]
 use egui::util::History;
 
 pub struct FrameHistory {

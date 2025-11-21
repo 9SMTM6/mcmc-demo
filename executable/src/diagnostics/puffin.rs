@@ -29,19 +29,18 @@ pub fn start_puffin_server() {
                     .arg(PUFFIN_URL)
                     .spawn();
 
-                #[allow(clippy::needless_lifetimes, reason = "Nightly stable mismatch")]
                 match viewer_process {
                     Ok(mut viewer_process) => {
                         // TODO: properly handle that stuff, so that puffin closes on exit. TO do that I need to move away from the detached thread workflow.
                         struct KillOnClose<'a> {
                             process: &'a mut Child,
                         }
-                        impl<'a> KillOnClose<'a> {
+                        impl KillOnClose<'_> {
                             fn wait(&mut self) -> Result<std::process::ExitStatus, std::io::Error> {
                                 self.process.wait()
                             }
                         }
-                        impl<'a> Drop for KillOnClose<'a> {
+                        impl Drop for KillOnClose<'_> {
                             fn drop(&mut self) {
                                 drop(self.process.kill());
                             }
