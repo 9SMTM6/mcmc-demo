@@ -200,6 +200,10 @@ impl McmcDemo {
 
     pub fn get_state(
         #[allow(
+            clippy::allow_attributes,
+            reason = "This seems cleanest way to do this."
+        )]
+        #[allow(
             unused_variables,
             reason = "Conditional compilation makes this sometimes unused"
         )]
@@ -232,6 +236,10 @@ impl eframe::App for McmcDemo {
     fn update(
         &mut self,
         ctx: &egui::Context,
+        #[allow(
+            clippy::allow_attributes,
+            reason = "This seems cleanest way to do this."
+        )]
         #[allow(
             unused_variables,
             reason = "Conditional compilation makes this sometimes unused"

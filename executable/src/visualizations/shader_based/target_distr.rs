@@ -96,7 +96,7 @@ impl PipelineStateHolder {
         // yup, its different.
         // tracing::warn!("{0:?}", render_state.target_format);
 
-        let pipeline: RenderPipeline = device.create_render_pipeline(&RenderPipelineDescriptor {
+        let pipeline = device.create_render_pipeline(&RenderPipelineDescriptor {
             vertex: fullscreen_quad::vertex_state(
                 &fullscreen_quad::create_shader_module(device),
                 &fullscreen_quad::fullscreen_quad_entry(),

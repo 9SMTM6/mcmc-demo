@@ -58,15 +58,21 @@ macros = { path = "./macros" }
 shared = { path = "./shared" }
 
 [workspace.lints.rust]
+edition_2024_expr_fragment_specifier = "allow"
 let_underscore_drop = "deny"
 rust_2018_idioms = { level = "warn", priority = -1 }
+rust_2024_compatibility = { level = "warn", priority = -1 }
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(tokio_unstable, rust_analyzer)'] }
 unsafe-op-in-unsafe-fn = "warn"
 # unstable
 # must_not_suspend = "deny"
 
 [workspace.lints.clippy]
+# AFAICT this contains groups correctness, suspicious, complexity, perf, style, and pendantic. 
+# But not restriction, cargo, nursery, and deprecated.
 all = { level = "warn", priority = -1 }
+# nursery = { level = "warn", priority = -1 }
+allow_attributes = "warn"
 allow_attributes_without_reason = "warn"
 branches_sharing_code = "warn"
 checked_conversions = "warn"
@@ -86,6 +92,7 @@ needless_borrowed_reference = "allow"
 needless_pass_by_value = "warn"
 no_effect_underscore_binding = "warn"
 pattern_type_mismatch = "warn"
+redundant_type_annotations = "warn"
 rc_buffer = "warn"
 redundant_else = "warn"
 semicolon_if_nothing_returned = "warn"
