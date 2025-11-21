@@ -21,7 +21,7 @@ ci_fmt:
 alias fmt := ci_fmt
 
 ci_clippy:
-    cargo +stable --locked clippy --workspace --target x86_64-unknown-linux-gnu --all-features --all-targets -- -D warnings
+    cargo +stable --locked clippy --workspace --target host-tuple --all-features --all-targets -- -D warnings
 
 ci_clippy_wasm:
     cargo --locked clippy --workspace --target wasm32-unknown-unknown --all-features --all-targets -- -D warnings
@@ -67,8 +67,8 @@ benchmark_wasm_size compression_level='4':
     just executable/benchmark_wasm_size {{compression_level}}
 
 tokio_console:
-    RUSTFLAGS="--cfg tokio_unstable" cargo +stable build --features tokio_console,debounce_async_loops --target x86_64-unknown-linux-gnu
-    ./target/x86_64-unknown-linux-gnu/debug/mcmc-demo &
+    RUSTFLAGS="--cfg tokio_unstable" cargo +stable build --features tokio_console,debounce_async_loops --target host-tuple
+    ./target/debug/mcmc-demo &
     # spawn tokio-console in another terminal window
     konsole -e tokio-console
 
@@ -80,7 +80,7 @@ alias eaFix := ci_easy_autofixes
 
 ci_staged_autofixes:
     cargo --locked clippy --allow-staged --workspace --target wasm32-unknown-unknown --all-features --all-targets --fix
-    cargo +stable --locked clippy --allow-staged --workspace --target x86_64-unknown-linux-gnu --all-features --all-targets --fix
+    cargo +stable --locked clippy --allow-staged --workspace --target host-tuple --all-features --all-targets --fix
     cargo +stable --locked fmt --all
 
 trunk_fat +cmd="serve":

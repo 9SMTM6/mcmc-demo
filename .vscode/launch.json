@@ -13,7 +13,7 @@
                     "build",
                     "--bin=mcmc-demo",
                     "--package=mcmc-demo",
-                    "--target=x86_64-unknown-linux-gnu",
+                    "--target=host-tuple",
                     "--all-features"
                 ],
                 "filter": {
