@@ -42,6 +42,10 @@ opt-level = 2
 # egui = { git = "https://github.com/emilk/egui", branch = "main" }
 # eframe = { git = "https://github.com/emilk/egui", branch = "main" }
 # wgpu-profiler = { git = "https://github.com/9SMTM6/wgpu-profiler", branch = "support_multi_queue" }
+# patch is needed until https://github.com/chemicstry/wasm_thread/pull/33 is merged and released
+wasm_thread = { git = "https://github.com/9SMTM6/wasm_thread.git", branch = "new_wasm_bindgen_init" }
+# patch is needed to fix https://github.com/RReverser/wasm-bindgen-rayon/issues/35
+wasm-bindgen-rayon = { git = "https://github.com/RReverser/wasm-bindgen-rayon.git", branch = "main" }
 
 # wgsl_to_wgpu = { path = "../wgsl_to_wgpu/wgsl_to_wgpu" }
 

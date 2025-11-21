@@ -4,7 +4,8 @@ unknown-registry = "deny"
 unknown-git = "deny"
 
 allow-git = [
-    # "https://github.com/9SMTM6/wgpu-profiler?branch=support_multi_queue"
+    "https://github.com/9SMTM6/wasm_thread.git",
+    "https://github.com/RReverser/wasm-bindgen-rayon.git",
 ]
 
 [advisories]
