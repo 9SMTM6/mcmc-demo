@@ -107,10 +107,6 @@ tracy = ["dep:tracing-tracy", "tracing", "dep:tracy-client"]
 
 [dependencies]
 bytemuck = { version = "1.16.0" }
-# fixes linking issue https://github.com/rust-embedded/critical-section/issues/41
-# Upstream fix PR: https://github.com/embassy-rs/embassy/pull/3312
-# can be removed after that is released.
-# Can't do this with a patch on embassy-executor, since that would require all embassy-* crates to be patched, and this is easier to follow.s
 eframe = { version = "0.33", default-features = false, features = [
     "wgpu",
     "wayland",
