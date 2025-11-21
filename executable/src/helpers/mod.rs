@@ -39,6 +39,7 @@ macro_rules! cfg_sleep {
 )]
 #[allow(
     clippy::missing_const_for_fn,
+    clippy::cognitive_complexity,
     reason = "False positives depending on configuration"
 )]
 pub fn warn_feature_config() {
