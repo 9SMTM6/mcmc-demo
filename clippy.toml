@@ -1,7 +1,4 @@
 allowed-duplicate-crates = [
-    # TODO: reevaluate all these  OS backends, since wgpu changed how native dependencies are pulled
-
-    # OS Crates, I'm never gonna get these unified
     # Windows
     "windows_aarch64_gnullvm",
     "windows_aarch64_msvc",
@@ -14,52 +11,37 @@ allowed-duplicate-crates = [
     "windows-core",
     "windows-implement",
     "windows-interface",
+    "windows-link",
     "windows-result",
     "windows-strings",
     "windows-sys",
     "windows-targets",
     "windows",
-    # macos
+
+    # Linux
+    "calloop-wayland-source",
+    "linux-raw-sys",
+    "smithay-client-toolkit",
+
+    # macOS
     "core-foundation",
+    "core-graphics-types",
     "objc2-app-kit",
     "objc2-foundation",
     "objc2",
-    # Linux
-    "linux-raw-sys",
-    # The following targets don't get build anyways
-    # Android
-    "ndk-sys",
-    # Redox-OS
-    "libredox",
+
+    # Redox OS
     "redox_syscall",
 
-    # These duplicates were, last time I checked, caused by build dependencies
+    # Generic
     "bitflags",
-
-    # IDK
-    "regex-automata",
-    "regex-syntax",
+    "calloop",
+    "foldhash",
+    "glam",
+    "hashbrown",
+    "indexmap",
     "rustc-hash",
     "rustix",
-
-    # Should be fixed if wgpu pushes an update.
-    "hashbrown",
-
-    # temporary
-    "base64",
-    "getrandom",
-    "indexmap",
     "thiserror-impl",
     "thiserror",
-    "tracy-client",
-    "wasi",
-    "zerocopy-derive",
-    "zerocopy",
-
-    # yeah, as expected, everyone depends on this, that graph is one big mess.
-    # But honestly not that bad with 2 versions. and it SHOULD all be build (proc_macro) time.
-    "syn",
-
-    # why is that even in my dependency tree...
-    "glow",
 ]
