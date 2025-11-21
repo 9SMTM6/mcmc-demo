@@ -19,6 +19,14 @@ use shared::cfg_if_expr;
 
 // When compiling natively:
 #[cfg(not(target_arch = "wasm32"))]
+#[allow(
+    clippy::allow_attributes,
+    reason = "This seems to be broken on current nightly."
+)]
+#[allow(
+    clippy::missing_panics_doc,
+    reason = "This is the entry point, noone else calls this."
+)]
 pub fn main() {
     use std::time::Duration;
 

@@ -33,7 +33,11 @@ macro_rules! cfg_sleep {
 }
 
 /// This function emits warnings when a feature and/or target configuration is chosen, that will not work as expected.
-#[expect(
+#[allow(
+    clippy::allow_attributes,
+    reason = "This seems cleanest way to do this."
+)]
+#[allow(
     clippy::missing_const_for_fn,
     reason = "False positives depending on configuration"
 )]
