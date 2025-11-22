@@ -259,4 +259,124 @@ jobs:
           # this option will not maintain any history of your previous pages deployment
           # set to false if you want all page build to be committed to your gh-pages branch history
           single-commit: true
-# TODO: Add container build-step, to be saved in GHCR.
+
+  container-build:
+    name: Build & Push Multi-Arch Container (SHA only)
+    needs: build-combined-webpage
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: amd64
+          - platform: arm64
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get repo name
+        id: repo
+        run: echo "lowercase=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
+      - name: Download web assets
+        uses: actions/download-artifact@v4
+        with:
+          name: combined-artifacts
+          path: executable/dist/combined
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & Push Multi-Arch Container (SHA only)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Containerfile
+          platforms: linux/${{ matrix.platform }}
+          push: true
+          tags: |
+            ghcr.io/${{ steps.repo.outputs.lowercase }}:${{ matrix.platform }}-${{ github.sha }}
+
+  container-merge:
+    name: Merge Multi-Arch Manifest
+    needs: container-build
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get repo name
+        id: repo
+        run: echo "lowercase=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create and Push Multi-Arch Manifest
+        run: |
+          docker buildx imagetools create \
+            --tag ghcr.io/${{ steps.repo.outputs.lowercase }}:${{ github.sha }} \
+            ghcr.io/${{ steps.repo.outputs.lowercase }}:amd64-${{ github.sha }} \
+            ghcr.io/${{ steps.repo.outputs.lowercase }}:arm64-${{ github.sha }}
+
+  container-release:
+    name: Tag & Push Container (branch/tag/latest)
+    needs: 
+      - container-merge
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    if: ${{ github.event_name == 'push' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get repo name
+        id: repo
+        run: echo "lowercase=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Create a valid release tag
+        id: tag
+        run: |
+          string=${{ github.ref }};
+          cleaned_string="${string#refs/tags/}";
+          cleaned_string="${cleaned_string#refs/heads/}";
+          echo "tag=$cleaned_string" >> $GITHUB_OUTPUT;
+
+      - name: Retag multi-arch image with branch/tag name
+        run: |
+          docker buildx imagetools create \
+            --tag ghcr.io/${{ steps.repo.outputs.lowercase }}:${{ steps.tag.outputs.tag }} \
+            ghcr.io/${{ steps.repo.outputs.lowercase }}:${{ github.sha }}
+
+      - name: Retag multi-arch image as latest (if tag)
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          docker buildx imagetools create \
+            --tag ghcr.io/${{ steps.repo.outputs.lowercase }}:latest \
+            ghcr.io/${{ steps.repo.outputs.lowercase }}:${{ github.sha }}
+
+# Container build and release is handled above.
