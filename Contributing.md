@@ -28,7 +28,7 @@ Aside from the Rust toolchain (including `rust-analyzer`, `clippy`, `rustfmt`, m
     * `brotli` for compression on the web.
     * [`tokio-console`](https://github.com/tokio-rs/console) for debugging of async on native
         * The related just task uses `konsole` to open the tokio-console in a separate terminal emulator
-    * I've got some experiments with `qrenderdoc`, `caddy` and `podman` (`docker`)
+    * I've got some experiments with `qrenderdoc`, and `podman` (`docker`)
 
 Most of the time though you should get away with just installing `trunk-rs` to test on the web by executing `trunk serve --config Trunk.fat.toml` in [./executable/](./executable/), or also install `just` and run `just trunk_fat` at the top level.
 

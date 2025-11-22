@@ -1,0 +1,25 @@
+[general]
+
+#### Address & Root dir
+# To make the host configurable, we have to set the commented out variables via environment variables... SWS is kinda broken
+# host = "0.0.0.0"
+# port = 4443
+root = "executable/dist/combined"
+
+log-level = "info"
+
+#### Pre-compressed files serving
+compression-static = true
+
+#### HTTP/2 + TLS
+http2 = true
+http2-tls-cert = "certs/cert.pem"
+http2-tls-key = "certs/key.pem"
+
+[advanced]
+
+#### Custom HTTP Headers
+[[advanced.headers]]
+source = "**/*"
+headers.Cross-Origin-Opener-Policy = "same-origin"
+headers.Cross-Origin-Embedder-Policy = "require-corp"

@@ -96,12 +96,13 @@ alias ts := trunk_slim
 trunk_deploy cmd="serve" +flags="":
     just executable/trunk_deploy {{cmd}} {{flags}}
 
-caddy_prepare:
+sws_prepare:
     just trunk_deploy build --release
     just executable/dist/precompress
+    [ -f cert.pem ] || openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes -subj "/CN=localhost"
 
-caddy_serve:
-    caddy run
+sws_serve:
+    SERVER_HTTPS_REDIRECT="true" SERVER_HTTPS_REDIRECT_FROM_PORT=8081 SERVER_HTTP2_TLS="true" SERVER_HTTP2_TLS_CERT="this_is_ignored" SERVER_HTTP2_TLS_KEY="this_is_ignored" SERVER_HOST="127.0.0.1" SERVER_ROOT=executable/dist/combined SERVER_PORT=4443 static-web-server --config-file sws.toml
 
 alias td := trunk_deploy
 
@@ -110,6 +111,10 @@ diff_deploy_html:
 
 patch_deploy_html:
     just executable/patch_deploy_html
+
+alias sp := sws_prepare
+
+alias ss := sws_serve
 
 # I have yet to find a practical use for this, but how to do this under wayland isn't well documented, so lets keep this around in case it ever becomes helpful.
 renderdoc:

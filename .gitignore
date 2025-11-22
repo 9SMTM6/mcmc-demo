@@ -8,3 +8,5 @@ target_wasm
 
 # Generated from cargo-deny
 duplicates_tree
+
+certs/

@@ -1,29 +1,30 @@
-FROM docker.io/caddy:2-alpine
+FROM docker.io/joseluisq/static-web-server:2-alpine
 
-ENV CADDY_SERVE_ROOT="executable/dist/combined"
+RUN mkdir -p executable/dist/combined
+RUN mkdir -p certs
 
-RUN mkdir -p ${CADDY_SERVE_ROOT}
+RUN apk add --no-cache openssl
 
-COPY Caddyfile .
-COPY ${CADDY_SERVE_ROOT} ${CADDY_SERVE_ROOT}
+COPY container_entrypoint.sh /entrypoint.sh
+COPY sws.toml .
+COPY executable/dist/combined executable/dist/combined
 # Ensure that the copied files were correctly prepared, by testing against filesize (and existence) of a sample file (currently ~1.2MB)
-RUN SIZE_LIMIT=1200000 && FILE_LOC="${CADDY_SERVE_ROOT}/slim/mcmc-demo*_bg.wasm.br"\
+RUN SIZE_LIMIT=1300000 && FILE_LOC="executable/dist/combined/slim/mcmc-demo*_bg.wasm.br"\
     FILE_SIZE=$(stat -c %s ${FILE_LOC}) && \
     if [ "$FILE_SIZE" -gt "$SIZE_LIMIT" ]; then \
-        echo "Error: ${FILE_LOC} exceeds the expected size. Did you run just caddy_prepare beforehand, or do you need to readjust the limits?" >&2; \
+        echo "Error: ${FILE_LOC} exceeds the expected size. Did you run just sws_prepare beforehand, or do you need to readjust the limits?" >&2; \
         exit 1; \
     fi
 
-# ports are for: https/<3 https/3 (http-to-https-redirect or https/<3) http/3
-EXPOSE 443/tcp 443/udp 80/tcp 80/udp
+# ports are for: https/ http-to-https-redirect
+EXPOSE 443/tcp 80/tcp
 
-ARG PUBLIC_URL='http://localhost'
-ENV PUBLIC_URL=${PUBLIC_URL}
+ENV TLS_HOST=localhost
 
-CMD [ "caddy", "run" ]
+CMD ["/entrypoint.sh"]
 
-# docker build . --build-arg PUBLIC_URL="http://localhost" -t mcmc-demo-webgpu
-# sudo docker run --cap-add=NET_ADMIN -p 443:443 -p 443:443/udp -p 80:80 [-e PUBLIC_URL='http://mcmc-demo-webgpu.pages.dev'] mcmc-demo-webgpu
+# docker build . -t mcmc-demo-webgpu
+# sudo docker run --cap-add=NET_ADMIN -p 443:443 -p 80:80 mcmc-demo-webgpu
 # https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#labelling-container-images
 # https://docs.github.com/en/packages/managing-github-packages-using-github-actions-workflows/publishing-and-installing-a-package-with-github-actions#publishing-a-package-using-an-action
 # https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#authenticating-in-a-github-actions-workflow
