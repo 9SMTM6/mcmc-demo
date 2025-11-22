@@ -4,10 +4,10 @@ This application is still work in progress (WIP).
 
 There is still next to no documentation, both for the users, as well as potential developers.
 
-This is originally inspired by https://github.com/chi-feng/mcmc-demo. Its technologically different and more meant to explore the long-term results of different parameter settings and target distributions with batched execution.
-While the Javascript original struggles after running for a while, this can handle a lot more samples, and it also has different display options.
+This is originally inspired by https://github.com/chi-feng/mcmc-demo. It's technologically different and more meant to explore the long-term results of different parameter settings and target distributions with batched execution.
+While the JavaScript original struggles after running for a while, this can handle a lot more samples, and it also has different display options.
 
-Its built using Rust and WebGPU, which allows execution in the Browser via Webassembly (WASM) similar to the Javascript Project, while having more optimization potential and the creation of native applications.
+It's built using Rust and WebGPU, which allows execution in the Browser via Webassembly (WASM) similar to the JavaScript Project, while having more optimization potential and the creation of native applications.
 
 Note that WebGPU currently isn't well supported even in up-to-date browsers, only Chromium supports it on Windows, MacOS and Android.
 This hugely limits the potential users of the web version, but as this is simply a pet project I'll live with it.
@@ -31,17 +31,17 @@ This will use the stable rust compiler to create a native executable and run it.
 
 You have to override the toolchain to stable, as the WASM version of this application uses true multithreading on the web, which in turn requires the `build-std` flag, which in turn requires nightly rust, thus we set an override in [a configuration file](./rust-toolchain.toml).
 
-`build-std` also requires manual specification of the target when active, so if you want to use the nightly (default) compiler, you have to run `cargo run --target <platform> [--release]`, e.g. on most Intel/AMD Linux: `cargo run --target x86_64-unknown-linux-gnu`.
+`build-std` also requires manual specification of the target when active, so if you want to use the nightly (default) compiler, you have to run `cargo run --target host-tuple [--release]`.
 This also propagates to your IDE language-server. 
-We ship an configuration file that does this for `vscode` with `rust-analyzer` and targets the web at [.vscode/settings.json](.vscode/settings.json), and also one for debugging in `vscode` with `lldb` at [.vscode/launch.json](.vscode/launch.json).
+We ship a configuration file that does this for `vscode` with `rust-analyzer` and targets the web at [.vscode/settings.json](.vscode/settings.json), and also one for debugging in `vscode` with `lldb` at [.vscode/launch.json](.vscode/launch.json).
 
 
-Aside the Rust toolchain (inclusive `rust-analyzer`, `clippy`, `rustfmt`, most will be installed on demand if not already present) we use a bunch of other tools for different parts of the project:
+Aside from the Rust toolchain (including `rust-analyzer`, `clippy`, `rustfmt`, most will be installed on demand if not already present) we use a bunch of other tools for different parts of the project:
 
 * [`trunk-rs`](https://github.com/trunk-rs/trunk) as asset bundler for the web deployment
     * it will also download `wasm-bindgen`, `wasm-opt` etc. on demand - on most OS's
-* Default posix `diff`, `patch` and `find` eg. to avoid code duplication for some files
-* [`just`](https://github.com/casey/just) as command runner, similar to `make`
+* Default POSIX `diff`, `patch` and `find` e.g., to avoid code duplication for some files
+* [`just`](https://github.com/casey/just) as command runner, it's similar to `make`
 * [`typst`](https://github.com/typst/typst) for the logo - yeah its a bit overkill
     * and [`svgcleaner`](https://github.com/RazrFalcon/svgcleaner) and
     * `rsvg-convert` for deployment of said logo
@@ -63,9 +63,9 @@ The project has to use a separate crate for rust proc-macros, thus there are mul
 * [./executable/src/](./executable/src/) contains the Rust code for the application
     * additional documentation for the internal structure might be found in rustdoc
 * [./executable/assets/](./executable/assets/) contains the application logo and then assets for the web deployment
-* [./executable/shaders/](./executable/shaders/) contains the shader code. Its using WGSL shaders with a primitive homebrew buildtime import system that works similar to C-Style `#include`s with `#pragma once`. The shader code is checked at build time for syntax errors by abusing `wgsl-bindgen`.
-* [./executable/dist/](./executable/dist/) contains an trunk project that works as a wrapper around 2 variants of the Web-Version of this application.
-    * One version with less features, thats smaller (still ~1.2 MB unfortunately)
+* [./executable/shaders/](./executable/shaders/) contains the shader code. It's using WGSL shaders with a primitive homebrew buildtime import system that works similar to C-Style `#include`s with `#pragma once`. The shader code is checked at build time for syntax errors by abusing `wgsl-bindgen`.
+* [./executable/dist/](./executable/dist/) contains a trunk project that works as a wrapper around 2 variants of the Web-Version of this application.
+    * One version with less features, that's smaller (still ~1.2 MB unfortunately)
     * One version with all features possible on the Web
 
 The project has a lot of features that allow for different additional functionality to be added. The primary purpose of these is to allow to strip out 'wasteful' features in terms of deployment-size, such as persistence with serde, and/or disable debug tooling.
