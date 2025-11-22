@@ -1,6 +1,7 @@
-#import "@preview/suiji:0.3.0": gen-rng, normal
-#import "@preview/cetz:0.2.2"
-#import "@preview/finite:0.3.0"
+#import "@preview/suiji:0.5.0": gen-rng, normal
+#import "@preview/cetz:0.4.2"
+#import "@preview/finite:0.5.0"
+#import "@preview/cetz-plot:0.1.3"
 
 // #import draw_finite: state, transition,
 
@@ -45,7 +46,8 @@
 #import cetz: canvas
 
 #canvas(length: 1cm, background: black, {
-  import cetz: plot, draw
+  import cetz: draw
+  import cetz-plot: plot
   import finite: automaton, layout
   // manually extracted from resulting svg. Target (16pt)^2
   // x: 16.0 pt / 132.489075874974 pt = 0.120764673573
