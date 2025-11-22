@@ -95,8 +95,8 @@ jobs:
       # Cloudflare doesnt respect precompressed artifacts. It just does its own brotli compression, which is pretty shitty.
       # See also ./assets/_headers
       # It might respect gzip artifacts, but these dont reach normal brotli compression levels, and are pretty close the the levels seen with cloudflares brotli.
-      # - name: Precompress every file
-      #   run: find ./dist/ -type f -exec brotli -k -f {} \;
+      - name: Precompress every file
+        run: find executable/dist/combined/ -type f ! -name '*.br' -exec brotli -q 11 -f {} \;
       - name: Save Artifacts
         uses: actions/upload-artifact@v4
         with:
