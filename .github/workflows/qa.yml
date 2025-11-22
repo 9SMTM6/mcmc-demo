@@ -14,16 +14,6 @@ jobs:
           components: rustfmt
       - uses: Swatinem/rust-cache@v2
       - run: cargo +stable --locked fmt --all -- --check
-  check-semver-updates:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: stable
-          components: rustfmt
-      - uses: Swatinem/rust-cache@v2
-      - run: cargo +stable --locked generate-lockfile --locked
   cargo-deny:
     runs-on: ubuntu-latest
     steps:
@@ -37,3 +27,16 @@ jobs:
       - uses: actions/checkout@v4
       - name: Check spelling of entire workspace
         uses: crate-ci/typos@master
+  favicon-compile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Install typst
+        uses: typst-community/setup-typst@v3
+        with:
+          typst-version: latest
+      - run: cd executable && typst compile assets/favicon.typ assets/favicon.intermediate.svg

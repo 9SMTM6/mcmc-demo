@@ -1,7 +1,10 @@
 mod dist
 
-generate_favicon:
+compile_favicon:
     typst compile assets/favicon.typ assets/favicon.intermediate.svg
+
+generate_favicon:
+    just compile_favicon
     svgcleaner assets/favicon.intermediate.svg assets/favicon.svg
     rsvg-convert --width 256 --height 256 assets/favicon.svg > assets/favicon-256.png
 
