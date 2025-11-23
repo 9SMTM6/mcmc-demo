@@ -5,7 +5,7 @@ default-members = ["executable"]
 
 [workspace.package]
 authors = ["Samuel Maier <9smtm6@gmail.com>"]
-version = "0.2.0-dev"
+version = "0.2.0-rc2"
 # NOTE: This is a virtual package!!!
 # https://doc.rust-lang.org/nightly/edition-guide/rust-2024/cargo-resolver.html
 edition = "2024"

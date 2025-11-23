@@ -2135,7 +2135,7 @@ checksum = "08ab2867e3eeeca90e844d1940eab391c9dc5228783db2ed999acbc0a9ed375a"
 
 [[package]]
 name = "macros"
-version = "0.2.0-dev"
+version = "0.2.0-rc2"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2179,7 +2179,7 @@ dependencies = [
 
 [[package]]
 name = "mcmc-demo"
-version = "0.2.0-dev"
+version = "0.2.0-rc2"
 dependencies = [
  "bytemuck",
  "console-subscriber",
@@ -3531,7 +3531,7 @@ dependencies = [
 
 [[package]]
 name = "shared"
-version = "0.2.0-dev"
+version = "0.2.0-rc2"
 
 [[package]]
 name = "shlex"
