@@ -8,7 +8,7 @@ use crate::{
     cfg_sleep,
     helpers::{
         BackgroundTaskManager, BgTaskHandle, GpuTaskSenders, TaskProgress, get_compute_queue,
-        get_gpu_channels, gpu_scheduler, task_spawn, warn_feature_config,
+        get_gpu_channels, gpu_scheduler, task_spawn,
     },
     simulation::random_walk_metropolis_hastings::{ProgressMode, Rwmh},
     target_distr,
@@ -61,7 +61,11 @@ impl McmcDemo {
     /// Called once before the first frame.
     #[expect(clippy::missing_panics_doc, reason = "only used once")]
     pub async fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        warn_feature_config();
+        for warning in env!("BUILD_WARNINGS").split(";") {
+            if !warning.is_empty() {
+                tracing::warn!(warning);
+            }
+        }
 
         let (GpuTaskSenders { bda_compute }, gpu_rx) = get_gpu_channels();
 

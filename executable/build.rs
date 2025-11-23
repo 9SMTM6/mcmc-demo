@@ -33,6 +33,7 @@ fn main() -> Result<()> {
         "build.rs runtime {runtime} ms",
         runtime = start.elapsed().as_millis()
     );
+    emit_build_warnings();
     Ok(())
 }
 
@@ -242,4 +243,50 @@ fn append_to_last_dir(directory: &Path, appendage: impl AsRef<OsStr>) -> PathBuf
 
     new_path.push(new_dir);
     new_path
+}
+
+fn emit_build_warnings() {
+    // IMPORTANT: In build.rs, #[cfg(target_arch = "wasm32")] checks the HOST architecture,
+    // not the TARGET being built for.
+    // We use std::env::var("CARGO_CFG_TARGET_ARCH") instead to get the actual target arch.
+    #[allow(
+        clippy::allow_attributes,
+        reason = "This seems cleanest way to do this."
+    )]
+    #[allow(
+        unused_mut,
+        reason = "This will receive false positives when no build warning is emitted."
+    )]
+    let mut build_warnings = Vec::<&'static str>::new();
+
+    let target_arch = std::env::var("CARGO_CFG_TARGET_ARCH").unwrap_or_default();
+
+    if cfg!(feature = "debounce_async_loops") && target_arch == "wasm32" {
+        let warning = r#"Feature "debounce_async_loops" enabled, however other configuration disables this implicitly. Requires #not(target_arch = "wasm32")."#;
+        build_warnings.push(warning);
+        println!("cargo::warning={warning}");
+    }
+
+    if cfg!(feature = "tokio_console") && !(cfg!(tokio_unstable) && target_arch != "wasm32") {
+        let warning = r#"Feature "tokio_console" enabled, however other configuration disables this implicitly. Requires #all(tokio_unstable, not(target_arch = "wasm32"))."#;
+        build_warnings.push(warning);
+        println!("cargo::warning={warning}");
+    }
+
+    if cfg!(feature = "tracy") && target_arch == "wasm32" {
+        let warning = r#"Feature "tracy" enabled, however other configuration disables this implicitly. Requires #not(target_arch = "wasm32")."#;
+        build_warnings.push(warning);
+        println!("cargo::warning={warning}");
+    }
+
+    if cfg!(feature = "wgpu_profile") && target_arch == "wasm32" {
+        let warning = r#"Feature "wgpu_profile" enabled, however other configuration disables this implicitly. Requires #not(target_arch = "wasm32")."#;
+        build_warnings.push(warning);
+        println!("cargo::warning={warning}");
+    }
+
+    println!(
+        "cargo::rustc-env=BUILD_WARNINGS={build_warnings}",
+        build_warnings = build_warnings.join(";")
+    );
 }

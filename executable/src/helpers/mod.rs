@@ -32,41 +32,6 @@ macro_rules! cfg_sleep {
     }
 }
 
-/// This function emits warnings when a feature and/or target configuration is chosen, that will not work as expected.
-#[allow(
-    clippy::allow_attributes,
-    reason = "This seems cleanest way to do this."
-)]
-#[allow(
-    clippy::missing_const_for_fn,
-    clippy::cognitive_complexity,
-    reason = "False positives depending on configuration"
-)]
-pub fn warn_feature_config() {
-    #[cfg(all(feature = "debounce_async_loops", target_arch = "wasm32"))]
-    tracing::warn!(
-        r#"Feature "debounce_async_loops" enabled, however other configuration disables this implicitly. Requires #not(target_arch = "wasm32")."#
-    );
-
-    #[cfg(all(
-        feature = "tokio_console",
-        not(all(tokio_unstable, not(target_arch = "wasm32")))
-    ))]
-    tracing::warn!(
-        r#"Feature "tokio_console" enabled, however other configuration disables this implicitly. Requires #all(tokio_unstable, not(target_arch = "wasm32"))."#
-    );
-
-    #[cfg(all(feature = "tracy", target_arch = "wasm32"))]
-    tracing::warn!(
-        r#"Feature "tracy" enabled, however other configuration disables this implicitly. Requires #not(target_arch = "wasm32")."#
-    );
-
-    #[cfg(all(feature = "wgpu_profile", target_arch = "wasm32"))]
-    tracing::warn!(
-        r#"Feature "wgpu_profile" enabled, however other configuration disables this implicitly. Requires #not(target_arch = "wasm32")."#
-    );
-}
-
 #[cfg(not(target_arch = "wasm32"))]
 pub fn task_spawn<U>(future: U) -> task::JoinHandle<U::Output>
 where
