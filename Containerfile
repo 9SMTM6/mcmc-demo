@@ -1,11 +1,15 @@
 FROM docker.io/joseluisq/static-web-server:2-alpine
 
 RUN mkdir -p executable/dist/combined
-RUN mkdir -p certs
 
 RUN apk add --no-cache openssl
 
 COPY container_entrypoint.sh /entrypoint.sh
+
+RUN chmod +x /entrypoint.sh
+
+VOLUME [ "/certs" ]
+
 COPY sws.toml .
 COPY executable/dist/combined executable/dist/combined
 # Ensure that the copied files were correctly prepared, by testing against filesize (and existence) of a sample file (currently ~1.2MB)
