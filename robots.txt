@@ -1,0 +1,4 @@
+# go ahead and crawl to your hearts content.
+# You're just not likely to find much.
+User-agent: *
+Allow: /
