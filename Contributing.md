@@ -8,8 +8,8 @@ This will use the stable rust compiler to create a native executable and run it.
 You have to override the toolchain to stable, as the WASM version of this application uses true multithreading on the web, which in turn requires the `build-std` flag, which in turn requires nightly rust, thus we set an override in [a configuration file](./rust-toolchain.toml).
 
 `build-std` also requires manual specification of the target when active, so if you want to use the nightly (default) compiler, you have to run `cargo run --target host-tuple [--release]`.
-This also propagates to your IDE language-server. 
-We ship a configuration file that does this for `vscode` with `rust-analyzer` and targets the web at [.vscode/settings.json](.vscode/settings.json), and also one for debugging in `vscode` with `lldb` at [.vscode/launch.json](.vscode/launch.json).
+This also propagates to your IDE language-server.
+We thus ship a configuration file that does this for `vscode` with `rust-analyzer` and targets the web at [.vscode/settings.json](.vscode/settings.json), and also one for debugging in `vscode` with `lldb` at [.vscode/launch.json](.vscode/launch.json).
 
 
 Aside from the Rust toolchain (including `rust-analyzer`, `clippy`, `rustfmt`, most will be installed on demand if not already present) we use a bunch of other tools for different parts of the project:
@@ -28,7 +28,7 @@ Aside from the Rust toolchain (including `rust-analyzer`, `clippy`, `rustfmt`, m
     * `brotli` for compression on the web.
     * [`tokio-console`](https://github.com/tokio-rs/console) for debugging of async on native
         * The related just task uses `konsole` to open the tokio-console in a separate terminal emulator
-    * I've got some experiments with `qrenderdoc`, and `podman` (`docker`)
+    * I've got some experiments with `qrenderdoc`
 
 Most of the time though you should get away with just installing `trunk-rs` to test on the web by executing `trunk serve --config Trunk.fat.toml` in [./executable/](./executable/), or also install `just` and run `just trunk_fat` at the top level.
 
@@ -39,7 +39,7 @@ The project has to use a separate crate for rust proc-macros, thus there are mul
 * [./executable/src/](./executable/src/) contains the Rust code for the application
     * additional documentation for the internal structure might be found in rustdoc
 * [./executable/assets/](./executable/assets/) contains the application logo and then assets for the web deployment
-* [./executable/shaders/](./executable/shaders/) contains the shader code. It's using WGSL shaders with a primitive homebrew buildtime import system that works similar to C-Style `#include`s with `#pragma once`. The shader code is checked at build time for syntax errors by abusing `wgsl-bindgen`.
+* [./executable/shaders/](./executable/shaders/) contains the shader code. It's using WGSL shaders with a primitive homebrew buildtime import system that works similar to C-Style `#include`s with `#pragma once`. The shader code is checked at build time for syntax errors and Rust wrappers for the shaders are generated with `wgsl_to_wgpu`.
 * [./executable/dist/](./executable/dist/) contains a trunk project that works as a wrapper around 2 variants of the Web-Version of this application.
     * One version with less features, that's smaller (still ~1.2 MB unfortunately)
     * One version with all features possible on the Web
